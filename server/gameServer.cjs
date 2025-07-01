@@ -3,6 +3,7 @@ const WebSocket = require('ws');
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,6 +17,14 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Servir archivos estáticos desde la carpeta raíz
+app.use(express.static(path.join(__dirname, '..')));
+
+// Ruta principal para servir index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
 
 // Health check endpoint for Railway
 app.get('/health', (req, res) => {
