@@ -9,7 +9,6 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node server/gameServer.cjs"
-    "server": "server/gameServer.cjs"
   },
   "dependencies": {
   "lucide-react": "^0.344.0",
