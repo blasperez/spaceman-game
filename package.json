@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node server/gameServer.cjs"
+    "build": "vite build",
+    "start": "npm run build && node server/gameserver.cjs"
   },
   "dependencies": {
   "lucide-react": "^0.344.0",
