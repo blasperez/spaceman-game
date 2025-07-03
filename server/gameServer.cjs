@@ -18,12 +18,17 @@ app.use(cors({
 
 app.use(express.json());
 
-// Servir archivos estáticos desde la carpeta raíz
-app.use(express.static(path.join(__dirname, '..')));
+// Servir archivos estáticos desde la carpeta dist (donde Vite genera el build)
+app.use(express.static(path.join(__dirname, '..', 'dist')));
 
-// Ruta principal para servir index.html
+// Ruta principal para servir index.html desde dist
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+});
+
+// Manejar rutas de React (SPA)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
 // Health check endpoint for Railway
