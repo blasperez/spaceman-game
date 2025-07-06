@@ -17,7 +17,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   countdown,
   soundEnabled
 }) => {
-  const [stars, setStars] = useState<Array<{ x: number; y: number; size: number; twinkle: number }>>([]);
+  const [stars, setStars] = useState<Array<{ x: number; y: number; size: number; twinkle: number; id: number }>>([]);
   const [fireTrail, setFireTrail] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; type: 'flame' | 'spark' | 'ember' }>>([]);
   const [flightParticles, setFlightParticles] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; vx: number; vy: number; type: 'star' | 'sparkle' | 'trail' }>>([]);
   
@@ -36,22 +36,37 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     moon2: { x: 75, y: 15 }
   });
 
-  // Generate enhanced stars background
+  // Generate enhanced stars background - FIXED
   useEffect(() => {
     const generateStars = () => {
-      const starCount = 80;
+      const starCount = 120;
       const newStars = [];
       for (let i = 0; i < starCount; i++) {
         newStars.push({
           x: Math.random() * 100,
           y: Math.random() * 100,
-          size: Math.random() * 2 + 0.5,
-          twinkle: Math.random() * 3 + 1
+          size: Math.random() * 3 + 0.5,
+          twinkle: Math.random() * 4 + 2,
+          id: i
         });
       }
       setStars(newStars);
     };
     generateStars();
+  }, []);
+
+  // Stars twinkling animation - NEW
+  useEffect(() => {
+    const twinkleInterval = setInterval(() => {
+      setStars(prevStars => 
+        prevStars.map(star => ({
+          ...star,
+          opacity: 0.3 + Math.random() * 0.7
+        }))
+      );
+    }, 2000);
+
+    return () => clearInterval(twinkleInterval);
   }, []);
 
   // Audio system for exciting background sound
@@ -68,7 +83,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
     return () => {
       if (oscillatorRef.current) {
-        oscillatorRef.current.stop();
+        try {
+          oscillatorRef.current.stop();
+        } catch (e) {
+          // Already stopped
+        }
       }
       if (audioContextRef.current) {
         audioContextRef.current.close();
@@ -152,30 +171,30 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [gamePhase, multiplier, soundEnabled]);
 
-  // Moving planets animation - creates illusion of spaceman movement
+  // Moving planets animation - FIXED
   useEffect(() => {
     if (gamePhase === 'flying') {
       const interval = setInterval(() => {
         setPlanetPositions(prev => ({
           planet1: {
-            x: prev.planet1.x - 0.3 < -20 ? 120 : prev.planet1.x - 0.3,
-            y: prev.planet1.y + Math.sin(Date.now() * 0.001) * 0.1
+            x: prev.planet1.x - 0.4 < -25 ? 125 : prev.planet1.x - 0.4,
+            y: prev.planet1.y + Math.sin(Date.now() * 0.001) * 0.15
           },
           planet2: {
-            x: prev.planet2.x - 0.2 < -25 ? 125 : prev.planet2.x - 0.2,
-            y: prev.planet2.y + Math.cos(Date.now() * 0.0008) * 0.1
+            x: prev.planet2.x - 0.3 < -30 ? 130 : prev.planet2.x - 0.3,
+            y: prev.planet2.y + Math.cos(Date.now() * 0.0008) * 0.12
           },
           planet3: {
-            x: prev.planet3.x - 0.25 < -30 ? 130 : prev.planet3.x - 0.25,
-            y: prev.planet3.y + Math.sin(Date.now() * 0.0012) * 0.08
+            x: prev.planet3.x - 0.35 < -35 ? 135 : prev.planet3.x - 0.35,
+            y: prev.planet3.y + Math.sin(Date.now() * 0.0012) * 0.1
           },
           moon1: {
-            x: prev.moon1.x - 0.4 < -15 ? 115 : prev.moon1.x - 0.4,
-            y: prev.moon1.y + Math.cos(Date.now() * 0.0015) * 0.12
+            x: prev.moon1.x - 0.5 < -20 : 120 : prev.moon1.x - 0.5,
+            y: prev.moon1.y + Math.cos(Date.now() * 0.0015) * 0.18
           },
           moon2: {
-            x: prev.moon2.x - 0.35 < -18 ? 118 : prev.moon2.x - 0.35,
-            y: prev.moon2.y + Math.sin(Date.now() * 0.0009) * 0.09
+            x: prev.moon2.x - 0.45 < -22 ? 122 : prev.moon2.x - 0.45,
+            y: prev.moon2.y + Math.sin(Date.now() * 0.0009) * 0.14
           }
         }));
       }, 50);
@@ -184,7 +203,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [gamePhase]);
 
-  // Enhanced fire trail system - PARTICLES CLOSER TO SPACEMAN
+  // Enhanced fire trail system - FIXED PARTICLES
   useEffect(() => {
     if (gamePhase === 'flying') {
       const interval = setInterval(() => {
@@ -195,28 +214,29 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           const spacemanX = 50; // Always center
           const spacemanY = 50; // Always center
           
-          for (let i = 0; i < 8; i++) { // More particles for better effect
+          for (let i = 0; i < 12; i++) { // More particles for better effect
+            const particleId = Date.now() + Math.random() * 1000 + i;
             newTrail.push({ 
-              x: spacemanX - 2 - Math.random() * 2, // MUCH closer to spaceman
-              y: spacemanY + (Math.random() - 0.5) * 6, // Tighter spread
-              opacity: 0.9 + Math.random() * 0.1,
-              size: 3 + Math.random() * 5, // Good size particles
-              type: Math.random() > 0.6 ? 'spark' : 'flame',
-              id: Date.now() + Math.random() + i
+              x: spacemanX - 3 - Math.random() * 4, // MUCH closer to spaceman
+              y: spacemanY + (Math.random() - 0.5) * 8, // Tighter spread
+              opacity: 0.8 + Math.random() * 0.2,
+              size: 2 + Math.random() * 6, // Good size particles
+              type: Math.random() > 0.6 ? 'spark' : Math.random() > 0.3 ? 'flame' : 'ember',
+              id: particleId
             });
           }
           
           const updatedTrail = newTrail.map(particle => ({
             ...particle,
-            x: particle.x - 1.5, // Slower movement for better visibility
-            y: particle.y + (Math.random() - 0.5) * 0.8,
-            opacity: particle.opacity - 0.025, // Slower fade
-            size: particle.size * 0.98
-          })).filter(particle => particle.opacity > 0 && particle.x > -10);
+            x: particle.x - 2, // Faster movement for better visibility
+            y: particle.y + (Math.random() - 0.5) * 1.2,
+            opacity: particle.opacity - 0.03, // Slower fade
+            size: particle.size * 0.97
+          })).filter(particle => particle.opacity > 0 && particle.x > -15);
           
-          return updatedTrail.slice(-120); // More particles for denser effect
+          return updatedTrail.slice(-150); // More particles for denser effect
         });
-      }, 40); // Faster generation
+      }, 30); // Faster generation
 
       return () => clearInterval(interval);
     } else {
@@ -224,7 +244,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [gamePhase]);
 
-  // Enhanced flight particles system for larger spaceman
+  // Enhanced flight particles system - FIXED
   useEffect(() => {
     if (gamePhase === 'flying') {
       const interval = setInterval(() => {
@@ -232,19 +252,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           const newParticles = [...prevParticles];
           
           // Generate flight particles around larger spaceman
-          for (let i = 0; i < 4; i++) {
+          for (let i = 0; i < 6; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const distance = 20 + Math.random() * 15; // Larger radius for bigger spaceman
+            const distance = 25 + Math.random() * 20; // Larger radius for bigger spaceman
+            const particleId = Date.now() + Math.random() * 1000 + i;
             
             newParticles.push({
               x: 50 + Math.cos(angle) * distance,
               y: 50 + Math.sin(angle) * distance,
-              opacity: 0.8 + Math.random() * 0.2,
-              size: 1.5 + Math.random() * 2.5, // Larger particles
-              id: Date.now() + Math.random() + i,
-              vx: (Math.random() - 0.5) * 2,
-              vy: (Math.random() - 0.5) * 2,
-              type: Math.random() > 0.5 ? 'star' : 'sparkle'
+              opacity: 0.7 + Math.random() * 0.3,
+              size: 1 + Math.random() * 3, // Larger particles
+              id: particleId,
+              vx: (Math.random() - 0.5) * 3,
+              vy: (Math.random() - 0.5) * 3,
+              type: Math.random() > 0.5 ? 'star' : Math.random() > 0.3 ? 'sparkle' : 'trail'
             });
           }
           
@@ -252,13 +273,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             ...particle,
             x: particle.x + particle.vx,
             y: particle.y + particle.vy,
-            opacity: particle.opacity - 0.02,
-            size: particle.size * 0.98
+            opacity: particle.opacity - 0.025,
+            size: particle.size * 0.97
           })).filter(particle => particle.opacity > 0);
           
-          return updatedParticles.slice(-80); // More particles
+          return updatedParticles.slice(-100); // More particles
         });
-      }, 80);
+      }, 60);
 
       return () => clearInterval(interval);
     } else {
@@ -287,6 +308,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       };
     }
     
+    if (particle.type === 'ember') {
+      return {
+        background: `radial-gradient(circle, 
+          rgba(255, 69, 0, ${particle.opacity}) 0%,
+          rgba(220, 20, 60, ${particle.opacity * 0.8}) 50%,
+          rgba(139, 0, 0, ${particle.opacity * 0.6}) 80%,
+          transparent 100%)`,
+        filter: 'blur(1px)',
+        boxShadow: `0 0 ${particle.size * 2}px rgba(255, 69, 0, ${particle.opacity * 0.6})`
+      };
+    }
+    
     return {
       background: `radial-gradient(ellipse, 
         rgba(255, 255, 255, ${particle.opacity * 0.9}) 0%,
@@ -312,6 +345,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       };
     }
     
+    if (particle.type === 'trail') {
+      return {
+        background: `radial-gradient(circle, 
+          rgba(138, 43, 226, ${particle.opacity}) 0%,
+          rgba(75, 0, 130, ${particle.opacity * 0.8}) 60%,
+          transparent 100%)`,
+        filter: 'blur(0.8px)',
+        boxShadow: `0 0 ${particle.size * 2}px rgba(138, 43, 226, ${particle.opacity * 0.7})`
+      };
+    }
+    
     return {
       background: `radial-gradient(circle, 
         rgba(255, 255, 255, ${particle.opacity}) 0%,
@@ -324,83 +368,98 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   return (
     <div className="relative w-full h-full bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 overflow-hidden">
-      {/* Enhanced stars background */}
+      {/* Enhanced stars background - FIXED */}
       <div className="absolute inset-0">
-        {stars.map((star, index) => (
+        {stars.map((star) => (
           <div
-            key={index}
-            className="absolute bg-white rounded-full animate-pulse"
+            key={star.id}
+            className="absolute bg-white rounded-full"
             style={{
               left: `${star.x}%`,
               top: `${star.y}%`,
               width: `${star.size}px`,
               height: `${star.size}px`,
-              opacity: 0.3 + Math.random() * 0.7,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${star.twinkle}s`,
-              boxShadow: `0 0 ${star.size * 2}px rgba(255, 255, 255, 0.5)`
+              opacity: 0.3 + Math.sin(Date.now() * 0.001 + star.id) * 0.4 + 0.3,
+              boxShadow: `0 0 ${star.size * 2}px rgba(255, 255, 255, 0.5)`,
+              animation: `twinkle ${star.twinkle}s ease-in-out infinite alternate`,
+              animationDelay: `${star.id * 0.1}s`
             }}
           />
         ))}
       </div>
 
-      {/* Moving Planets - Creates illusion of spaceman movement */}
+      {/* Moving Planets - FIXED with better movement */}
       <div 
-        className="absolute w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full opacity-80 shadow-2xl transition-all duration-75 ease-linear"
+        className="absolute rounded-full opacity-80 shadow-2xl transition-all duration-75 ease-linear"
         style={{ 
           left: `${planetPositions.planet1.x}%`,
           top: `${planetPositions.planet1.y}%`,
-          boxShadow: '0 0 30px rgba(59, 130, 246, 0.5)',
+          width: '64px',
+          height: '64px',
+          background: 'radial-gradient(circle at 30% 30%, #60A5FA, #3B82F6, #1E40AF)',
+          boxShadow: '0 0 30px rgba(59, 130, 246, 0.5), inset -10px -10px 20px rgba(0,0,0,0.3)',
           transform: gamePhase === 'flying' ? 'scale(1.1)' : 'scale(1)'
         }}
       />
       
       <div 
-        className="absolute w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full opacity-70 shadow-2xl transition-all duration-75 ease-linear"
+        className="absolute rounded-full opacity-70 shadow-2xl transition-all duration-75 ease-linear"
         style={{ 
           left: `${planetPositions.planet2.x}%`,
           top: `${planetPositions.planet2.y}%`,
-          boxShadow: '0 0 20px rgba(147, 51, 234, 0.5)',
+          width: '40px',
+          height: '40px',
+          background: 'radial-gradient(circle at 30% 30%, #A78BFA, #8B5CF6, #7C3AED)',
+          boxShadow: '0 0 20px rgba(147, 51, 234, 0.5), inset -8px -8px 15px rgba(0,0,0,0.3)',
           transform: gamePhase === 'flying' ? 'scale(1.05)' : 'scale(1)'
         }}
       />
       
       <div 
-        className="absolute w-20 h-20 bg-gradient-to-br from-orange-400 to-red-500 rounded-full opacity-60 shadow-2xl transition-all duration-75 ease-linear"
+        className="absolute rounded-full opacity-60 shadow-2xl transition-all duration-75 ease-linear"
         style={{ 
           left: `${planetPositions.planet3.x}%`,
           top: `${planetPositions.planet3.y}%`,
-          boxShadow: '0 0 40px rgba(251, 146, 60, 0.4)',
+          width: '80px',
+          height: '80px',
+          background: 'radial-gradient(circle at 30% 30%, #FB923C, #F97316, #EA580C)',
+          boxShadow: '0 0 40px rgba(251, 146, 60, 0.4), inset -12px -12px 25px rgba(0,0,0,0.3)',
           transform: gamePhase === 'flying' ? 'scale(1.15)' : 'scale(1)'
         }}
       />
 
-      {/* Moving Moons */}
+      {/* Moving Moons - FIXED */}
       <div 
-        className="absolute w-8 h-8 bg-gradient-to-br from-gray-300 to-gray-500 rounded-full opacity-75 shadow-xl transition-all duration-75 ease-linear"
+        className="absolute rounded-full opacity-75 shadow-xl transition-all duration-75 ease-linear"
         style={{ 
           left: `${planetPositions.moon1.x}%`,
           top: `${planetPositions.moon1.y}%`,
-          boxShadow: '0 0 15px rgba(156, 163, 175, 0.6)',
+          width: '32px',
+          height: '32px',
+          background: 'radial-gradient(circle at 30% 30%, #D1D5DB, #9CA3AF, #6B7280)',
+          boxShadow: '0 0 15px rgba(156, 163, 175, 0.6), inset -6px -6px 12px rgba(0,0,0,0.4)',
           transform: gamePhase === 'flying' ? 'scale(1.1)' : 'scale(1)'
         }}
       />
       
       <div 
-        className="absolute w-6 h-6 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded-full opacity-80 shadow-xl transition-all duration-75 ease-linear"
+        className="absolute rounded-full opacity-80 shadow-xl transition-all duration-75 ease-linear"
         style={{ 
           left: `${planetPositions.moon2.x}%`,
           top: `${planetPositions.moon2.y}%`,
-          boxShadow: '0 0 12px rgba(250, 204, 21, 0.7)',
+          width: '24px',
+          height: '24px',
+          background: 'radial-gradient(circle at 30% 30%, #FEF3C7, #FBBF24, #F59E0B)',
+          boxShadow: '0 0 12px rgba(250, 204, 21, 0.7), inset -4px -4px 8px rgba(0,0,0,0.2)',
           transform: gamePhase === 'flying' ? 'scale(1.08)' : 'scale(1)'
         }}
       />
 
-      {/* Flight particles */}
+      {/* Flight particles - FIXED */}
       {flightParticles.map((particle) => (
         <div
           key={particle.id}
-          className="absolute rounded-full"
+          className="absolute rounded-full pointer-events-none"
           style={{
             left: `${particle.x}%`,
             top: `${particle.y}%`,
@@ -412,11 +471,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         />
       ))}
 
-      {/* Fire trail particles - CLOSER TO SPACEMAN */}
+      {/* Fire trail particles - FIXED */}
       {fireTrail.map((particle) => (
         <div
           key={particle.id}
-          className="absolute rounded-full"
+          className="absolute rounded-full pointer-events-none"
           style={{
             left: `${particle.x}%`,
             top: `${particle.y}%`,
@@ -543,6 +602,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           </div>
         </div>
       )}
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes twinkle {
+          0% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.2); }
+          100% { opacity: 0.3; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 };
