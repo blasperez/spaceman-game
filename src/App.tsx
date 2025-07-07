@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../utils/supabase'
 import { GameBoard } from './components/GameBoard';
 import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
 import { MobileBettingPanel } from './components/MobileBettingPanel';
@@ -10,6 +11,30 @@ import { AutoBotPanel } from './components/AutoBotPanel';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { useGameSocket } from './hooks/useGameSocket';
 import { Crown, Menu, BarChart3, RefreshCw, Settings, Users, TrendingUp, Maximize, Volume2, VolumeX, ChevronLeft, ChevronRight, Plus, Minus, X } from 'lucide-react';
+
+function Page() {
+  const [todos, setTodos] = useState([])
+
+  useEffect(() => {
+   async function getTodos() {
+      const { data: todos } = await supabase.from('todos').select()
+
+      if (todos.length > 1) {
+        setTodos(todos)
+      }
+    }
+    
+    getTodos()
+  }, [])
+
+  return (
+    <div>
+      {todos.map((todo) => (
+        <li key={todo}>{todo}</li>
+      ))}
+    </div>
+  )
+}
 
 interface GameHistory {
   id: number;
