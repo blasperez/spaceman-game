@@ -193,11 +193,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
       });
       
       if (error) {
-        setMessage(error.message);
+        console.error('Signup error:', error);
+        if (error.message.includes('User already registered')) {
+          setMessage('Este email ya está registrado. Intenta iniciar sesión.');
+        } else if (error.message.includes('Password should be at least')) {
+          setMessage('La contraseña debe tener al menos 6 caracteres.');
+        } else {
+          setMessage('Error al registrar: ' + error.message);
+        }
       } else {
         setMessage('¡Registro exitoso! Revisa tu correo para confirmar tu cuenta.');
       }
     } catch (error) {
+      console.error('Signup exception:', error);
       setMessage('Error al registrar: ' + (error as Error).message);
     } finally {
       setLoading(false);
@@ -213,15 +221,32 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
-        setMessage(error.message);
+        console.error('Login error:', error);
+        if (error.message.includes('Invalid login credentials')) {
+          setMessage('Email o contraseña incorrectos. Intenta de nuevo.');
+        } else if (error.message.includes('Email not confirmed')) {
+          setMessage('Por favor confirma tu email antes de iniciar sesión.');
+        } else {
+          setMessage('Error al iniciar sesión: ' + error.message);
+        }
         setLoading(false);
-      } else if (data.user) {
+        return;
+      }
+      
+      if (data.user) {
+        console.log('Login successful:', data.user);
         // Create user profile and login
         const userProfile = await createUserProfile(data.user);
         onLogin(userProfile);
         setMessage('¡Bienvenido! Sesión iniciada.');
+        setLoading(false);
+      } else {
+        console.error('No user data received');
+        setMessage('Error: No se pudo obtener información del usuario');
+        setLoading(false);
       }
     } catch (error) {
+      console.error('Login exception:', error);
       setMessage('Error al iniciar sesión: ' + (error as Error).message);
       setLoading(false);
     }

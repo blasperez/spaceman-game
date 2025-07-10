@@ -760,6 +760,43 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                 </div>
               </div>
 
+              {/* Account Limits */}
+              <div>
+                <h3 className="text-white font-semibold mb-3 sm:mb-4">Límites de Cuenta</h3>
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 sm:p-4 space-y-3 shadow-lg">
+                  <div className="flex justify-between">
+                    <span className="text-white/70 text-sm">Límite de Depósito:</span>
+                    <span className="text-white text-sm">${(user?.deposit_limit || 1000).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/70 text-sm">Límite de Retiro:</span>
+                    <span className="text-white text-sm">${(user?.withdrawal_limit || 1000).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* KYC Verification Button */}
+              {!user?.kyc_verified && (
+                <div>
+                  <h3 className="text-white font-semibold mb-3 sm:mb-4">Verificación de Identidad</h3>
+                  <div className="bg-yellow-500/20 backdrop-blur-md border border-yellow-400/30 rounded-2xl p-3 sm:p-4 shadow-lg">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <AlertCircle size={20} className="text-yellow-400" />
+                      <span className="text-yellow-300 text-sm font-medium">Verificación Pendiente</span>
+                    </div>
+                    <p className="text-white/70 text-sm mb-3">
+                      Para poder retirar fondos, necesitas completar la verificación de identidad (KYC).
+                    </p>
+                    <button
+                      onClick={() => setShowKYCForm(true)}
+                      className="w-full bg-yellow-500/80 hover:bg-yellow-600/80 backdrop-blur-md border border-yellow-400/30 text-white font-medium py-2 rounded-xl transition-colors active:scale-95 shadow-lg"
+                    >
+                      Completar Verificación
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={onLogout}
                 className="w-full flex items-center justify-center space-x-2 bg-red-500/80 hover:bg-red-600/80 backdrop-blur-md border border-red-400/30 text-white font-medium py-3 rounded-2xl transition-colors active:scale-95 shadow-lg"

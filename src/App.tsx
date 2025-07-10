@@ -290,18 +290,9 @@ function App() {
   };
 
   // Auth functions
-  const handleLogin = (provider: 'google' | 'facebook' | 'twitter') => {
-    const mockUser: UserProfile = {
-      id: `${provider}_${Date.now()}`,
-      name: provider === 'google' ? 'Juan Pérez' : provider === 'facebook' ? 'María García' : 'Carlos López',
-      email: `usuario@${provider}.com`,
-      avatar: `https://ui-avatars.com/api/?name=${provider === 'google' ? 'Juan+Perez' : provider === 'facebook' ? 'Maria+Garcia' : 'Carlos+Lopez'}&background=random`,
-      provider,
-      balance: 1000,
-      isDemo: false
-    };
-    setUser(mockUser);
-    setBalance(1000);
+  const handleLogin = (userProfile: UserProfile) => {
+    setUser(userProfile);
+    setBalance(userProfile.balance);
   };
 
   const handleDemoMode = () => {
@@ -318,7 +309,18 @@ function App() {
     setBalance(1000.00);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+      }
+    } catch (error) {
+      console.error('Logout exception:', error);
+    }
+    
+    // Reset local state
     setUser(null);
     setShowAccountPanel(false);
     setBalance(1000.00);
