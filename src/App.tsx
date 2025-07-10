@@ -478,9 +478,22 @@ function App() {
   // MOBILE LAYOUT
   if (isMobile) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden ${
+      <div className={`min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden space-background ${
         isLandscape ? 'landscape-mode' : 'portrait-mode'
       }`}>
+        {/* Space Background Animations */}
+        <div className="stars"></div>
+        <div className="planet planet-1"></div>
+        <div className="planet planet-2"></div>
+        <div className="planet planet-3"></div>
+        <div className="spaceship"></div>
+        <div className="meteor"></div>
+        <div className="meteor"></div>
+        <div className="meteor"></div>
+        <div className="meteor"></div>
+        <div className="meteor"></div>
+        <div className="nebula"></div>
+        <div className="nebula"></div>
         {/* MOBILE Game Board - Full Screen */}
         <div className="absolute inset-0">
           <MultiplayerGameBoard
@@ -698,7 +711,20 @@ function App() {
 
   // DESKTOP LAYOUT (unchanged)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden space-background">
+      {/* Space Background Animations */}
+      <div className="stars"></div>
+      <div className="planet planet-1"></div>
+      <div className="planet planet-2"></div>
+      <div className="planet planet-3"></div>
+      <div className="spaceship"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="nebula"></div>
+      <div className="nebula"></div>
       {/* FULL SCREEN Game Board */}
       <div className="absolute inset-0">
         <MultiplayerGameBoard

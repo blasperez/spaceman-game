@@ -42,47 +42,125 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
   }, [onLogin]);
 
   const createUserProfile = async (supabaseUser: any) => {
-    // Check if user profile exists in our database
-    const { data: existingProfile } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', supabaseUser.id)
-      .single();
+    try {
+      // Check if user profile exists in our database
+      const { data: existingProfile, error: selectError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
 
-    if (existingProfile) {
+      if (existingProfile) {
+        return {
+          id: existingProfile.id,
+          name: existingProfile.full_name || supabaseUser.user_metadata?.full_name || 'Usuario',
+          email: existingProfile.email || supabaseUser.email,
+          avatar: existingProfile.avatar_url || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(existingProfile.full_name || 'Usuario')}&background=random`,
+          provider: existingProfile.provider || 'google',
+          balance: existingProfile.balance || 1000.00,
+          isDemo: false,
+          // Casino specific fields
+          age: existingProfile.age,
+          country: existingProfile.country,
+          phone: existingProfile.phone,
+          kyc_verified: existingProfile.kyc_verified || false,
+          withdrawal_methods: existingProfile.withdrawal_methods || [],
+          deposit_limit: existingProfile.deposit_limit || 1000,
+          withdrawal_limit: existingProfile.withdrawal_limit || 1000,
+          total_deposits: existingProfile.total_deposits || 0,
+          total_withdrawals: existingProfile.total_withdrawals || 0,
+          games_played: existingProfile.games_played || 0,
+          total_wagered: existingProfile.total_wagered || 0,
+          total_won: existingProfile.total_won || 0
+        };
+      } else {
+        // Create new user profile
+        const newProfile = {
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          full_name: supabaseUser.user_metadata?.full_name || 'Usuario',
+          avatar_url: supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(supabaseUser.user_metadata?.full_name || 'Usuario')}&background=random`,
+          provider: 'google',
+          balance: 1000.00,
+          created_at: new Date().toISOString(),
+          // Casino specific fields
+          age: null,
+          country: null,
+          phone: null,
+          kyc_verified: false,
+          withdrawal_methods: [],
+          deposit_limit: 1000,
+          withdrawal_limit: 1000,
+          total_deposits: 0,
+          total_withdrawals: 0,
+          games_played: 0,
+          total_wagered: 0,
+          total_won: 0
+        };
+
+        const { error } = await supabase
+          .from('user_profiles')
+          .insert([newProfile]);
+
+        if (error) {
+          console.error('Error creating user profile:', error);
+          // If table doesn't exist, create a mock profile
+          return {
+            id: supabaseUser.id,
+            name: supabaseUser.user_metadata?.full_name || 'Usuario',
+            email: supabaseUser.email,
+            avatar: supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(supabaseUser.user_metadata?.full_name || 'Usuario')}&background=random`,
+            provider: 'google',
+            balance: 1000.00,
+            isDemo: false,
+            age: null,
+            country: null,
+            phone: null,
+            kyc_verified: false,
+            withdrawal_methods: [],
+            deposit_limit: 1000,
+            withdrawal_limit: 1000,
+            total_deposits: 0,
+            total_withdrawals: 0,
+            games_played: 0,
+            total_wagered: 0,
+            total_won: 0
+          };
+        }
+
+        return {
+          id: newProfile.id,
+          name: newProfile.full_name,
+          email: newProfile.email,
+          avatar: newProfile.avatar_url,
+          provider: newProfile.provider,
+          balance: newProfile.balance,
+          isDemo: false,
+          age: newProfile.age,
+          country: newProfile.country,
+          phone: newProfile.phone,
+          kyc_verified: newProfile.kyc_verified,
+          withdrawal_methods: newProfile.withdrawal_methods,
+          deposit_limit: newProfile.deposit_limit,
+          withdrawal_limit: newProfile.withdrawal_limit,
+          total_deposits: newProfile.total_deposits,
+          total_withdrawals: newProfile.total_withdrawals,
+          games_played: newProfile.games_played,
+          total_wagered: newProfile.total_wagered,
+          total_won: newProfile.total_won
+        };
+      }
+    } catch (error) {
+      console.error('Error in createUserProfile:', error);
+      // Return a fallback profile if database is not available
       return {
-        id: existingProfile.id,
-        name: existingProfile.full_name || supabaseUser.user_metadata?.full_name || 'Usuario',
-        email: existingProfile.email || supabaseUser.email,
-        avatar: existingProfile.avatar_url || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(existingProfile.full_name || 'Usuario')}&background=random`,
-        provider: existingProfile.provider || 'google',
-        balance: existingProfile.balance || 1000.00,
-        isDemo: false,
-        // Casino specific fields
-        age: existingProfile.age,
-        country: existingProfile.country,
-        phone: existingProfile.phone,
-        kyc_verified: existingProfile.kyc_verified || false,
-        withdrawal_methods: existingProfile.withdrawal_methods || [],
-        deposit_limit: existingProfile.deposit_limit || 1000,
-        withdrawal_limit: existingProfile.withdrawal_limit || 1000,
-        total_deposits: existingProfile.total_deposits || 0,
-        total_withdrawals: existingProfile.total_withdrawals || 0,
-        games_played: existingProfile.games_played || 0,
-        total_wagered: existingProfile.total_wagered || 0,
-        total_won: existingProfile.total_won || 0
-      };
-    } else {
-      // Create new user profile
-      const newProfile = {
         id: supabaseUser.id,
+        name: supabaseUser.user_metadata?.full_name || 'Usuario',
         email: supabaseUser.email,
-        full_name: supabaseUser.user_metadata?.full_name || 'Usuario',
-        avatar_url: supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(supabaseUser.user_metadata?.full_name || 'Usuario')}&background=random`,
+        avatar: supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(supabaseUser.user_metadata?.full_name || 'Usuario')}&background=random`,
         provider: 'google',
         balance: 1000.00,
-        created_at: new Date().toISOString(),
-        // Casino specific fields
+        isDemo: false,
         age: null,
         country: null,
         phone: null,
@@ -95,36 +173,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
         games_played: 0,
         total_wagered: 0,
         total_won: 0
-      };
-
-      const { error } = await supabase
-        .from('user_profiles')
-        .insert([newProfile]);
-
-      if (error) {
-        console.error('Error creating user profile:', error);
-      }
-
-      return {
-        id: newProfile.id,
-        name: newProfile.full_name,
-        email: newProfile.email,
-        avatar: newProfile.avatar_url,
-        provider: newProfile.provider,
-        balance: newProfile.balance,
-        isDemo: false,
-        age: newProfile.age,
-        country: newProfile.country,
-        phone: newProfile.phone,
-        kyc_verified: newProfile.kyc_verified,
-        withdrawal_methods: newProfile.withdrawal_methods,
-        deposit_limit: newProfile.deposit_limit,
-        withdrawal_limit: newProfile.withdrawal_limit,
-        total_deposits: newProfile.total_deposits,
-        total_withdrawals: newProfile.total_withdrawals,
-        games_played: newProfile.games_played,
-        total_wagered: newProfile.total_wagered,
-        total_won: newProfile.total_won
       };
     }
   };
@@ -162,16 +210,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         setMessage(error.message);
-      } else {
+        setLoading(false);
+      } else if (data.user) {
+        // Create user profile and login
+        const userProfile = await createUserProfile(data.user);
+        onLogin(userProfile);
         setMessage('¡Bienvenido! Sesión iniciada.');
       }
     } catch (error) {
       setMessage('Error al iniciar sesión: ' + (error as Error).message);
-    } finally {
       setLoading(false);
     }
   };
