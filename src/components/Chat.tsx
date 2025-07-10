@@ -15,7 +15,7 @@ interface ChatProps {
   username: string;
 }
 
-export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage }) => {
+export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username }) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);

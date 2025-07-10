@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CreditCard, Plus, History, TrendingUp, TrendingDown, LogOut, Wallet, Shield, Settings, DollarSign, ArrowDownToLine } from 'lucide-react';
+import { X, CreditCard, Plus, History, TrendingUp, TrendingDown, LogOut, Wallet, Shield, Settings, DollarSign, ArrowDownToLine, Ban as Bank } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -27,6 +27,12 @@ interface PaymentMethod {
   email?: string;
 }
 
+interface BankAccount {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+}
 
 interface Transaction {
   id: string;
@@ -53,6 +59,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
   user,
   balance,
   gameHistory,
+  transactions,
   paymentMethods,
   onClose,
   onLogout,
@@ -62,10 +69,17 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
   const [activeTab, setActiveTab] = useState<'overview' | 'deposit' | 'withdraw' | 'history' | 'settings'>('overview');
   const [showAddCard, setShowAddCard] = useState(false);
   const [showAddPayPal, setShowAddPayPal] = useState(false);
+  const [showAddBank, setShowAddBank] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<string>('');
+  const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0);
+  const [selectedBankAccount, setSelectedBankAccount] = useState<string>('');
+  
+  // Mock bank accounts
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
 
   const depositAmounts = [100, 500, 1000];
+  const withdrawalAmounts = [100, 500, 1000];
 
   const handleAddCard = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +108,20 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
     setShowAddPayPal(false);
   };
 
+  const handleAddBank = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    
+    const newBankAccount: BankAccount = {
+      id: Date.now().toString(),
+      bankName: formData.get('bankName') as string,
+      accountNumber: formData.get('accountNumber') as string,
+      accountHolder: formData.get('accountHolder') as string
+    };
+    
+    setBankAccounts(prev => [...prev, newBankAccount]);
+    setShowAddBank(false);
+  };
 
   const handleDeposit = () => {
     if (selectedAmount && selectedMethod && !user.isDemo) {
@@ -103,11 +131,37 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
     }
   };
 
+  const handleWithdrawal = () => {
+    if (withdrawalAmount && selectedBankAccount && !user.isDemo && withdrawalAmount <= balance) {
+      const bankAccount = bankAccounts.find(b => b.id === selectedBankAccount);
+      if (!bankAccount) return;
+
+      // Create withdrawal transaction
+      const transaction: Transaction = {
+        id: Date.now().toString(),
+        type: 'withdrawal',
+        amount: withdrawalAmount,
+        method: `${bankAccount.bankName} **** ${bankAccount.accountNumber.slice(-4)}`,
+        status: 'pending',
+        timestamp: new Date()
+      };
+
+      // In a real app, this would be handled by the parent component
+      // For now, we'll simulate the withdrawal
+      alert(`Retiro de $${withdrawalAmount} solicitado. Será procesado en 1-3 días hábiles.`);
+      
+      setWithdrawalAmount(0);
+      setSelectedBankAccount('');
+    }
+  };
 
   const totalWon = gameHistory.reduce((sum, game) => sum + game.winAmount, 0);
   const totalBet = gameHistory.reduce((sum, game) => sum + game.betAmount, 0);
   const netProfit = totalWon - totalBet;
 
+  // Calculate minimum withdrawal (must have positive balance and minimum amount)
+  const minWithdrawal = 100;
+  const canWithdraw = balance >= minWithdrawal && !user.isDemo;
 
   // FIXED: Proper validation for deposit button
   const canDeposit = selectedAmount && selectedAmount > 0 && selectedMethod && selectedMethod !== '' && !user.isDemo;
