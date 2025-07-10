@@ -8,7 +8,6 @@ interface ConnectionStatusProps {
 }
 
 export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
-  isConnected,
   connectionStatus,
   onReconnect
 }) => {

@@ -1,5 +1,9 @@
 import React from 'react';
 import { Rocket, Play } from 'lucide-react';
+<<<<<<< HEAD
+=======
+import { supabase } from '../integrations/supabase/client';
+>>>>>>> d9949890a7c7ebf738e71e211a9736420e38ae49
 
 interface LoginScreenProps {
   onLogin: (provider: 'google' | 'facebook' | 'twitter') => void;
