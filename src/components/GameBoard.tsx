@@ -189,7 +189,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             y: prev.planet3.y + Math.sin(Date.now() * 0.0012) * 0.1
           },
           moon1: {
-            x: prev.moon1.x - 0.5 < -20 : 120 : prev.moon1.x - 0.5,
+            x: prev.moon1.x - 0.5 < -20 ? 120 : prev.moon1.x - 0.5,
             y: prev.moon1.y + Math.cos(Date.now() * 0.0015) * 0.18
           },
           moon2: {
@@ -604,7 +604,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       )}
 
       {/* CSS Animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes twinkle {
           0% { opacity: 0.3; transform: scale(1); }
           50% { opacity: 1; transform: scale(1.2); }

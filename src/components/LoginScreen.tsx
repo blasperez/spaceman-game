@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Rocket, Play } from 'lucide-react';
-import { supabase } from '../../utils/supabase'; // Ajusta la ruta si es necesario
+import { supabase } from '../integrations/supabase/client';
 
 export const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
