@@ -47,25 +47,8 @@ export const useGameSocket = (userId: string, userName: string) => {
 
   // Get WebSocket URL based on environment
   const getWebSocketUrl = () => {
-    // Check for environment variable first
-    if (import.meta.env.VITE_WEBSOCKET_URL) {
-      return import.meta.env.VITE_WEBSOCKET_URL;
-    }
-    
-    // Production URLs - try multiple endpoints
-    if (import.meta.env.PROD) {
-      const productionUrls = [
-        'wss://spaceman-server-production.up.railway.app',
-        'wss://spaceman-game-server.herokuapp.com',
-        'wss://spaceman-ws.vercel.app'
-      ];
-      
-      // Return first URL for now, could implement fallback logic
-      return productionUrls[0];
-    }
-    
-    // Development URL
-    return 'ws://localhost:8080';
+    // Siempre usar la URL de producción proporcionada
+    return 'wss://spaceman-game-production.up.railway.app';
   };
 
   // Connect to WebSocket server
