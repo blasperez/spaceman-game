@@ -1,4 +1,13 @@
+<<<<<<< HEAD
+import React, { useState, useEffect, useCallback } from 'react';
+import { GameBoard } from './components/GameBoard';
+import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
+import { MobileBettingPanel } from './components/MobileBettingPanel';
+import { Statistics } from './components/Statistics';
+import { Chat } from './components/Chat';
+=======
 import { useState, useEffect } from 'react';
+>>>>>>> d9949890a7c7ebf738e71e211a9736420e38ae49
 import { LoginScreen } from './components/LoginScreen';
 import { SimpleAccountPanel } from './components/SimpleAccountPanel';
 import { SimpleStats } from './components/SimpleStats';
@@ -6,10 +15,85 @@ import { SimpleGameBoard } from './components/SimpleGameBoard';
 import { useAuth } from './hooks/useAuth';
 import { DollarSign, Play, Square } from 'lucide-react';
 
+<<<<<<< HEAD
+interface GameHistory {
+  id: number;
+  multiplier: number;
+  betAmount: number;
+  winAmount: number;
+  timestamp: Date;
+}
+
+interface ChatMessage {
+  id: number;
+  username: string;
+  message: string;
+  timestamp: Date;
+  type: 'user' | 'system';
+}
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  provider: 'google' | 'facebook' | 'twitter' | 'demo';
+  balance: number;
+  isDemo: boolean;
+}
+
+interface PaymentMethod {
+  id: string;
+  type: 'card' | 'paypal';
+  last4?: string;
+  brand?: string;
+  email?: string;
+}
+
+interface Transaction {
+  id: string;
+  type: 'deposit' | 'withdrawal';
+  amount: number;
+  method: string;
+  status: 'completed' | 'pending' | 'failed';
+  timestamp: Date;
+}
+
+interface AutoBotConfig {
+  isActive: boolean;
+  autoCashOut: number;
+  betAmount: number;
+  maxRounds: number;
+  maxLoss: number;
+  maxWin: number;
+  currentRounds: number;
+  totalProfit: number;
+  strategy: 'fixed' | 'martingale' | 'fibonacci';
+  stopOnWin: boolean;
+  stopOnLoss: boolean;
+}
+
+type GamePhase = 'waiting' | 'flying' | 'crashed';
+
+function App() {
+  // Auth state
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [showAccountPanel, setShowAccountPanel] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showAutoBotPanel, setShowAutoBotPanel] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  
+  // Mobile orientation detection
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+=======
 const App = () => {
   const [todos, setTodos] = useState<any[]>([]);
   const { user } = useAuth();
 
+>>>>>>> d9949890a7c7ebf738e71e211a9736420e38ae49
   // Game state
   const [betAmount, setBetAmount] = useState(10);
   const [userBalance, setUserBalance] = useState(1000);

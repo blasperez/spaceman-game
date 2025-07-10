@@ -10,9 +10,7 @@ interface GameBoardProps {
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
-  isGameRunning,
   multiplier,
-  onGameEnd,
   gamePhase,
   countdown,
   soundEnabled

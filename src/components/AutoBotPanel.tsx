@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Bot, Play, Square, TrendingUp, TrendingDown, Settings, AlertTriangle, DollarSign, Target, RotateCcw } from 'lucide-react';
+import { X, Bot, Play, Square, TrendingUp, Settings, AlertTriangle, Target, RotateCcw } from 'lucide-react';
 
 interface AutoBotConfig {
   isActive: boolean;
