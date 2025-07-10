@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Rocket, Play } from 'lucide-react';
-import { supabase } from '../../utils/supabase';
 
 export const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -16,20 +15,21 @@ export const LoginScreen: React.FC = () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          data: {
-            full_name: email.split('@')[0], // Default name from email
-          }
-        }
+      const response = await fetch(`${import.meta.env.VITE_APP_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
+
+      const data = await response.json();
       
-      if (error) {
-        setMessage(`Error: ${error.message}`);
+      if (!response.ok) {
+        setMessage(`Error: ${data.error || 'Error en el registro'}`);
       } else {
-        setMessage('¡Registro exitoso! Revisa tu correo para confirmar.');
+        setMessage('¡Registro exitoso! Ya puedes iniciar sesión.');
+        setIsLogin(true); // Cambiar a modo login
       }
     } catch (error) {
       setMessage('Error de conexión. Verifica tu conexión a internet.');
@@ -44,12 +44,29 @@ export const LoginScreen: React.FC = () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const response = await fetch(`${import.meta.env.VITE_APP_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
       
-      if (error) {
-        setMessage(`Error: ${error.message}`);
+      if (!response.ok) {
+        setMessage(`Error: ${data.error || 'Credenciales incorrectas'}`);
       } else {
+        // Guardar el token en localStorage
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
         setMessage('¡Bienvenido! Sesión iniciada.');
+        
+        // Redirigir al juego después de un breve delay
+        setTimeout(() => {
+          window.location.href = '/game';
+        }, 1000);
       }
     } catch (error) {
       setMessage('Error de conexión. Verifica tu conexión a internet.');
@@ -64,22 +81,8 @@ export const LoginScreen: React.FC = () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/game`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
-        }
-      });
-      
-      if (error) {
-        setMessage(`Error Google: ${error.message}`);
-        setLoading(false);
-      }
-      // La redirección ocurre automáticamente si es exitoso
+      // Redirigir a la ruta de Google OAuth del servidor
+      window.location.href = `${import.meta.env.VITE_APP_URL}/auth/google`;
     } catch (error) {
       setMessage('Error de conexión con Google. Verifica tu conexión a internet.');
       setLoading(false);
