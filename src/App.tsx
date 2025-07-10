@@ -60,6 +60,19 @@ interface UserProfile {
   provider: 'google' | 'facebook' | 'twitter' | 'demo';
   balance: number;
   isDemo: boolean;
+  // Casino specific fields
+  age?: number;
+  country?: string;
+  phone?: string;
+  kyc_verified?: boolean;
+  withdrawal_methods?: any[];
+  deposit_limit?: number;
+  withdrawal_limit?: number;
+  total_deposits?: number;
+  total_withdrawals?: number;
+  games_played?: number;
+  total_wagered?: number;
+  total_won?: number;
 }
 
 interface PaymentMethod {
@@ -342,7 +355,35 @@ function App() {
     setBalance(prev => prev + amount);
     
     if (user) {
-      setUser({ ...user, balance: user.balance + amount });
+      setUser({ 
+        ...user, 
+        balance: user.balance + amount,
+        total_deposits: (user.total_deposits || 0) + amount
+      });
+    }
+  };
+
+  const handleWithdrawal = (amount: number, method: string) => {
+    if (!user || user.isDemo || amount > balance) return;
+
+    const transaction: Transaction = {
+      id: Date.now().toString(),
+      type: 'withdrawal',
+      amount,
+      method,
+      status: 'pending',
+      timestamp: new Date()
+    };
+
+    setTransactions(prev => [...prev, transaction]);
+    setBalance(prev => prev - amount);
+    
+    if (user) {
+      setUser({ 
+        ...user, 
+        balance: user.balance - amount,
+        total_withdrawals: (user.total_withdrawals || 0) + amount
+      });
     }
   };
 
@@ -648,6 +689,7 @@ function App() {
             onLogout={handleLogout}
             onAddPaymentMethod={handleAddPaymentMethod}
             onDeposit={handleDeposit}
+            onWithdrawal={handleWithdrawal}
           />
         )}
       </div>
@@ -862,6 +904,7 @@ function App() {
           onLogout={handleLogout}
           onAddPaymentMethod={handleAddPaymentMethod}
           onDeposit={handleDeposit}
+          onWithdrawal={handleWithdrawal}
         />
       )}
     </div>
