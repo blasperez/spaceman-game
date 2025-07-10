@@ -228,7 +228,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
             { id: 'deposit', label: 'Recargar', icon: Plus },
             { id: 'withdraw', label: 'Retirar', icon: ArrowDownToLine },
             { id: 'history', label: 'Historial', icon: History },
-            { id: 'settings', label: 'Ajustes', icon: Settings }
+            { id: 'settings', label: 'Detalles de Cuenta', icon: Settings }
           ].map(tab => (
             <button
               key={tab.id}
@@ -631,6 +631,59 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
             </div>
           )}
 
+          {/* History Tab - Mobile optimized */}
+          {activeTab === 'history' && (
+            <div className="space-y-4 sm:space-y-6">
+              <div>
+                <h3 className="text-white font-semibold mb-3 sm:mb-4">Historial de Transacciones</h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {transactions.length === 0 ? (
+                    <div className="text-center py-8 text-white/60">
+                      <History size={32} className="mx-auto mb-4 sm:w-12 sm:h-12" />
+                      <p className="text-sm">No hay transacciones registradas</p>
+                      <p className="text-xs">Realiza depósitos o retiros para ver el historial</p>
+                    </div>
+                  ) : (
+                    transactions.slice().reverse().map(transaction => (
+                      <div key={transaction.id} className="flex items-center justify-between bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 shadow-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-2 h-2 rounded-full ${
+                            transaction.type === 'deposit' ? 'bg-green-400' : 'bg-blue-400'
+                          }`} />
+                          <div>
+                            <div className="text-white font-medium text-sm sm:text-base">
+                              {transaction.type === 'deposit' ? 'Depósito' : 'Retiro'}
+                            </div>
+                            <div className="text-white/60 text-xs sm:text-sm">
+                              {transaction.method}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`font-semibold text-sm sm:text-base ${
+                            transaction.type === 'deposit' ? 'text-green-400' : 'text-blue-400'
+                          }`}>
+                            {transaction.type === 'deposit' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                          </div>
+                          <div className={`text-xs ${
+                            transaction.status === 'completed' ? 'text-green-400' :
+                            transaction.status === 'pending' ? 'text-yellow-400' : 'text-red-400'
+                          }`}>
+                            {transaction.status === 'completed' ? 'Completado' :
+                             transaction.status === 'pending' ? 'Pendiente' : 'Fallido'}
+                          </div>
+                          <div className="text-white/60 text-xs">
+                            {transaction.timestamp.toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Settings Tab - Mobile optimized */}
           {activeTab === 'settings' && (
             <div className="space-y-4 sm:space-y-6">
@@ -639,33 +692,33 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 sm:p-4 space-y-3 shadow-lg">
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Nombre:</span>
-                    <span className="text-white text-sm">{user.name}</span>
+                    <span className="text-white text-sm">{user?.name || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Email:</span>
-                    <span className="text-white text-sm">{user.email}</span>
+                    <span className="text-white text-sm">{user?.email || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Proveedor:</span>
-                    <span className="text-white text-sm capitalize">{user.provider}</span>
+                    <span className="text-white text-sm capitalize">{user?.provider || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Tipo de Cuenta:</span>
-                    <span className="text-white text-sm">{user.isDemo ? 'Demo' : 'Real'}</span>
+                    <span className="text-white text-sm">{user?.isDemo ? 'Demo' : 'Real'}</span>
                   </div>
-                  {user.age && (
+                  {user?.age && (
                     <div className="flex justify-between">
                       <span className="text-white/70 text-sm">Edad:</span>
                       <span className="text-white text-sm">{user.age} años</span>
                     </div>
                   )}
-                  {user.country && (
+                  {user?.country && (
                     <div className="flex justify-between">
                       <span className="text-white/70 text-sm">País:</span>
                       <span className="text-white text-sm">{user.country}</span>
                     </div>
                   )}
-                  {user.phone && (
+                  {user?.phone && (
                     <div className="flex justify-between">
                       <span className="text-white/70 text-sm">Teléfono:</span>
                       <span className="text-white text-sm">{user.phone}</span>
@@ -673,8 +726,8 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                   )}
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Verificación KYC:</span>
-                    <span className={`text-sm ${user.kyc_verified ? 'text-green-400' : 'text-red-400'}`}>
-                      {user.kyc_verified ? '✓ Verificado' : '✗ Pendiente'}
+                    <span className={`text-sm ${user?.kyc_verified ? 'text-green-400' : 'text-red-400'}`}>
+                      {user?.kyc_verified ? '✓ Verificado' : '✗ Pendiente'}
                     </span>
                   </div>
                 </div>
@@ -686,23 +739,23 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 sm:p-4 space-y-3 shadow-lg">
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Total Depositos:</span>
-                    <span className="text-white text-sm">${(user.total_deposits || 0).toFixed(2)}</span>
+                    <span className="text-white text-sm">${(user?.total_deposits || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Total Retiros:</span>
-                    <span className="text-white text-sm">${(user.total_withdrawals || 0).toFixed(2)}</span>
+                    <span className="text-white text-sm">${(user?.total_withdrawals || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Juegos Jugados:</span>
-                    <span className="text-white text-sm">{user.games_played || 0}</span>
+                    <span className="text-white text-sm">{user?.games_played || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Total Apostado:</span>
-                    <span className="text-white text-sm">${(user.total_wagered || 0).toFixed(2)}</span>
+                    <span className="text-white text-sm">${(user?.total_wagered || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Total Ganado:</span>
-                    <span className="text-white text-sm">${(user.total_won || 0).toFixed(2)}</span>
+                    <span className="text-white text-sm">${(user?.total_won || 0).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
