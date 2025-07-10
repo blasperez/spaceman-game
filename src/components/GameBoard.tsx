@@ -487,128 +487,37 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         />
       ))}
 
-      {/* UFO Beam - Following Reference */}
-      {gamePhase === 'waiting' && (
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
-          <div className="w-20 h-10 bg-gradient-to-b from-blue-400/80 to-transparent rounded-full"></div>
-          <div className="w-40 h-40 bg-gradient-to-b from-blue-400/20 to-transparent rounded-full mt-2 -ml-10"></div>
-        </div>
-      )}
-
-      {/* Enhanced Game Status Text with Beautiful Countdown - MOVED HIGHER */}
-      {gamePhase === 'waiting' && countdown > 0 && (
-        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 text-center">
-          <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-blue-400/30 rounded-3xl p-8 shadow-2xl">
-            <div className="text-white text-3xl font-bold mb-4 drop-shadow-2xl">🚀 NEXT FLIGHT</div>
-            
-            {/* Beautiful Countdown Circle */}
-            <div className="relative w-32 h-32 mx-auto mb-4">
-              <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
-                {/* Background circle */}
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="50"
-                  stroke="rgba(255,255,255,0.2)"
-                  strokeWidth="8"
-                  fill="transparent"
-                />
-                {/* Progress circle */}
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="50"
-                  stroke="url(#gradient)"
-                  strokeWidth="8"
-                  fill="transparent"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 50}`}
-                  strokeDashoffset={`${2 * Math.PI * 50 * (countdown / 9)}`}
-                  className="transition-all duration-1000 ease-linear"
-                />
-                <defs>
-                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#3B82F6" />
-                    <stop offset="50%" stopColor="#8B5CF6" />
-                    <stop offset="100%" stopColor="#EF4444" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              
-              {/* Countdown number */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-5xl font-bold text-white drop-shadow-2xl animate-pulse">
-                  {countdown}
-                </span>
-              </div>
-            </div>
-            
-            <div className="text-blue-200 text-xl drop-shadow-xl animate-pulse">
-              ✨ Place your bets! ✨
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Larger Multiplier Display - Above Spaceman */}
-      {gamePhase === 'flying' && (
-        <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <div className="text-center">
-            <span className={`text-8xl font-bold ${getMultiplierColor()} drop-shadow-2xl animate-pulse`}
-                  style={{ 
-                    textShadow: '0 0 30px rgba(255, 255, 255, 0.9), 0 0 60px rgba(255, 255, 255, 0.7)',
-                    filter: 'brightness(1.3)',
-                    transform: `scale(${1 + (multiplier - 1) * 0.1})` // Grows with multiplier
-                  }}>
-              {multiplier.toFixed(2)}x
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* LARGER Spaceman FIXED IN CENTER - Enhanced Size */}
-      <div
-        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 ${
-          gamePhase === 'crashed' ? 'animate-bounce scale-125' : ''
-        } ${gamePhase === 'flying' ? 'animate-pulse scale-110' : 'scale-100'}`}
-      >
-        <div className="relative">
-          {/* LARGER Spaceman */}
-          <div className={`w-32 h-32 flex items-center justify-center overflow-hidden ${
-            gamePhase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
-          }`}
-               style={{
-                 filter: gamePhase === 'flying' ? 'brightness(1.4) saturate(1.4) drop-shadow(0 0 25px rgba(255,165,0,0.8))' : 'brightness(1.1)',
-                 transform: gamePhase === 'flying' ? `scale(${1 + (multiplier - 1) * 0.05})` : 'scale(1)' // Grows slightly with multiplier
-               }}>
-            <img 
-              src="/png-png-urbanbrush-13297 copy.png" 
-              alt="Spaceman"
-              className="w-full h-full object-contain"
-              style={{
-                filter: gamePhase === 'flying' ? 'brightness(1.3) saturate(1.3) drop-shadow(0 0 15px rgba(255,165,0,0.7))' : 'none'
-              }}
-            />
-          </div>
+      {/* UFO OVNI con rayo animado */}
+      <div className="absolute left-1/2 top-1/4 transform -translate-x-1/2 z-30 pointer-events-none">
+        {/* OVNI */}
+        <svg width="120" height="60" viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="60" cy="30" rx="50" ry="18" fill="#b3e0ff" fillOpacity="0.7"/>
+          <ellipse cx="60" cy="28" rx="40" ry="12" fill="#4f8cc9" fillOpacity="0.8"/>
+          <ellipse cx="60" cy="24" rx="30" ry="8" fill="#fff" fillOpacity="0.8"/>
+          <ellipse cx="60" cy="20" rx="18" ry="5" fill="#b3e0ff" fillOpacity="0.9"/>
+          <ellipse cx="60" cy="20" rx="10" ry="2" fill="#fff" fillOpacity="0.7"/>
+          <circle cx="30" cy="30" r="3" fill="#fff"/>
+          <circle cx="90" cy="30" r="3" fill="#fff"/>
+        </svg>
+        {/* Haz de luz animado */}
+        <div className="absolute left-1/2 top-10 w-32 h-56 -translate-x-1/2 z-20 pointer-events-none">
+          <div className="w-full h-full bg-gradient-to-b from-blue-300/40 via-blue-200/10 to-transparent rounded-b-full animate-ufo-beam" style={{filter:'blur(2px)'}}></div>
         </div>
       </div>
-
-      {/* Enhanced Game Status Messages */}
-      {gamePhase === 'crashed' && (
-        <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="bg-red-500/90 border-4 border-red-300/90 rounded-3xl px-12 py-6 backdrop-blur-sm animate-bounce"
-               style={{ boxShadow: '0 0 40px rgba(239, 68, 68, 0.8)' }}>
-            <span className="text-red-50 font-bold text-3xl drop-shadow-2xl">💥 CRASHED at {multiplier.toFixed(2)}x!</span>
-          </div>
-        </div>
-      )}
-
-      {/* CSS Animations */}
+      {/* Animación CSS para el haz de luz */}
       <style jsx>{`
         @keyframes twinkle {
           0% { opacity: 0.3; transform: scale(1); }
           50% { opacity: 1; transform: scale(1.2); }
           100% { opacity: 0.3; transform: scale(1); }
+        }
+        @keyframes ufo-beam {
+          0% { opacity: 0.7; }
+          50% { opacity: 1; }
+          100% { opacity: 0.7; }
+        }
+        .animate-ufo-beam {
+          animation: ufo-beam 2s infinite;
         }
       `}</style>
     </div>
