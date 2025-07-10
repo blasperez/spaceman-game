@@ -6,7 +6,7 @@ const http = require('http');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { pool, initDB } = require('./database');
+const { pool, initDB } = require('./database.cjs');
 
 const app = express();
 const server = http.createServer(app);
