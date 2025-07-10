@@ -48,8 +48,19 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
   canBet,
   canCashOut,
   currentWin,
+  autoCashOut,
+  setAutoCashOut,
+  autoPlay,
+  setAutoPlay,
   hasActiveBet,
-  autoBotConfig
+  gamePhase,
+  currentBet,
+  lastBetAmount,
+  autoBotConfig,
+  autoBetEnabled,
+  setAutoBetEnabled,
+  autoBetAmount,
+  setAutoBetAmount
 }) => {
   const [lastTapTime, setLastTapTime] = useState(0);
 
