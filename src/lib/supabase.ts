@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://spaceman-game-production.up.railway.app';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+if (!supabaseAnonKey) {
+  throw new Error('Missing VITE_SUPABASE_ANON_KEY environment variable');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -26,6 +26,15 @@ export interface Database {
           full_name: string | null;
           avatar_url: string | null;
           balance: number;
+          phone_number: string | null;
+          date_of_birth: string | null;
+          country: string | null;
+          city: string | null;
+          address: string | null;
+          document_type: string | null;
+          document_number: string | null;
+          kyc_status: 'pending' | 'verified' | 'rejected';
+          account_status: 'active' | 'suspended' | 'banned';
           created_at: string;
           updated_at: string;
         };
@@ -35,11 +44,29 @@ export interface Database {
           full_name?: string | null;
           avatar_url?: string | null;
           balance?: number;
+          phone_number?: string | null;
+          date_of_birth?: string | null;
+          country?: string | null;
+          city?: string | null;
+          address?: string | null;
+          document_type?: string | null;
+          document_number?: string | null;
+          kyc_status?: 'pending' | 'verified' | 'rejected';
+          account_status?: 'active' | 'suspended' | 'banned';
         };
         Update: {
           full_name?: string | null;
           avatar_url?: string | null;
           balance?: number;
+          phone_number?: string | null;
+          date_of_birth?: string | null;
+          country?: string | null;
+          city?: string | null;
+          address?: string | null;
+          document_type?: string | null;
+          document_number?: string | null;
+          kyc_status?: 'pending' | 'verified' | 'rejected';
+          account_status?: 'active' | 'suspended' | 'banned';
           updated_at?: string;
         };
       };

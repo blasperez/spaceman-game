@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Rocket, Play } from 'lucide-react';
-import { supabase } from '../../utils/supabase'; // Ajusta la ruta si es necesario
+import { supabase } from '../../utils/supabase';
 
 export const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -14,30 +14,76 @@ export const LoginScreen: React.FC = () => {
     e.preventDefault();
     setMessage('');
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
-    if (error) setMessage(error.message);
-    else setMessage('¡Registro exitoso! Revisa tu correo para confirmar.');
+    
+    try {
+      const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            full_name: email.split('@')[0], // Default name from email
+          }
+        }
+      });
+      
+      if (error) {
+        setMessage(`Error: ${error.message}`);
+      } else {
+        setMessage('¡Registro exitoso! Revisa tu correo para confirmar.');
+      }
+    } catch (error) {
+      setMessage('Error de conexión. Verifica tu conexión a internet.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) setMessage(error.message);
-    else setMessage('¡Bienvenido! Sesión iniciada.');
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        setMessage(`Error: ${error.message}`);
+      } else {
+        setMessage('¡Bienvenido! Sesión iniciada.');
+      }
+    } catch (error) {
+      setMessage('Error de conexión. Verifica tu conexión a internet.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // --- GOOGLE LOGIN ---
   const handleGoogleLogin = async () => {
     setMessage('');
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
-    if (error) setMessage('Error Google: ' + error.message);
-    // La redirección ocurre automáticamente
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/game`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      });
+      
+      if (error) {
+        setMessage(`Error Google: ${error.message}`);
+        setLoading(false);
+      }
+      // La redirección ocurre automáticamente si es exitoso
+    } catch (error) {
+      setMessage('Error de conexión con Google. Verifica tu conexión a internet.');
+      setLoading(false);
+    }
   };
 
   // --- DEMO MODE (opcional) ---
@@ -61,11 +107,13 @@ export const LoginScreen: React.FC = () => {
           <h2 className="text-lg sm:text-xl font-semibold text-white text-center mb-4 sm:mb-6">
             {isLogin ? 'Inicia Sesión' : 'Registrarse'}
           </h2>
+          
           {/* SOLO Google */}
           <div className="space-y-3">
             <button
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center space-x-3 bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-900 font-medium py-3 sm:py-3 px-4 rounded-xl transition-colors active:scale-95"
+              disabled={loading}
+              className="w-full flex items-center justify-center space-x-3 bg-white hover:bg-gray-100 active:bg-gray-200 disabled:bg-gray-300 text-gray-900 font-medium py-3 sm:py-3 px-4 rounded-xl transition-colors active:scale-95 disabled:scale-100"
               type="button"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -74,7 +122,9 @@ export const LoginScreen: React.FC = () => {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              <span className="text-sm sm:text-base">Continuar con Google</span>
+              <span className="text-sm sm:text-base">
+                {loading ? 'Conectando...' : 'Continuar con Google'}
+              </span>
             </button>
           </div>
 
@@ -100,6 +150,7 @@ export const LoginScreen: React.FC = () => {
               onChange={e => setEmail(e.target.value)}
               className="rounded-lg px-3 py-2 w-full text-black"
               placeholder="Correo electrónico"
+              disabled={loading}
             />
             <input
               type="password"
@@ -108,34 +159,45 @@ export const LoginScreen: React.FC = () => {
               onChange={e => setPassword(e.target.value)}
               className="rounded-lg px-3 py-2 w-full text-black"
               placeholder="Contraseña"
+              disabled={loading}
             />
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-500 hover:bg-blue-600 w-full text-white py-2 rounded-lg"
+              className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 w-full text-white py-2 rounded-lg transition-colors"
             >
               {loading ? (isLogin ? "Entrando..." : "Registrando...") : (isLogin ? "Entrar" : "Registrarse")}
             </button>
           </form>
+          
           <div className="flex justify-end">
             <button
               type="button"
               className="text-xs text-gray-300 hover:underline focus:outline-none"
               onClick={() => setIsLogin(!isLogin)}
+              disabled={loading}
             >
               {isLogin
                 ? "¿No tienes cuenta? Regístrate"
                 : "¿Ya tienes cuenta? Entrar"}
             </button>
           </div>
+          
           {message && (
-            <div className={`text-center text-sm ${message.includes('¡') ? 'text-green-400' : 'text-red-400'}`}>{message}</div>
+            <div className={`text-center text-sm p-2 rounded-lg ${
+              message.includes('¡') || message.includes('exitoso') 
+                ? 'text-green-400 bg-green-400/10' 
+                : 'text-red-400 bg-red-400/10'
+            }`}>
+              {message}
+            </div>
           )}
 
           {/* Demo mode button (opcional) */}
           <button
             onClick={handleDemoMode}
-            className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 active:from-purple-800 active:to-blue-800 text-white font-medium py-3 px-4 rounded-xl transition-all transform active:scale-95 mt-2"
+            disabled={loading}
+            className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 active:from-purple-800 active:to-blue-800 disabled:from-gray-600 disabled:to-gray-600 text-white font-medium py-3 px-4 rounded-xl transition-all transform active:scale-95 disabled:scale-100 mt-2"
             type="button"
           >
             <Play size={20} />

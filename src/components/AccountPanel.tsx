@@ -445,6 +445,156 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
             </div>
           )}
 
+          {/* Withdraw Tab - Mobile optimized */}
+          {activeTab === 'withdraw' && (
+            <div className="space-y-4 sm:space-y-6">
+              {user.isDemo ? (
+                <div className="text-center py-8">
+                  <Shield size={32} className="text-white/60 mx-auto mb-4 sm:w-12 sm:h-12" />
+                  <h3 className="text-white font-semibold mb-2">Modo Demo Activo</h3>
+                  <p className="text-white/70 text-sm">
+                    Inicia sesión con una cuenta real para retirar dinero
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Withdrawal Amounts - Mobile grid */}
+                  <div>
+                    <h3 className="text-white font-semibold mb-3 sm:mb-4">Selecciona Monto</h3>
+                    <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                      {withdrawalAmounts.map(amount => (
+                        <button
+                          key={amount}
+                          onClick={() => setWithdrawalAmount(amount)}
+                          disabled={amount > balance}
+                          className={`p-3 sm:p-4 rounded-2xl border-2 transition-all active:scale-95 backdrop-blur-md shadow-lg ${
+                            withdrawalAmount === amount
+                              ? 'border-blue-400/50 bg-blue-400/10'
+                              : amount > balance
+                              ? 'border-gray-500/30 bg-gray-500/10 opacity-50'
+                              : 'border-white/20 hover:border-white/30 bg-white/5'
+                          }`}
+                        >
+                          <div className="text-white font-bold text-base sm:text-lg">${amount}</div>
+                          <div className="text-white/70 text-xs sm:text-sm">USD</div>
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {/* Custom amount input */}
+                    <div className="mt-4">
+                      <label className="text-white/70 text-sm">Monto personalizado:</label>
+                      <input
+                        type="number"
+                        min="100"
+                        max={balance}
+                        value={withdrawalAmount || ''}
+                        onChange={(e) => setWithdrawalAmount(Number(e.target.value) || 0)}
+                        className="w-full mt-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
+                        placeholder="Ingresa el monto"
+                      />
+                    </div>
+                    
+                    {/* Show selected amount */}
+                    {withdrawalAmount > 0 && (
+                      <div className="mt-4 p-3 bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-xl shadow-lg">
+                        <p className="text-blue-300 text-sm">✅ Monto seleccionado: <span className="font-bold">${withdrawalAmount} USD</span></p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bank Accounts - Mobile optimized */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3 sm:mb-4">
+                      <h3 className="text-white font-semibold">Cuentas Bancarias</h3>
+                      <button
+                        onClick={() => setShowAddBank(true)}
+                        className="px-2 sm:px-3 py-1 bg-blue-500/80 hover:bg-blue-600/80 backdrop-blur-md border border-blue-400/30 text-white text-xs sm:text-sm rounded-xl transition-colors active:scale-95 shadow-lg"
+                      >
+                        + Banco
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {bankAccounts.length === 0 ? (
+                        <div className="text-center py-6 sm:py-8 text-white/60">
+                          <Bank size={24} className="mx-auto mb-2 sm:w-8 sm:h-8" />
+                          <p className="text-sm">No tienes cuentas bancarias registradas</p>
+                          <p className="text-xs">Agrega una cuenta bancaria para retirar</p>
+                        </div>
+                      ) : (
+                        bankAccounts.map(account => (
+                          <button
+                            key={account.id}
+                            onClick={() => setSelectedBankAccount(account.id)}
+                            className={`w-full flex items-center justify-between p-3 sm:p-4 rounded-2xl border-2 transition-all active:scale-95 backdrop-blur-md shadow-lg ${
+                              selectedBankAccount === account.id
+                                ? 'border-blue-400/50 bg-blue-400/10'
+                                : 'border-white/20 hover:border-white/30 bg-white/5'
+                            }`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <Bank size={16} className="text-white/70 sm:w-5 sm:h-5" />
+                              <div className="text-left">
+                                <div className="text-white font-medium text-sm sm:text-base">
+                                  {account.bankName}
+                                </div>
+                                <div className="text-white/60 text-xs sm:text-sm">
+                                  **** {account.accountNumber.slice(-4)}
+                                </div>
+                              </div>
+                            </div>
+                            {selectedBankAccount === account.id && (
+                              <div className="text-blue-400">✓</div>
+                            )}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                    
+                    {/* Show selected bank account */}
+                    {selectedBankAccount && (
+                      <div className="mt-4 p-3 bg-green-500/20 backdrop-blur-md border border-green-400/30 rounded-xl shadow-lg">
+                        <p className="text-green-300 text-sm">
+                          ✅ Cuenta seleccionada: <span className="font-bold">
+                            {bankAccounts.find(b => b.id === selectedBankAccount)?.bankName} **** {bankAccounts.find(b => b.id === selectedBankAccount)?.accountNumber.slice(-4)}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Withdrawal Button - Mobile optimized */}
+                  {canWithdraw && withdrawalAmount > 0 && selectedBankAccount && (
+                    <div className="space-y-4">
+                      <div className="bg-yellow-500/20 backdrop-blur-md border border-yellow-400/30 rounded-xl p-3 sm:p-4 shadow-lg">
+                        <p className="text-yellow-200 text-sm">
+                          💳 Se procesará el retiro de ${withdrawalAmount} USD a tu cuenta bancaria
+                        </p>
+                      </div>
+                      
+                      <button
+                        onClick={handleWithdrawal}
+                        className="w-full bg-gradient-to-r from-green-500/90 to-blue-500/90 hover:from-green-600/90 hover:to-blue-600/90 backdrop-blur-md border border-green-400/30 text-white font-bold py-3 sm:py-4 rounded-2xl transition-all transform active:scale-95 shadow-2xl"
+                      >
+                        💳 Retirar ${withdrawalAmount} USD
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Help text when requirements not met */}
+                  {!canWithdraw && (
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg">
+                      <p className="text-white/80 text-sm">
+                        {balance < minWithdrawal ? `Saldo mínimo requerido: $${minWithdrawal} USD` : 'Completa todos los campos'}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {/* Settings Tab - Mobile optimized */}
           {activeTab === 'settings' && (
             <div className="space-y-4 sm:space-y-6">
@@ -470,13 +620,47 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                 </div>
               </div>
 
-              <button
-                onClick={onLogout}
-                className="w-full flex items-center justify-center space-x-2 bg-red-500/80 hover:bg-red-600/80 backdrop-blur-md border border-red-400/30 text-white font-medium py-3 rounded-2xl transition-colors active:scale-95 shadow-lg"
-              >
-                <LogOut size={18} />
-                <span>Cerrar Sesión</span>
-              </button>
+              {/* KYC Status */}
+              {!user.isDemo && (
+                <div>
+                  <h3 className="text-white font-semibold mb-3 sm:mb-4">Verificación KYC</h3>
+                  <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 sm:p-4 space-y-3 shadow-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70 text-sm">Estado:</span>
+                      <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
+                        user.kyc_status === 'verified' ? 'bg-green-500/20 text-green-400' :
+                        user.kyc_status === 'rejected' ? 'bg-red-500/20 text-red-400' :
+                        'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {user.kyc_status === 'verified' ? 'Verificado' :
+                         user.kyc_status === 'rejected' ? 'Rechazado' : 'Pendiente'}
+                      </span>
+                    </div>
+                    <p className="text-white/60 text-xs">
+                      La verificación KYC es requerida para retirar dinero real
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Account Actions */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => {/* TODO: Open profile form */}}
+                  className="w-full flex items-center justify-center space-x-2 bg-blue-500/80 hover:bg-blue-600/80 backdrop-blur-md border border-blue-400/30 text-white font-medium py-3 rounded-2xl transition-colors active:scale-95 shadow-lg"
+                >
+                  <User size={18} />
+                  <span>Editar Perfil</span>
+                </button>
+                
+                <button
+                  onClick={onLogout}
+                  className="w-full flex items-center justify-center space-x-2 bg-red-500/80 hover:bg-red-600/80 backdrop-blur-md border border-red-400/30 text-white font-medium py-3 rounded-2xl transition-colors active:scale-95 shadow-lg"
+                >
+                  <LogOut size={18} />
+                  <span>Cerrar Sesión</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -554,6 +738,53 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowAddPayPal(false)}
+                    className="flex-1 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white py-3 rounded-xl active:scale-95 shadow-lg"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-500/80 hover:bg-blue-600/80 backdrop-blur-md border border-blue-400/30 text-white py-3 rounded-xl active:scale-95 shadow-lg"
+                  >
+                    Agregar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add Bank Modal - Mobile optimized */}
+        {showAddBank && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-6 w-full max-w-md shadow-2xl">
+              <h3 className="text-white font-semibold mb-4">Agregar Cuenta Bancaria</h3>
+              <form onSubmit={handleAddBank} className="space-y-4">
+                <input
+                  name="bankName"
+                  type="text"
+                  placeholder="Nombre del banco"
+                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
+                  required
+                />
+                <input
+                  name="accountNumber"
+                  type="text"
+                  placeholder="Número de cuenta"
+                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
+                  required
+                />
+                <input
+                  name="accountHolder"
+                  type="text"
+                  placeholder="Titular de la cuenta"
+                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
+                  required
+                />
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddBank(false)}
                     className="flex-1 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white py-3 rounded-xl active:scale-95 shadow-lg"
                   >
                     Cancelar
