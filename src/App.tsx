@@ -202,14 +202,14 @@ function App() {
             setBalance(userProfile.balance);
             setIsLoading(false);
           } else {
-            // Si no se encontró perfil, al menos desactivamos loading para que la UI continúe
+            // Si no se encontró perfil
             setIsLoading(false);
           }
         }
       } catch (error) {
         console.error('Error checking session:', error);
       } finally {
-        // setIsLoading(false); // This line is now handled inside onAuthStateChange
+        setIsLoading(false);
       }
     };
     
@@ -256,7 +256,7 @@ function App() {
           setBalance(userProfile.balance);
           setIsLoading(false);
         } else {
-          // Si no se encontró perfil, al menos desactivamos loading para que la UI continúe
+          // Si no se encontró perfil
           setIsLoading(false);
         }
       } else if (event === 'SIGNED_OUT') {
@@ -270,6 +270,9 @@ function App() {
         setAutoBetEnabled(false);
         setIsLoading(false);
       }
+
+      // En cualquier caso, desactivamos loading por si quedara activo
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
