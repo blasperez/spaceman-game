@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './lib/supabase'
-import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
-import { MobileBettingPanel } from './components/MobileBettingPanel';
+import EnhancedGameBoard from './components/EnhancedGameBoard';
 import { Statistics } from './components/Statistics';
 import { Chat } from './components/Chat';
 import { LoginScreen } from './components/LoginScreen';
@@ -9,7 +8,9 @@ import { AccountPanel } from './components/AccountPanel';
 import { AutoBotPanel } from './components/AutoBotPanel';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { useGameSocket } from './hooks/useGameSocket';
-import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
+import { MobileBettingPanel } from './components/MobileBettingPanel';
 
 interface GameHistory {
   id: number;
@@ -465,14 +466,27 @@ function App() {
         <div className="meteor"></div>
         <div className="nebula"></div>
         <div className="nebula"></div>
-        {/* MOBILE Game Board - Full Screen */}
+        {/* Enhanced Game Board - Mobile Full Screen */}
         <div className="absolute inset-0">
-          <MultiplayerGameBoard
-            gameState={gameData.gameState}
-            activeBets={gameData.activeBets}
-            totalPlayers={gameData.totalPlayers}
-            isConnected={isConnected}
-            currentUserId={user.id}
+          <EnhancedGameBoard
+            multiplier={gameData.gameState.multiplier}
+            gamePhase={gameData.gameState.phase}
+            countdown={gameData.gameState.countdown}
+            soundEnabled={soundEnabled}
+            onSoundToggle={() => setSoundEnabled(!soundEnabled)}
+            balance={balance}
+            betAmount={betAmount}
+            setBetAmount={setBetAmount}
+            onPlaceBet={handlePlaceBet}
+            onCashOut={handleCashOut}
+            canBet={canBet}
+            canCashOut={canCashOut}
+            hasActiveBet={hasActiveBet}
+            currentWin={currentWin}
+            autoCashOutEnabled={autoCashOutEnabled}
+            setAutoCashOutEnabled={setAutoCashOutEnabled}
+            autoCashOut={autoCashOut}
+            setAutoCashOut={setAutoCashOut}
           />
         </div>
 

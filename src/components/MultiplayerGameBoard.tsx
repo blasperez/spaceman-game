@@ -60,7 +60,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     return 'text-purple-400';
   };
 
-  const currentUserBet = activeBets.find(bet => bet.playerId === currentUserId);
+  
 
   return (
     <div className="relative w-full h-full bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 overflow-hidden">
@@ -223,7 +223,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
           
           {/* Players List */}
           <div className="space-y-1">
-            {activeBets.map((bet, index) => (
+            {activeBets.map((bet) => (
               <div
                 key={bet.playerId}
                 className={`grid grid-cols-4 gap-2 text-xs py-2 px-2 rounded ${

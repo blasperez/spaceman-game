@@ -26,7 +26,6 @@ export const Statistics: React.FC<StatisticsProps> = ({ gameHistory, recentMulti
   
   const totalBets = gameHistory.length;
   const totalWon = gameHistory.reduce((sum, game) => sum + game.winAmount, 0);
-  const totalBetAmount = gameHistory.reduce((sum, game) => sum + game.betAmount, 0);
   const winRate = totalBets > 0 ? (gameHistory.filter(g => g.winAmount > g.betAmount).length / totalBets * 100) : 0;
   const highestMultiplier = gameHistory.length > 0 ? Math.max(...gameHistory.map(g => g.multiplier)) : 0;
 
