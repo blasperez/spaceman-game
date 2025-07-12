@@ -118,12 +118,8 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
 
   const quickBetAmounts = [1, 5, 10, 25];
 
-  const getMultiplierColor = (mult: number) => {
-    if (mult < 1.5) return 'text-green-400';
-    if (mult < 2) return 'text-yellow-400';
-    if (mult < 5) return 'text-orange-400';
-    return 'text-red-400';
-  };
+  // Siempre amarillo para coincidir con el diseño de referencia
+  const multiplierTextColor = 'text-yellow-400';
 
   const getGameStatusText = () => {
     switch (gamePhase) {
@@ -188,7 +184,7 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
             <div className="absolute inset-2 rounded-full bg-gradient-to-br from-cyan-300 to-blue-500 shadow-inner">
               <div className="absolute inset-4 rounded-full bg-gradient-to-br from-white/20 to-transparent">
                 <div className="flex items-center justify-center h-full">
-                  <span className={`text-5xl font-bold drop-shadow-lg ${getMultiplierColor(multiplier)}`}>
+                  <span className={`text-5xl font-extrabold drop-shadow-lg ${multiplierTextColor}`}> 
                     {multiplier.toFixed(2)}x
                   </span>
                 </div>
@@ -224,7 +220,7 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
           }}
         >
           <div className="text-6xl animate-bounce" style={{ animationDuration: '2s' }}>
-            🚀
+            🧑‍🚀
           </div>
         </div>
 
@@ -232,7 +228,7 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
         {trail.map((point, index) => (
           <div
             key={index}
-            className="absolute w-2 h-2 bg-orange-400 rounded-full"
+            className="absolute w-2 h-1 bg-yellow-400 rounded-full"
             style={{
               left: `${point.x}%`,
               top: `${point.y}%`,
