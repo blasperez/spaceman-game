@@ -164,25 +164,25 @@ function App() {
     const checkExistingSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (session?.user) {
-          console.log('Found existing session:', session.user.email);
-          
-          // Fetch user profile from database
-          const { data: profile, error } = await supabase
+          // Cargamos (o creamos) el perfil
+          const { data: profile } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
-          
+
+          let userProfile: UserProfile;
+
           if (profile) {
-            const userProfile: UserProfile = {
+            userProfile = {
               id: profile.id,
               name: profile.full_name || session.user.user_metadata?.full_name || 'Usuario',
               email: profile.email || session.user.email || '',
               avatar: profile.avatar_url || session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Usuario')}&background=random`,
               provider: 'google',
-              balance: profile.balance || 1000.00,
+              balance: profile.balance || 1000,
               isDemo: false,
               age: profile.age,
               country: profile.country,
@@ -197,20 +197,35 @@ function App() {
               total_wagered: profile.total_wagered || 0,
               total_won: profile.total_won || 0
             };
-            
-            setUser(userProfile);
-            setBalance(userProfile.balance);
-            setIsLoading(false);
           } else {
-            // Si no se encontró perfil
-            setIsLoading(false);
+            // Perfil básico si no existe
+            userProfile = {
+              id: session.user.id,
+              name: session.user.user_metadata?.full_name || 'Usuario',
+              email: session.user.email || '',
+              avatar: session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || 'Usuario')}&background=random`,
+              provider: 'google',
+              balance: 1000,
+              isDemo: false
+            };
+            await supabase.from('profiles').insert([{
+              id: userProfile.id,
+              email: userProfile.email,
+              full_name: userProfile.name,
+              avatar_url: userProfile.avatar,
+              balance: userProfile.balance
+            }]);
           }
+
+          setUser(userProfile);
+          setBalance(userProfile.balance);
         }
       } catch (error) {
         console.error('Error checking session:', error);
-      } finally {
-        setIsLoading(false);
       }
+
+      // Siempre desac­tivamos loading, con o sin éxito
+      setIsLoading(false);
     };
     
     checkExistingSession();
