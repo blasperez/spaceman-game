@@ -493,9 +493,25 @@ function App() {
       timestamp: new Date()
     };
 
+    // Guardar en Supabase
+    (async () => {
+      try {
+        await supabase.from('transactions').insert([
+          {
+            user_id: user?.id,
+            type: 'deposit',
+            amount,
+            status: 'completed',
+            payment_method: method.type === 'card' ? `**** ${method.last4}` : method.email || 'PayPal'
+          }
+        ]);
+      } catch (e) {
+        console.error('Error inserting deposit transaction', e);
+      }
+    })();
+
     setTransactions(prev => [...prev, transaction]);
     setBalance(prev => prev + amount);
-    
     if (user) {
       setUser({ 
         ...user, 
@@ -517,9 +533,25 @@ function App() {
       timestamp: new Date()
     };
 
+    // Guardar en Supabase
+    (async () => {
+      try {
+        await supabase.from('transactions').insert([
+          {
+            user_id: user.id,
+            type: 'withdrawal',
+            amount,
+            status: 'pending',
+            payment_method: method
+          }
+        ]);
+      } catch (e) {
+        console.error('Error inserting withdrawal transaction', e);
+      }
+    })();
+
     setTransactions(prev => [...prev, transaction]);
     setBalance(prev => prev - amount);
-    
     if (user) {
       setUser({ 
         ...user, 
