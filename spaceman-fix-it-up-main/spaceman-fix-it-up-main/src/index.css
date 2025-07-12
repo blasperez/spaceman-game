@@ -1,0 +1,360 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  .portrait-mode {
+    /* Portrait mode optimizations */
+  }
+  
+  .landscape-mode {
+    /* Landscape mode optimizations */
+  }
+  
+  /* Prevent zoom on input focus */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+  
+  /* Touch-friendly buttons */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Smooth scrolling for mobile */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Hide scrollbars on mobile */
+  .overflow-x-auto::-webkit-scrollbar,
+  .overflow-y-auto::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .overflow-x-auto,
+  .overflow-y-auto {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Orientation-specific styles */
+@media (orientation: landscape) and (max-height: 500px) {
+  .landscape-mode {
+    /* Specific landscape optimizations */
+  }
+}
+
+/* Prevent text selection on game elements */
+.game-element {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Smooth transitions for mobile interactions */
+@media (max-width: 768px) {
+  * {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  /* Active states for touch */
+  button:active {
+    transform: scale(0.95);
+  }
+  
+  /* Prevent double-tap zoom */
+  * {
+    touch-action: manipulation;
+  }
+}
+
+/* Custom animations for mobile betting panel */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(100% - 80px));
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Enhanced mobile betting panel styles */
+.mobile-betting-panel {
+  /* Ensure smooth dragging */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Improved touch targets for mobile */
+@media (max-width: 768px) {
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Better visual feedback for touch */
+  .touch-feedback:active {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
+  }
+}
+
+/* Auto controls toggle animations */
+.auto-toggle {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auto-toggle-active {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+/* Improved backdrop blur for mobile */
+@supports (backdrop-filter: blur(20px)) {
+  .mobile-backdrop {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* Fallback for older browsers */
+@supports not (backdrop-filter: blur(20px)) {
+  .mobile-backdrop {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Space Background Animations */
+.space-background {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Stars animation */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.stars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(2px 2px at 160px 30px, #ddd, transparent);
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+/* Planets animation */
+@keyframes planetFloat {
+  0% {
+    transform: translateX(100vw) translateY(0px) rotate(0deg);
+  }
+  100% {
+    transform: translateX(-100px) translateY(20px) rotate(360deg);
+  }
+}
+
+@keyframes planetFloat2 {
+  0% {
+    transform: translateX(100vw) translateY(50px) rotate(0deg);
+  }
+  100% {
+    transform: translateX(-100px) translateY(70px) rotate(-360deg);
+  }
+}
+
+@keyframes planetFloat3 {
+  0% {
+    transform: translateX(100vw) translateY(100px) rotate(0deg);
+  }
+  100% {
+    transform: translateX(-100px) translateY(120px) rotate(180deg);
+  }
+}
+
+.planet {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--planet-color), var(--planet-dark));
+  box-shadow: 
+    inset -4px -4px 8px rgba(0,0,0,0.3),
+    0 0 20px rgba(255,255,255,0.1);
+}
+
+.planet-1 {
+  --planet-color: #ff6b6b;
+  --planet-dark: #d63031;
+  width: 60px;
+  height: 60px;
+  animation: planetFloat 25s linear infinite;
+}
+
+.planet-2 {
+  --planet-color: #74b9ff;
+  --planet-dark: #0984e3;
+  width: 40px;
+  height: 40px;
+  animation: planetFloat2 35s linear infinite;
+}
+
+.planet-3 {
+  --planet-color: #a29bfe;
+  --planet-dark: #6c5ce7;
+  width: 80px;
+  height: 80px;
+  animation: planetFloat3 45s linear infinite;
+}
+
+/* Spaceship with fire trail */
+@keyframes spaceshipFly {
+  0% {
+    transform: translateX(-100px) translateY(50vh) rotate(0deg);
+  }
+  100% {
+    transform: translateX(100vw) translateY(40vh) rotate(5deg);
+  }
+}
+
+@keyframes fireTrail {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+.spaceship {
+  position: absolute;
+  width: 40px;
+  height: 20px;
+  background: linear-gradient(45deg, #ddd, #fff);
+  border-radius: 20px 5px 5px 20px;
+  box-shadow: 0 0 10px rgba(255,255,255,0.5);
+  animation: spaceshipFly 15s linear infinite;
+}
+
+.spaceship::before {
+  content: '';
+  position: absolute;
+  right: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 8px;
+  background: linear-gradient(90deg, #ff6b35, #f7931e, transparent);
+  border-radius: 0 4px 4px 0;
+  animation: fireTrail 0.5s ease-out infinite;
+}
+
+.spaceship::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 6px;
+  background: linear-gradient(90deg, #ff4757, #ff3742, transparent);
+  border-radius: 0 3px 3px 0;
+  animation: fireTrail 0.3s ease-out infinite 0.1s;
+}
+
+/* Meteor shower */
+@keyframes meteor {
+  0% {
+    transform: translateX(100vw) translateY(-100px) rotate(45deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100px) translateY(100vh) rotate(45deg);
+    opacity: 0;
+  }
+}
+
+.meteor {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: linear-gradient(45deg, #fff, #ff6b6b);
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ff6b6b;
+  animation: meteor 3s linear infinite;
+}
+
+.meteor:nth-child(1) { animation-delay: 0s; }
+.meteor:nth-child(2) { animation-delay: 1s; }
+.meteor:nth-child(3) { animation-delay: 2s; }
+.meteor:nth-child(4) { animation-delay: 3s; }
+.meteor:nth-child(5) { animation-delay: 4s; }
+
+/* Nebula clouds */
+@keyframes nebulaFloat {
+  0%, 100% {
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(20px) translateY(-10px) scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+.nebula {
+  position: absolute;
+  width: 200px;
+  height: 100px;
+  background: radial-gradient(ellipse, rgba(138, 43, 226, 0.2), transparent);
+  border-radius: 50%;
+  animation: nebulaFloat 20s ease-in-out infinite;
+}
+
+.nebula:nth-child(1) {
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.nebula:nth-child(2) {
+  top: 60%;
+  right: 15%;
+  animation-delay: 10s;
+}
