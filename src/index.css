@@ -180,49 +180,59 @@
   animation: twinkle 4s ease-in-out infinite;
 }
 
-/* FIXED: Enhanced planets animation for desktop visibility with proper movement */
-@keyframes planetFloat {
+/* FIXED: Planetas se mueven de IZQUIERDA a DERECHA (como si el astronauta volara hacia la derecha) */
+@keyframes planetFloat1 {
   0% {
     transform: translateX(-200px) translateY(0px) rotate(0deg);
+    left: -200px;
   }
   100% {
     transform: translateX(calc(100vw + 200px)) translateY(20px) rotate(360deg);
+    left: calc(100vw + 200px);
   }
 }
 
 @keyframes planetFloat2 {
   0% {
     transform: translateX(-200px) translateY(0px) rotate(0deg);
+    left: -200px;
   }
   100% {
     transform: translateX(calc(100vw + 200px)) translateY(-15px) rotate(-360deg);
+    left: calc(100vw + 200px);
   }
 }
 
 @keyframes planetFloat3 {
   0% {
     transform: translateX(-200px) translateY(0px) rotate(0deg);
+    left: -200px;
   }
   100% {
     transform: translateX(calc(100vw + 200px)) translateY(10px) rotate(180deg);
+    left: calc(100vw + 200px);
   }
 }
 
-@keyframes moonFloat {
+@keyframes moonFloat1 {
   0% {
     transform: translateX(-100px) translateY(0px) scale(1);
+    left: -100px;
   }
   100% {
     transform: translateX(calc(100vw + 100px)) translateY(25px) scale(1.1);
+    left: calc(100vw + 100px);
   }
 }
 
 @keyframes moonFloat2 {
   0% {
     transform: translateX(-100px) translateY(0px) scale(1);
+    left: -100px;
   }
   100% {
     transform: translateX(calc(100vw + 100px)) translateY(-20px) scale(1.05);
+    left: calc(100vw + 100px);
   }
 }
 
@@ -235,39 +245,38 @@
     0 0 20px rgba(255,255,255,0.1);
   z-index: 1;
   will-change: transform;
+  opacity: 0.9;
+  filter: brightness(1.3);
 }
 
 .planet-1 {
   --planet-color: #ff6b6b;
   --planet-dark: #d63031;
-  width: 80px;
-  height: 80px;
-  animation: planetFloat 30s linear infinite;
+  width: 100px;
+  height: 100px;
+  animation: planetFloat1 35s linear infinite;
   top: 15%;
-  left: -200px;
 }
 
 .planet-2 {
   --planet-color: #74b9ff;
   --planet-dark: #0984e3;
-  width: 60px;
-  height: 60px;
-  animation: planetFloat2 40s linear infinite;
+  width: 80px;
+  height: 80px;
+  animation: planetFloat2 45s linear infinite;
   top: 25%;
-  left: -200px;
 }
 
 .planet-3 {
   --planet-color: #a29bfe;
   --planet-dark: #6c5ce7;
-  width: 100px;
-  height: 100px;
-  animation: planetFloat3 50s linear infinite;
+  width: 120px;
+  height: 120px;
+  animation: planetFloat3 55s linear infinite;
   top: 60%;
-  left: -200px;
 }
 
-/* Spaceship with fire trail */
+/* Spaceship with enhanced fire trail */
 @keyframes spaceshipFly {
   0% {
     transform: translateX(-100px) translateY(50vh) rotate(0deg);
@@ -295,7 +304,7 @@
   background: linear-gradient(45deg, #ddd, #fff);
   border-radius: 20px 5px 5px 20px;
   box-shadow: 0 0 10px rgba(255,255,255,0.5);
-  animation: spaceshipFly 20s linear infinite;
+  animation: spaceshipFly 25s linear infinite;
   z-index: 1;
 }
 
@@ -325,14 +334,14 @@
   animation: fireTrail 0.3s ease-out infinite 0.1s;
 }
 
-/* Meteor shower */
+/* Meteor shower - también de izquierda a derecha */
 @keyframes meteor {
   0% {
-    transform: translateX(100vw) translateY(-100px) rotate(45deg);
+    transform: translateX(-100px) translateY(-100px) rotate(45deg);
     opacity: 1;
   }
   100% {
-    transform: translateX(-100px) translateY(100vh) rotate(45deg);
+    transform: translateX(100vw) translateY(100vh) rotate(45deg);
     opacity: 0;
   }
 }
@@ -388,25 +397,25 @@
   animation-delay: 12s;
 }
 
-/* FIXED: Ensure desktop planets are visible and moving */
+/* FIXED: Ensure desktop planets are visible and moving correctly */
 @media (min-width: 1024px) {
   .planet {
-    opacity: 0.9;
-    filter: brightness(1.3);
+    opacity: 1;
+    filter: brightness(1.5);
   }
   
   .planet-1 {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .planet-2 {
     width: 100px;
     height: 100px;
   }
   
-  .planet-2 {
-    width: 80px;
-    height: 80px;
-  }
-  
   .planet-3 {
-    width: 120px;
-    height: 120px;
+    width: 140px;
+    height: 140px;
   }
 }
