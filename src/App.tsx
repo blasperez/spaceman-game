@@ -684,6 +684,12 @@ function App() {
         <div className="meteor"></div>
         <div className="nebula"></div>
         <div className="nebula"></div>
+        {/* PNG background image used in desktop */}
+        <img
+          src="/png-png-urbanbrush-13297 copy.png"
+          alt="Spaceman background"
+          className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
+        />
         {/* Enhanced Game Board - Mobile Full Screen */}
         <div className="absolute inset-0">
           <EnhancedGameBoard
