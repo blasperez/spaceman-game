@@ -20,15 +20,6 @@ async function initDB() {
         google_id VARCHAR(255) UNIQUE,
         avatar_url TEXT,
         balance DECIMAL(10,2) DEFAULT 1000.00,
-        phone_number VARCHAR(50),
-        date_of_birth DATE,
-        country VARCHAR(100),
-        city VARCHAR(100),
-        address TEXT,
-        document_type VARCHAR(50),
-        document_number VARCHAR(100),
-        kyc_status VARCHAR(20) DEFAULT 'pending' CHECK (kyc_status IN ('pending', 'verified', 'rejected')),
-        account_status VARCHAR(20) DEFAULT 'active' CHECK (account_status IN ('active', 'suspended', 'banned')),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

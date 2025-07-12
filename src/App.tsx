@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../utils/supabase'
-import { GameBoard } from './components/GameBoard';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from './lib/supabase'
 import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
 import { MobileBettingPanel } from './components/MobileBettingPanel';
 import { Statistics } from './components/Statistics';
@@ -10,31 +9,7 @@ import { AccountPanel } from './components/AccountPanel';
 import { AutoBotPanel } from './components/AutoBotPanel';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { useGameSocket } from './hooks/useGameSocket';
-import { Crown, Menu, BarChart3, RefreshCw, Settings, Users, TrendingUp, Maximize, Volume2, VolumeX, ChevronLeft, ChevronRight, Plus, Minus, X } from 'lucide-react';
-
-function Page() {
-  const [todos, setTodos] = useState([])
-
-  useEffect(() => {
-   async function getTodos() {
-      const { data: todos } = await supabase.from('todos').select()
-
-      if (todos.length > 1) {
-        setTodos(todos)
-      }
-    }
-    
-    getTodos()
-  }, [])
-
-  return (
-    <div>
-      {todos.map((todo) => (
-        <li key={todo}>{todo}</li>
-      ))}
-    </div>
-  )
-}
+import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 interface GameHistory {
   id: number;
@@ -60,6 +35,19 @@ interface UserProfile {
   provider: 'google' | 'facebook' | 'twitter' | 'demo';
   balance: number;
   isDemo: boolean;
+  // Casino specific fields
+  age?: number;
+  country?: string;
+  phone?: string;
+  kyc_verified?: boolean;
+  withdrawal_methods?: any[];
+  deposit_limit?: number;
+  withdrawal_limit?: number;
+  total_deposits?: number;
+  total_withdrawals?: number;
+  games_played?: number;
+  total_wagered?: number;
+  total_won?: number;
 }
 
 interface PaymentMethod {
@@ -93,7 +81,7 @@ interface AutoBotConfig {
   stopOnLoss: boolean;
 }
 
-type GamePhase = 'waiting' | 'flying' | 'crashed';
+
 
 function App() {
   // Auth state
@@ -115,9 +103,6 @@ function App() {
   const [hasActiveBet, setHasActiveBet] = useState(false);
   const [currentBet, setCurrentBet] = useState(0);
   const [hasCashedOut, setHasCashedOut] = useState(false);
-  
-  // Multiplayer mode toggle
-  const [useMultiplayer, setUseMultiplayer] = useState(true);
   
   // WebSocket connection for multiplayer
   const { gameData, isConnected, connectionStatus, placeBet, cashOut, reconnect } = useGameSocket(
@@ -142,9 +127,9 @@ function App() {
 
   // Auto Bet States
   const [autoBetEnabled, setAutoBetEnabled] = useState(false);
-  const [autoBetAmount, setAutoBetAmount] = useState(5);
+  const [autoBetAmount] = useState(5);
   const [autoCashOut, setAutoCashOut] = useState(2.00);
-  const [autoCashOut50, setAutoCashOut50] = useState(1.50);
+  const [autoCashOut50] = useState(1.50);
   const [autoCashOutEnabled, setAutoCashOutEnabled] = useState(false);
   const [autoCashOut50Enabled, setAutoCashOut50Enabled] = useState(false);
 
@@ -156,7 +141,6 @@ function App() {
   
   // Settings
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Chat
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -277,18 +261,9 @@ function App() {
   };
 
   // Auth functions
-  const handleLogin = (provider: 'google' | 'facebook' | 'twitter') => {
-    const mockUser: UserProfile = {
-      id: `${provider}_${Date.now()}`,
-      name: provider === 'google' ? 'Juan Pérez' : provider === 'facebook' ? 'María García' : 'Carlos López',
-      email: `usuario@${provider}.com`,
-      avatar: `https://ui-avatars.com/api/?name=${provider === 'google' ? 'Juan+Perez' : provider === 'facebook' ? 'Maria+Garcia' : 'Carlos+Lopez'}&background=random`,
-      provider,
-      balance: 1000,
-      isDemo: false
-    };
-    setUser(mockUser);
-    setBalance(1000);
+  const handleLogin = (userProfile: UserProfile) => {
+    setUser(userProfile);
+    setBalance(userProfile.balance);
   };
 
   const handleDemoMode = () => {
@@ -305,7 +280,18 @@ function App() {
     setBalance(1000.00);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+      }
+    } catch (error) {
+      console.error('Logout exception:', error);
+    }
+    
+    // Reset local state
     setUser(null);
     setShowAccountPanel(false);
     setBalance(1000.00);
@@ -342,7 +328,35 @@ function App() {
     setBalance(prev => prev + amount);
     
     if (user) {
-      setUser({ ...user, balance: user.balance + amount });
+      setUser({ 
+        ...user, 
+        balance: user.balance + amount,
+        total_deposits: (user.total_deposits || 0) + amount
+      });
+    }
+  };
+
+  const handleWithdrawal = (amount: number, method: string) => {
+    if (!user || user.isDemo || amount > balance) return;
+
+    const transaction: Transaction = {
+      id: Date.now().toString(),
+      type: 'withdrawal',
+      amount,
+      method,
+      status: 'pending',
+      timestamp: new Date()
+    };
+
+    setTransactions(prev => [...prev, transaction]);
+    setBalance(prev => prev - amount);
+    
+    if (user) {
+      setUser({ 
+        ...user, 
+        balance: user.balance - amount,
+        total_withdrawals: (user.total_withdrawals || 0) + amount
+      });
     }
   };
 
@@ -418,10 +432,8 @@ function App() {
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
     } else {
       document.exitFullscreen();
-      setIsFullscreen(false);
     }
   };
 
@@ -437,9 +449,22 @@ function App() {
   // MOBILE LAYOUT
   if (isMobile) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden ${
+      <div className={`min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden space-background ${
         isLandscape ? 'landscape-mode' : 'portrait-mode'
       }`}>
+        {/* Space Background Animations */}
+        <div className="stars"></div>
+        <div className="planet planet-1"></div>
+        <div className="planet planet-2"></div>
+        <div className="planet planet-3"></div>
+        <div className="spaceship"></div>
+        <div className="meteor"></div>
+        <div className="meteor"></div>
+        <div className="meteor"></div>
+        <div className="meteor"></div>
+        <div className="meteor"></div>
+        <div className="nebula"></div>
+        <div className="nebula"></div>
         {/* MOBILE Game Board - Full Screen */}
         <div className="absolute inset-0">
           <MultiplayerGameBoard
@@ -648,6 +673,7 @@ function App() {
             onLogout={handleLogout}
             onAddPaymentMethod={handleAddPaymentMethod}
             onDeposit={handleDeposit}
+            onWithdrawal={handleWithdrawal}
           />
         )}
       </div>
@@ -656,7 +682,20 @@ function App() {
 
   // DESKTOP LAYOUT (unchanged)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden space-background">
+      {/* Space Background Animations */}
+      <div className="stars"></div>
+      <div className="planet planet-1"></div>
+      <div className="planet planet-2"></div>
+      <div className="planet planet-3"></div>
+      <div className="spaceship"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="nebula"></div>
+      <div className="nebula"></div>
       {/* FULL SCREEN Game Board */}
       <div className="absolute inset-0">
         <MultiplayerGameBoard
@@ -862,6 +901,7 @@ function App() {
           onLogout={handleLogout}
           onAddPaymentMethod={handleAddPaymentMethod}
           onDeposit={handleDeposit}
+          onWithdrawal={handleWithdrawal}
         />
       )}
     </div>

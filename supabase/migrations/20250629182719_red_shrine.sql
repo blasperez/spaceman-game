@@ -8,15 +8,6 @@
       - `full_name` (text, nullable)
       - `avatar_url` (text, nullable)
       - `balance` (numeric, default 0)
-      - `phone_number` (text, nullable) - Required for casino verification
-      - `date_of_birth` (date, nullable) - Required for age verification
-      - `country` (text, nullable) - Required for jurisdiction compliance
-      - `city` (text, nullable) - Required for location verification
-      - `address` (text, nullable) - Required for KYC
-      - `document_type` (text, nullable) - ID, passport, etc.
-      - `document_number` (text, nullable) - Document ID number
-      - `kyc_status` (text, default 'pending') - KYC verification status
-      - `account_status` (text, default 'active') - Account status
       - `created_at` (timestamp)
       - `updated_at` (timestamp)
     
@@ -50,15 +41,6 @@ CREATE TABLE IF NOT EXISTS profiles (
   full_name text,
   avatar_url text,
   balance numeric DEFAULT 0 CHECK (balance >= 0),
-  phone_number text,
-  date_of_birth date,
-  country text,
-  city text,
-  address text,
-  document_type text,
-  document_number text,
-  kyc_status text DEFAULT 'pending' CHECK (kyc_status IN ('pending', 'verified', 'rejected')),
-  account_status text DEFAULT 'active' CHECK (account_status IN ('active', 'suspended', 'banned')),
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
