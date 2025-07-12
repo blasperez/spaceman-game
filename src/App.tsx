@@ -200,43 +200,16 @@ function App() {
             
             setUser(userProfile);
             setBalance(userProfile.balance);
+            setIsLoading(false);
           } else {
-            console.log('No profile found, creating new one...');
-            // Create new profile if it doesn't exist
-            const newProfile = {
-              id: session.user.id,
-              email: session.user.email,
-              full_name: session.user.user_metadata?.full_name || 'Usuario',
-              avatar_url: session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || 'Usuario')}&background=random`,
-              balance: 1000.00,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-            
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert([newProfile]);
-            
-            if (!insertError) {
-              const userProfile: UserProfile = {
-                id: newProfile.id,
-                name: newProfile.full_name,
-                email: newProfile.email,
-                avatar: newProfile.avatar_url,
-                provider: 'google',
-                balance: newProfile.balance,
-                isDemo: false
-              };
-              
-              setUser(userProfile);
-              setBalance(userProfile.balance);
-            }
+            // Si no se encontró perfil, al menos desactivamos loading para que la UI continúe
+            setIsLoading(false);
           }
         }
       } catch (error) {
         console.error('Error checking session:', error);
       } finally {
-        setIsLoading(false);
+        // setIsLoading(false); // This line is now handled inside onAuthStateChange
       }
     };
     
@@ -281,6 +254,10 @@ function App() {
           
           setUser(userProfile);
           setBalance(userProfile.balance);
+          setIsLoading(false);
+        } else {
+          // Si no se encontró perfil, al menos desactivamos loading para que la UI continúe
+          setIsLoading(false);
         }
       } else if (event === 'SIGNED_OUT') {
         // Handle sign out
@@ -291,6 +268,7 @@ function App() {
         setPaymentMethods([]);
         setAutoBotConfig((prev: AutoBotConfig) => ({ ...prev, isActive: false, currentRounds: 0, totalProfit: 0 }));
         setAutoBetEnabled(false);
+        setIsLoading(false);
       }
     });
 
@@ -490,6 +468,7 @@ function App() {
     setPaymentMethods([]);
     setAutoBotConfig(prev => ({ ...prev, isActive: false, currentRounds: 0, totalProfit: 0 }));
     setAutoBetEnabled(false);
+    setIsLoading(false);
   };
 
   // Payment functions
