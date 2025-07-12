@@ -10,6 +10,19 @@
       - `balance` (numeric, default 0)
       - `created_at` (timestamp)
       - `updated_at` (timestamp)
+      - `provider` (text, default 'google')
+      - `age` (integer, nullable)
+      - `country` (text, nullable)
+      - `phone` (text, nullable)
+      - `kyc_verified` (boolean, default false)
+      - `withdrawal_methods` (jsonb, default '[]')
+      - `deposit_limit` (numeric, default 1000)
+      - `withdrawal_limit` (numeric, default 1000)
+      - `total_deposits` (numeric, default 0)
+      - `total_withdrawals` (numeric, default 0)
+      - `games_played` (integer, default 0)
+      - `total_wagered` (numeric, default 0)
+      - `total_won` (numeric, default 0)
     
     - `game_history`
       - `id` (uuid, primary key)
@@ -34,13 +47,26 @@
     - Add policies for authenticated users to access their own data
 */
 
--- Create profiles table
+-- Create profiles table with all casino fields
 CREATE TABLE IF NOT EXISTS profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email text UNIQUE NOT NULL,
   full_name text,
   avatar_url text,
-  balance numeric DEFAULT 0 CHECK (balance >= 0),
+  balance numeric DEFAULT 1000.00 CHECK (balance >= 0),
+  provider text DEFAULT 'google',
+  age integer,
+  country text,
+  phone text,
+  kyc_verified boolean DEFAULT false,
+  withdrawal_methods jsonb DEFAULT '[]',
+  deposit_limit numeric DEFAULT 1000.00,
+  withdrawal_limit numeric DEFAULT 1000.00,
+  total_deposits numeric DEFAULT 0.00,
+  total_withdrawals numeric DEFAULT 0.00,
+  games_played integer DEFAULT 0,
+  total_wagered numeric DEFAULT 0.00,
+  total_won numeric DEFAULT 0.00,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
@@ -121,12 +147,13 @@ CREATE POLICY "Users can insert own transactions"
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO profiles (id, email, full_name, avatar_url)
+  INSERT INTO profiles (id, email, full_name, avatar_url, provider)
   VALUES (
     NEW.id,
     NEW.email,
     NEW.raw_user_meta_data->>'full_name',
-    NEW.raw_user_meta_data->>'avatar_url'
+    NEW.raw_user_meta_data->>'avatar_url',
+    COALESCE(NEW.raw_user_meta_data->>'provider', 'google')
   );
   RETURN NEW;
 END;

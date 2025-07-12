@@ -141,7 +141,21 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
   };
 
   return (
-    <div className="relative w-full h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-purple-900 overflow-hidden">
+    <div className="relative w-full h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-purple-900 overflow-hidden space-background">
+      {/* Space Background Elements */}
+      <div className="stars"></div>
+      <div className="planet planet-1"></div>
+      <div className="planet planet-2"></div>
+      <div className="planet planet-3"></div>
+      <div className="spaceship"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="meteor"></div>
+      <div className="nebula"></div>
+      <div className="nebula"></div>
+
       {/* Stars background */}
       {stars.map((star, index) => (
         <div

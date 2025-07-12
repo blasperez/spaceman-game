@@ -92,6 +92,7 @@ function App() {
   const [showAutoBotPanel, setShowAutoBotPanel] = useState(false);
   const [showStatistics, setShowStatistics] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Mobile orientation detection
   const [isLandscape, setIsLandscape] = useState(false);
@@ -157,6 +158,194 @@ function App() {
   // Mock payment methods and transactions
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  // Check for existing session on app load
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          console.log('Found existing session:', session.user.email);
+          
+          // Fetch user profile from database
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profile) {
+            const userProfile: UserProfile = {
+              id: profile.id,
+              name: profile.full_name || session.user.user_metadata?.full_name || 'Usuario',
+              email: profile.email || session.user.email || '',
+              avatar: profile.avatar_url || session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Usuario')}&background=random`,
+              provider: 'google',
+              balance: profile.balance || 1000.00,
+              isDemo: false,
+              age: profile.age,
+              country: profile.country,
+              phone: profile.phone,
+              kyc_verified: profile.kyc_verified || false,
+              withdrawal_methods: profile.withdrawal_methods || [],
+              deposit_limit: profile.deposit_limit || 1000,
+              withdrawal_limit: profile.withdrawal_limit || 1000,
+              total_deposits: profile.total_deposits || 0,
+              total_withdrawals: profile.total_withdrawals || 0,
+              games_played: profile.games_played || 0,
+              total_wagered: profile.total_wagered || 0,
+              total_won: profile.total_won || 0
+            };
+            
+            setUser(userProfile);
+            setBalance(userProfile.balance);
+          } else {
+            console.log('No profile found, creating new one...');
+            // Create new profile if it doesn't exist
+            const newProfile = {
+              id: session.user.id,
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name || 'Usuario',
+              avatar_url: session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || 'Usuario')}&background=random`,
+              balance: 1000.00,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert([newProfile]);
+            
+            if (!insertError) {
+              const userProfile: UserProfile = {
+                id: newProfile.id,
+                name: newProfile.full_name,
+                email: newProfile.email,
+                avatar: newProfile.avatar_url,
+                provider: 'google',
+                balance: newProfile.balance,
+                isDemo: false
+              };
+              
+              setUser(userProfile);
+              setBalance(userProfile.balance);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkExistingSession();
+  }, []);
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
+      console.log('Auth state changed:', event, session?.user?.email);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Handle sign in
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          const userProfile: UserProfile = {
+            id: profile.id,
+            name: profile.full_name || session.user.user_metadata?.full_name || 'Usuario',
+            email: profile.email || session.user.email || '',
+            avatar: profile.avatar_url || session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Usuario')}&background=random`,
+            provider: 'google',
+            balance: profile.balance || 1000.00,
+            isDemo: false,
+            age: profile.age,
+            country: profile.country,
+            phone: profile.phone,
+            kyc_verified: profile.kyc_verified || false,
+            withdrawal_methods: profile.withdrawal_methods || [],
+            deposit_limit: profile.deposit_limit || 1000,
+            withdrawal_limit: profile.withdrawal_limit || 1000,
+            total_deposits: profile.total_deposits || 0,
+            total_withdrawals: profile.total_withdrawals || 0,
+            games_played: profile.games_played || 0,
+            total_wagered: profile.total_wagered || 0,
+            total_won: profile.total_won || 0
+          };
+          
+          setUser(userProfile);
+          setBalance(userProfile.balance);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // Handle sign out
+        setUser(null);
+        setBalance(1000.00);
+        setGameHistory([]);
+        setTransactions([]);
+        setPaymentMethods([]);
+        setAutoBotConfig((prev: AutoBotConfig) => ({ ...prev, isActive: false, currentRounds: 0, totalProfit: 0 }));
+        setAutoBetEnabled(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Save user data to database when balance changes
+  useEffect(() => {
+    if (user && !user.isDemo) {
+      const saveUserData = async () => {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              balance: balance,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+          
+          if (error) {
+            console.error('Error saving user data:', error);
+          }
+        } catch (error) {
+          console.error('Error saving user data:', error);
+        }
+      };
+      
+      // Debounce the save operation
+      const timeoutId = setTimeout(saveUserData, 1000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [balance, user]);
+
+  // Save game history to database
+  const saveGameHistory = async (gameHistory: GameHistory) => {
+    if (user && !user.isDemo) {
+      try {
+        const { error } = await supabase
+          .from('game_history')
+          .insert([{
+            user_id: user.id,
+            game_id: gameData.gameState.gameId,
+            bet_amount: gameHistory.betAmount,
+            multiplier: gameHistory.multiplier,
+            win_amount: gameHistory.winAmount
+          }]);
+        
+        if (error) {
+          console.error('Error saving game history:', error);
+        }
+      } catch (error) {
+        console.error('Error saving game history:', error);
+      }
+    }
+  };
 
   // Mobile detection and orientation
   useEffect(() => {
@@ -404,6 +593,10 @@ function App() {
       };
       
       setGameHistory(prev => [...prev, newGame]);
+      
+      // Save game history to database
+      saveGameHistory(newGame);
+      
       setHasActiveBet(false);
       setCurrentBet(0);
       
@@ -417,7 +610,7 @@ function App() {
         type: 'user'
       }]);
     }
-  }, [hasActiveBet, gameData.gameState.phase, currentBet, gameData.gameState.multiplier, user?.name, hasCashedOut, cashOut]);
+  }, [hasActiveBet, gameData.gameState.phase, currentBet, gameData.gameState.multiplier, user?.name, hasCashedOut, cashOut, saveGameHistory]);
 
   const handleSendMessage = (message: string) => {
     const newMessage: ChatMessage = {
@@ -442,6 +635,17 @@ function App() {
   const canBet = gameData.gameState.phase === 'waiting' && !hasActiveBet && betAmount <= balance && !autoBotConfig.isActive && !autoBetEnabled;
   const canCashOut = hasActiveBet && gameData.gameState.phase === 'flying' && gameData.gameState.multiplier >= 1 && !hasCashedOut;
   const currentWin = hasActiveBet ? currentBet * gameData.gameState.multiplier : 0;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <LoginScreen onLogin={handleLogin} onDemoMode={handleDemoMode} />;
