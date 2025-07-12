@@ -34,6 +34,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
   currentUserId
 }) => {
   const [stars, setStars] = useState<Array<{ x: number; y: number; size: number }>>([]);
+  const [fireParticles, setFireParticles] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number }>>([]);
 
   // Generate stars background
   useEffect(() => {
@@ -52,12 +53,63 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     generateStars();
   }, []);
 
+  // Fire trail effect for spaceman during flight
+  useEffect(() => {
+    if (gameState.phase === 'flying') {
+      const interval = setInterval(() => {
+        setFireParticles(prevParticles => {
+          const newParticles = [...prevParticles];
+          
+          // Generate fire particles from the left side of spaceman (tail of the ship)
+          for (let i = 0; i < 8; i++) {
+            const particleId = Date.now() + Math.random() * 1000 + i;
+            newParticles.push({
+              x: 47, // Left side of spaceman (tail position)
+              y: 50 + (Math.random() - 0.5) * 6, // Slight vertical spread
+              opacity: 0.9 + Math.random() * 0.1,
+              size: 2 + Math.random() * 4,
+              id: particleId
+            });
+          }
+          
+          // Update existing particles
+          const updatedParticles = newParticles.map(particle => ({
+            ...particle,
+            x: particle.x - 1.5, // Move particles to the left
+            y: particle.y + (Math.random() - 0.5) * 0.8,
+            opacity: particle.opacity - 0.04,
+            size: particle.size * 0.98
+          })).filter(particle => particle.opacity > 0 && particle.x > -10);
+          
+          return updatedParticles.slice(-100); // Keep last 100 particles
+        });
+      }, 50);
+
+      return () => clearInterval(interval);
+    } else {
+      setFireParticles([]);
+    }
+  }, [gameState.phase]);
+
   const getMultiplierColor = () => {
     if (gameState.multiplier < 1.5) return 'text-white';
     if (gameState.multiplier < 2) return 'text-yellow-400';
     if (gameState.multiplier < 5) return 'text-orange-400';
     if (gameState.multiplier < 10) return 'text-red-400';
     return 'text-purple-400';
+  };
+
+  const getFireParticleStyle = (particle: any) => {
+    return {
+      background: `radial-gradient(circle, 
+        rgba(255, 255, 255, ${particle.opacity}) 0%,
+        rgba(255, 255, 0, ${particle.opacity * 0.9}) 20%,
+        rgba(255, 165, 0, ${particle.opacity * 0.8}) 50%,
+        rgba(255, 69, 0, ${particle.opacity * 0.7}) 80%,
+        transparent 100%)`,
+      filter: 'blur(0.5px)',
+      boxShadow: `0 0 ${particle.size * 2}px rgba(255, 165, 0, ${particle.opacity * 0.8})`
+    };
   };
 
   return (
@@ -76,7 +128,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       </div>
 
-      {/* FIXED: Enhanced space background with planets visible on desktop */}
+      {/* Enhanced space background with animated planets */}
       <div className="absolute inset-0">
         {/* Stars */}
         {stars.map((star, index) => (
@@ -94,27 +146,23 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
           />
         ))}
 
-        {/* FIXED: Visible planets for desktop */}
+        {/* Animated planets for desktop */}
         <div 
-          className="absolute rounded-full opacity-80 shadow-2xl"
+          className="absolute rounded-full opacity-80 shadow-2xl planet-animated"
           style={{ 
-            left: '8%',
-            top: '15%',
-            width: '80px',
-            height: '80px',
+            width: '100px',
+            height: '100px',
             background: 'radial-gradient(circle at 30% 30%, #60A5FA, #3B82F6, #1E40AF)',
             boxShadow: '0 0 40px rgba(59, 130, 246, 0.5), inset -12px -12px 25px rgba(0,0,0,0.3)',
-            animation: 'planetFloat 30s linear infinite'
+            animation: 'planetFloat1 30s linear infinite'
           }}
         />
         
         <div 
-          className="absolute rounded-full opacity-70 shadow-2xl"
+          className="absolute rounded-full opacity-70 shadow-2xl planet-animated"
           style={{ 
-            left: '85%',
-            top: '20%',
-            width: '60px',
-            height: '60px',
+            width: '80px',
+            height: '80px',
             background: 'radial-gradient(circle at 30% 30%, #A78BFA, #8B5CF6, #7C3AED)',
             boxShadow: '0 0 30px rgba(147, 51, 234, 0.5), inset -10px -10px 20px rgba(0,0,0,0.3)',
             animation: 'planetFloat2 40s linear infinite'
@@ -122,37 +170,31 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         />
         
         <div 
-          className="absolute rounded-full opacity-60 shadow-2xl"
+          className="absolute rounded-full opacity-60 shadow-2xl planet-animated"
           style={{ 
-            left: '90%',
-            top: '70%',
-            width: '100px',
-            height: '100px',
+            width: '120px',
+            height: '120px',
             background: 'radial-gradient(circle at 30% 30%, #FB923C, #F97316, #EA580C)',
             boxShadow: '0 0 50px rgba(251, 146, 60, 0.4), inset -15px -15px 30px rgba(0,0,0,0.3)',
             animation: 'planetFloat3 50s linear infinite'
           }}
         />
 
-        {/* Moons */}
+        {/* Animated moons */}
         <div 
-          className="absolute rounded-full opacity-75 shadow-xl"
+          className="absolute rounded-full opacity-75 shadow-xl moon-animated"
           style={{ 
-            left: '15%',
-            top: '80%',
             width: '40px',
             height: '40px',
             background: 'radial-gradient(circle at 30% 30%, #D1D5DB, #9CA3AF, #6B7280)',
             boxShadow: '0 0 20px rgba(156, 163, 175, 0.6), inset -8px -8px 15px rgba(0,0,0,0.4)',
-            animation: 'moonFloat 25s linear infinite'
+            animation: 'moonFloat1 25s linear infinite'
           }}
         />
         
         <div 
-          className="absolute rounded-full opacity-80 shadow-xl"
+          className="absolute rounded-full opacity-80 shadow-xl moon-animated"
           style={{ 
-            left: '75%',
-            top: '10%',
             width: '30px',
             height: '30px',
             background: 'radial-gradient(circle at 30% 30%, #FEF3C7, #FBBF24, #F59E0B)',
@@ -162,7 +204,23 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         />
       </div>
 
-      {/* Game Status - Waiting */}
+      {/* Fire trail particles */}
+      {fireParticles.map((particle) => (
+        <div
+          key={particle.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+            opacity: particle.opacity,
+            ...getFireParticleStyle(particle)
+          }}
+        />
+      ))}
+
+      {/* Game Status - Waiting with 20 second countdown */}
       {gameState.phase === 'waiting' && gameState.countdown > 0 && (
         <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 text-center">
           <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-blue-400/30 rounded-3xl p-8 shadow-2xl">
@@ -188,7 +246,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   fill="transparent"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 50}`}
-                  strokeDashoffset={`${2 * Math.PI * 50 * (gameState.countdown / 10)}`}
+                  strokeDashoffset={`${2 * Math.PI * 50 * (gameState.countdown / 20)}`}
                   className="transition-all duration-1000 ease-linear"
                 />
                 <defs>
@@ -230,7 +288,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       )}
 
-      {/* FIXED: Use PNG spaceman from public folder */}
+      {/* Spaceman with fire trail */}
       <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 ${
         gameState.phase === 'crashed' ? 'animate-bounce scale-125' : ''
       } ${gameState.phase === 'flying' ? 'animate-pulse scale-110' : 'scale-100'}`}>
@@ -322,39 +380,79 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       </div>
 
-      {/* FIXED: Add CSS animations for planets */}
+      {/* CSS animations for planets */}
       <style jsx>{`
-        @keyframes planetFloat {
-          0% { transform: translateX(0) translateY(0) rotate(0deg); }
-          25% { transform: translateX(20px) translateY(-10px) rotate(90deg); }
-          50% { transform: translateX(0) translateY(-20px) rotate(180deg); }
-          75% { transform: translateX(-20px) translateY(-10px) rotate(270deg); }
-          100% { transform: translateX(0) translateY(0) rotate(360deg); }
+        @keyframes planetFloat1 {
+          0% { 
+            transform: translateX(-200px) translateY(15vh) rotate(0deg); 
+            left: -200px;
+            top: 15%;
+          }
+          100% { 
+            transform: translateX(calc(100vw + 200px)) translateY(25vh) rotate(360deg); 
+            left: calc(100vw + 200px);
+            top: 25%;
+          }
         }
         
         @keyframes planetFloat2 {
-          0% { transform: translateX(0) translateY(0) rotate(0deg); }
-          33% { transform: translateX(-15px) translateY(15px) rotate(120deg); }
-          66% { transform: translateX(15px) translateY(10px) rotate(240deg); }
-          100% { transform: translateX(0) translateY(0) rotate(360deg); }
+          0% { 
+            transform: translateX(-200px) translateY(60vh) rotate(0deg); 
+            left: -200px;
+            top: 60%;
+          }
+          100% { 
+            transform: translateX(calc(100vw + 200px)) translateY(70vh) rotate(-360deg); 
+            left: calc(100vw + 200px);
+            top: 70%;
+          }
         }
         
         @keyframes planetFloat3 {
-          0% { transform: translateX(0) translateY(0) rotate(0deg); }
-          50% { transform: translateX(-25px) translateY(25px) rotate(180deg); }
-          100% { transform: translateX(0) translateY(0) rotate(360deg); }
+          0% { 
+            transform: translateX(-200px) translateY(80vh) rotate(0deg); 
+            left: -200px;
+            top: 80%;
+          }
+          100% { 
+            transform: translateX(calc(100vw + 200px)) translateY(90vh) rotate(180deg); 
+            left: calc(100vw + 200px);
+            top: 90%;
+          }
         }
         
-        @keyframes moonFloat {
-          0% { transform: translateX(0) translateY(0) scale(1); }
-          50% { transform: translateX(10px) translateY(-15px) scale(1.1); }
-          100% { transform: translateX(0) translateY(0) scale(1); }
+        @keyframes moonFloat1 {
+          0% { 
+            transform: translateX(-100px) translateY(30vh) scale(1); 
+            left: -100px;
+            top: 30%;
+          }
+          100% { 
+            transform: translateX(calc(100vw + 100px)) translateY(40vh) scale(1.1); 
+            left: calc(100vw + 100px);
+            top: 40%;
+          }
         }
         
         @keyframes moonFloat2 {
-          0% { transform: translateX(0) translateY(0) scale(1); }
-          50% { transform: translateX(-8px) translateY(12px) scale(1.05); }
-          100% { transform: translateX(0) translateY(0) scale(1); }
+          0% { 
+            transform: translateX(-100px) translateY(50vh) scale(1); 
+            left: -100px;
+            top: 50%;
+          }
+          100% { 
+            transform: translateX(calc(100vw + 100px)) translateY(60vh) scale(1.05); 
+            left: calc(100vw + 100px);
+            top: 60%;
+          }
+        }
+        
+        .planet-animated {
+          will-change: transform;
+        }
+        
+        .moon-animated {
+          will-change: transform;
         }
       `}</style>
     </div>

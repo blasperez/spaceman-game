@@ -153,7 +153,7 @@ export const useGameSocket = (userId: string, userName: string) => {
     setIsConnected(true);
     setConnectionStatus('connected');
     
-    // Simulate game rounds
+    // Simulate game rounds with 20 second countdown
     const simulateRound = () => {
       // Waiting phase
       setGameData(prev => ({
@@ -161,14 +161,14 @@ export const useGameSocket = (userId: string, userName: string) => {
         gameState: {
           ...prev.gameState,
           phase: 'waiting',
-          countdown: 10,
+          countdown: 20, // Extended to 20 seconds
           multiplier: 1.00,
           gameId: `local_${Date.now()}`
         }
       }));
       
       // Countdown
-      let countdown = 10;
+      let countdown = 20;
       const countdownInterval = setInterval(() => {
         countdown--;
         setGameData(prev => ({
@@ -286,7 +286,7 @@ export const useGameSocket = (userId: string, userName: string) => {
         break;
         
       case 'bet_placed':
-        console.log(`🎰 Bet placed successfully: €${message.data.betAmount}`);
+        console.log(`🎰 Bet placed successfully: ${message.data.betAmount} monedas`);
         betLockRef.current = false;
         break;
         
@@ -324,7 +324,7 @@ export const useGameSocket = (userId: string, userName: string) => {
           timestamp: Date.now()
         }
       }));
-      console.log(`🎰 Placing bet: €${betAmount}`);
+      console.log(`🎰 Placing bet: ${betAmount} monedas`);
       
       // Auto-unlock after timeout as safety measure
       setTimeout(() => {

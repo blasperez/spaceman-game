@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CreditCard, Plus, History, TrendingUp, TrendingDown, LogOut, Wallet, Shield, Settings, DollarSign, ArrowDownToLine, Ban as Bank, User, AlertCircle } from 'lucide-react';
+import { X, CreditCard, Plus, History, TrendingUp, TrendingDown, LogOut, Wallet, Shield, Settings, DollarSign, ArrowDownToLine, Ban as Bank, User, AlertCircle, Target, Zap, ZapOff } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -67,6 +67,10 @@ interface AccountPanelProps {
   onAddPaymentMethod: (method: Omit<PaymentMethod, 'id'>) => void;
   onDeposit: (amount: number, methodId: string) => void;
   onWithdrawal?: (amount: number, method: string) => void;
+  autoCashOutEnabled: boolean;
+  setAutoCashOutEnabled: (enabled: boolean) => void;
+  autoCashOut: number;
+  setAutoCashOut: (multiplier: number) => void;
 }
 
 export const AccountPanel: React.FC<AccountPanelProps> = ({
@@ -79,9 +83,13 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
   onLogout,
   onAddPaymentMethod,
   onDeposit,
-  onWithdrawal
+  onWithdrawal,
+  autoCashOutEnabled,
+  setAutoCashOutEnabled,
+  autoCashOut,
+  setAutoCashOut
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'deposit' | 'withdraw' | 'history' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'deposit' | 'withdraw' | 'history' | 'settings' | 'autocashout'>('overview');
   const [showAddCard, setShowAddCard] = useState(false);
   const [showAddPayPal, setShowAddPayPal] = useState(false);
   const [showAddBank, setShowAddBank] = useState(false);
@@ -90,11 +98,12 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
   const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0);
   const [selectedBankAccount, setSelectedBankAccount] = useState<string>('');
   const [showKYCForm, setShowKYCForm] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   
   // Mock bank accounts
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
 
-  const depositAmounts = [100, 500, 1000];
+  const depositAmounts = [100, 500, 1000, 2000, 5000];
   const withdrawalAmounts = [100, 500, 1000];
 
   const handleAddCard = (e: React.FormEvent) => {
@@ -139,11 +148,26 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
     setShowAddBank(false);
   };
 
-  const handleDeposit = () => {
-    if (selectedAmount && selectedMethod && !user.isDemo) {
-      onDeposit(selectedAmount, selectedMethod);
-      setSelectedAmount(null);
-      setSelectedMethod('');
+  // Simplified deposit process - 1 peso mexicano = 1 moneda
+  const handleQuickDeposit = async (amount: number) => {
+    if (user.isDemo) return;
+    
+    setProcessingPayment(true);
+    
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // In a real implementation, this would integrate with Stripe/PayPal
+      onDeposit(amount, 'quick_payment');
+      
+      // Show success message
+      alert(`¡Depósito exitoso! Se agregaron ${amount} monedas a tu cuenta por $${amount} MXN`);
+      
+    } catch (error) {
+      alert('Error en el procesamiento del pago. Intenta nuevamente.');
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -152,21 +176,16 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
       const bankAccount = bankAccounts.find(b => b.id === selectedBankAccount);
       if (!bankAccount) return;
 
-      // Create withdrawal transaction
-      // Create withdrawal transaction (to be used by parent component)
       const transactionData = {
         amount: withdrawalAmount,
         method: `${bankAccount.bankName} **** ${bankAccount.accountNumber.slice(-4)}`
       };
 
-      // Call parent withdrawal handler if provided
       if (onWithdrawal) {
         onWithdrawal(transactionData.amount, transactionData.method);
       }
 
-      // In a real app, this would be handled by the parent component
-      // For now, we'll simulate the withdrawal
-      alert(`Retiro de $${withdrawalAmount} solicitado. Será procesado en 1-3 días hábiles.`);
+      alert(`Retiro de ${withdrawalAmount} monedas solicitado ($${withdrawalAmount} MXN). Será procesado en 1-3 días hábiles.`);
       
       setWithdrawalAmount(0);
       setSelectedBankAccount('');
@@ -177,17 +196,14 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
   const totalBet = gameHistory.reduce((sum, game) => sum + game.betAmount, 0);
   const netProfit = totalWon - totalBet;
 
-  // Calculate minimum withdrawal (must have positive balance and minimum amount)
   const minWithdrawal = 100;
   const canWithdraw = balance >= minWithdrawal && !user.isDemo && user.kyc_verified;
-
-  // FIXED: Proper validation for deposit button
   const canDeposit = selectedAmount && selectedAmount > 0 && selectedMethod && selectedMethod !== '' && !user.isDemo;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden shadow-2xl">
-        {/* Header - Mobile optimized */}
+        {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
           <div className="flex items-center space-x-3 sm:space-x-4">
             <img 
@@ -218,14 +234,15 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
           </button>
         </div>
 
-        {/* Tabs - Mobile optimized with horizontal scroll */}
+        {/* Tabs */}
         <div className="flex border-b border-white/10 overflow-x-auto">
           {[
             { id: 'overview', label: 'Resumen', icon: Wallet },
             { id: 'deposit', label: 'Recargar', icon: Plus },
             { id: 'withdraw', label: 'Retirar', icon: ArrowDownToLine },
+            { id: 'autocashout', label: 'Auto Cashout', icon: Target },
             { id: 'history', label: 'Historial', icon: History },
-            { id: 'settings', label: 'Detalles de Cuenta', icon: Settings }
+            { id: 'settings', label: 'Cuenta', icon: Settings }
           ].map(tab => (
             <button
               key={tab.id}
@@ -242,7 +259,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
           ))}
         </div>
 
-        {/* Content - Mobile optimized */}
+        {/* Content */}
         <div className="p-4 sm:p-6 overflow-y-auto max-h-[60vh] sm:max-h-[60vh]">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
@@ -253,21 +270,22 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                   <div>
                     <p className="text-blue-200 text-sm">Saldo Actual</p>
                     <p className="text-2xl sm:text-3xl font-bold">
-                      ${balance.toFixed(2)} {user.isDemo && '(Demo)'}
+                      {balance.toFixed(0)} monedas {user.isDemo && '(Demo)'}
                     </p>
+                    <p className="text-blue-200 text-xs">≈ ${balance.toFixed(0)} MXN</p>
                   </div>
                   <Wallet size={24} className="text-blue-300 sm:w-8 sm:h-8" />
                 </div>
               </div>
 
-              {/* Casino Stats Grid - Mobile responsive */}
+              {/* Casino Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 sm:p-4 shadow-lg">
                   <div className="flex items-center space-x-3">
                     <TrendingUp className="text-green-400" size={20} />
                     <div>
                       <p className="text-white/70 text-xs sm:text-sm">Total Ganado</p>
-                      <p className="text-white font-bold text-sm sm:text-base">${(user.total_won || 0).toFixed(2)}</p>
+                      <p className="text-white font-bold text-sm sm:text-base">{(user.total_won || 0).toFixed(0)} monedas</p>
                     </div>
                   </div>
                 </div>
@@ -277,7 +295,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                     <TrendingDown className="text-red-400" size={20} />
                     <div>
                       <p className="text-white/70 text-xs sm:text-sm">Total Apostado</p>
-                      <p className="text-white font-bold text-sm sm:text-base">${(user.total_wagered || 0).toFixed(2)}</p>
+                      <p className="text-white font-bold text-sm sm:text-base">{(user.total_wagered || 0).toFixed(0)} monedas</p>
                     </div>
                   </div>
                 </div>
@@ -288,7 +306,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                     <div>
                       <p className="text-white/70 text-xs sm:text-sm">Ganancia Neta</p>
                       <p className={`font-bold text-sm sm:text-base ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        ${netProfit.toFixed(2)}
+                        {netProfit.toFixed(0)} monedas
                       </p>
                     </div>
                   </div>
@@ -321,7 +339,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                         <div className={`font-semibold text-sm sm:text-base ${
                           game.winAmount > game.betAmount ? 'text-green-400' : 'text-red-400'
                         }`}>
-                          {game.winAmount > game.betAmount ? '+' : ''}{(game.winAmount - game.betAmount).toFixed(2)}
+                          {game.winAmount > game.betAmount ? '+' : ''}{(game.winAmount - game.betAmount).toFixed(0)}
                         </div>
                         <div className="text-white/60 text-xs">
                           {game.timestamp.toLocaleTimeString()}
@@ -334,7 +352,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
             </div>
           )}
 
-          {/* Deposit Tab - Mobile optimized */}
+          {/* Deposit Tab - Simplified */}
           {activeTab === 'deposit' && (
             <div className="space-y-4 sm:space-y-6">
               {user.isDemo ? (
@@ -342,135 +360,47 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                   <Shield size={32} className="text-white/60 mx-auto mb-4 sm:w-12 sm:h-12" />
                   <h3 className="text-white font-semibold mb-2">Modo Demo Activo</h3>
                   <p className="text-white/70 text-sm">
-                    Inicia sesión con una cuenta real para recargar dinero
+                    Inicia sesión con una cuenta real para comprar monedas
                   </p>
                 </div>
               ) : (
                 <>
-                  {/* Deposit Amounts - Mobile grid */}
+                  <div className="bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-xl p-4 shadow-lg">
+                    <h3 className="text-white font-semibold mb-2">💰 Compra de Monedas</h3>
+                    <p className="text-blue-200 text-sm">1 Peso Mexicano = 1 Moneda del juego</p>
+                    <p className="text-blue-200 text-xs mt-1">Pago seguro con tarjeta de crédito/débito</p>
+                  </div>
+
+                  {/* Quick Purchase Options */}
                   <div>
-                    <h3 className="text-white font-semibold mb-3 sm:mb-4">Selecciona Monto</h3>
-                    <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                    <h3 className="text-white font-semibold mb-3 sm:mb-4">Compra Rápida</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                       {depositAmounts.map(amount => (
                         <button
                           key={amount}
-                          onClick={() => setSelectedAmount(amount)}
-                          className={`p-3 sm:p-4 rounded-2xl border-2 transition-all active:scale-95 backdrop-blur-md shadow-lg ${
-                            selectedAmount === amount
-                              ? 'border-blue-400/50 bg-blue-400/10'
-                              : 'border-white/20 hover:border-white/30 bg-white/5'
-                          }`}
+                          onClick={() => handleQuickDeposit(amount)}
+                          disabled={processingPayment}
+                          className="bg-gradient-to-r from-green-500/80 to-blue-500/80 hover:from-green-600/80 hover:to-blue-600/80 disabled:from-gray-500/80 disabled:to-gray-600/80 backdrop-blur-md border border-green-400/30 rounded-2xl p-4 transition-all active:scale-95 shadow-lg"
                         >
-                          <div className="text-white font-bold text-base sm:text-lg">${amount}</div>
-                          <div className="text-white/70 text-xs sm:text-sm">USD</div>
+                          <div className="text-white font-bold text-lg">{amount} monedas</div>
+                          <div className="text-green-200 text-sm">${amount} MXN</div>
+                          {processingPayment && (
+                            <div className="text-white/70 text-xs mt-1">Procesando...</div>
+                          )}
                         </button>
                       ))}
                     </div>
-                    
-                    {/* Show selected amount */}
-                    {selectedAmount && (
-                      <div className="mt-4 p-3 bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-xl shadow-lg">
-                        <p className="text-blue-300 text-sm">✅ Monto seleccionado: <span className="font-bold">${selectedAmount} USD</span></p>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Payment Methods - Mobile optimized */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3 sm:mb-4">
-                      <h3 className="text-white font-semibold">Métodos de Pago</h3>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => setShowAddCard(true)}
-                          className="px-2 sm:px-3 py-1 bg-blue-500/80 hover:bg-blue-600/80 backdrop-blur-md border border-blue-400/30 text-white text-xs sm:text-sm rounded-xl transition-colors active:scale-95 shadow-lg"
-                        >
-                          + Tarjeta
-                        </button>
-                        <button
-                          onClick={() => setShowAddPayPal(true)}
-                          className="px-2 sm:px-3 py-1 bg-blue-500/80 hover:bg-blue-600/80 backdrop-blur-md border border-blue-400/30 text-white text-xs sm:text-sm rounded-xl transition-colors active:scale-95 shadow-lg"
-                        >
-                          + PayPal
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {paymentMethods.length === 0 ? (
-                        <div className="text-center py-6 sm:py-8 text-white/60">
-                          <CreditCard size={24} className="mx-auto mb-2 sm:w-8 sm:h-8" />
-                          <p className="text-sm">No tienes métodos de pago registrados</p>
-                          <p className="text-xs">Agrega una tarjeta o PayPal para recargar</p>
+                  {processingPayment && (
+                    <div className="bg-yellow-500/20 backdrop-blur-md border border-yellow-400/30 rounded-xl p-4 shadow-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-400"></div>
+                        <div>
+                          <p className="text-yellow-200 font-medium">Procesando pago...</p>
+                          <p className="text-yellow-300 text-sm">Por favor espera mientras procesamos tu transacción</p>
                         </div>
-                      ) : (
-                        paymentMethods.map(method => (
-                          <button
-                            key={method.id}
-                            onClick={() => setSelectedMethod(method.id)}
-                            className={`w-full flex items-center justify-between p-3 sm:p-4 rounded-2xl border-2 transition-all active:scale-95 backdrop-blur-md shadow-lg ${
-                              selectedMethod === method.id
-                                ? 'border-blue-400/50 bg-blue-400/10'
-                                : 'border-white/20 hover:border-white/30 bg-white/5'
-                            }`}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <CreditCard size={16} className="text-white/70 sm:w-5 sm:h-5" />
-                              <div className="text-left">
-                                <div className="text-white font-medium text-sm sm:text-base">
-                                  {method.type === 'card' ? `**** ${method.last4}` : method.email}
-                                </div>
-                                <div className="text-white/60 text-xs sm:text-sm">
-                                  {method.type === 'card' ? method.brand : 'PayPal'}
-                                </div>
-                              </div>
-                            </div>
-                            {selectedMethod === method.id && (
-                              <div className="text-blue-400">✓</div>
-                            )}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                    
-                    {/* Show selected method */}
-                    {selectedMethod && (
-                      <div className="mt-4 p-3 bg-green-500/20 backdrop-blur-md border border-green-400/30 rounded-xl shadow-lg">
-                        <p className="text-green-300 text-sm">
-                          ✅ Método seleccionado: <span className="font-bold">
-                            {paymentMethods.find(m => m.id === selectedMethod)?.type === 'card' 
-                              ? `**** ${paymentMethods.find(m => m.id === selectedMethod)?.last4}`
-                              : paymentMethods.find(m => m.id === selectedMethod)?.email
-                            }
-                          </span>
-                        </p>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Deposit Button - Mobile optimized */}
-                  {canDeposit && (
-                    <div className="space-y-4">
-                      <div className="bg-yellow-500/20 backdrop-blur-md border border-yellow-400/30 rounded-xl p-3 sm:p-4 shadow-lg">
-                        <p className="text-yellow-200 text-sm">
-                          💳 Se procesará el pago de ${selectedAmount} USD usando tu método seleccionado
-                        </p>
-                      </div>
-                      
-                      <button
-                        onClick={handleDeposit}
-                        className="w-full bg-gradient-to-r from-green-500/90 to-blue-500/90 hover:from-green-600/90 hover:to-blue-600/90 backdrop-blur-md border border-green-400/30 text-white font-bold py-3 sm:py-4 rounded-2xl transition-all transform active:scale-95 shadow-2xl"
-                      >
-                        💳 Recargar ${selectedAmount} USD
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Help text when requirements not met */}
-                  {!canDeposit && selectedAmount && (
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg">
-                      <p className="text-white/80 text-sm">
-                        {!selectedMethod ? '👆 Selecciona un método de pago para continuar' : 'Completa todos los campos'}
-                      </p>
                     </div>
                   )}
                 </>
@@ -478,7 +408,110 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
             </div>
           )}
 
-          {/* Withdraw Tab - Mobile optimized */}
+          {/* Auto Cashout Tab */}
+          {activeTab === 'autocashout' && (
+            <div className="space-y-4 sm:space-y-6">
+              <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-md border border-orange-400/30 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <h3 className="text-white font-semibold mb-4 flex items-center">
+                  <Target size={20} className="mr-2 text-orange-400" />
+                  Configuración de Auto Cashout
+                </h3>
+                
+                {/* Auto Cashout Toggle */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h4 className="text-white font-medium">Activar Auto Cashout</h4>
+                    <p className="text-white/70 text-sm">Retira automáticamente cuando se alcance el multiplicador</p>
+                  </div>
+                  <button
+                    onClick={() => setAutoCashOutEnabled(!autoCashOutEnabled)}
+                    className={`w-16 h-8 rounded-full transition-all duration-300 ${
+                      autoCashOutEnabled 
+                        ? 'bg-green-500 shadow-lg shadow-green-500/30' 
+                        : 'bg-white/20'
+                    }`}
+                  >
+                    <div className={`w-7 h-7 bg-white rounded-full transition-all duration-300 flex items-center justify-center ${
+                      autoCashOutEnabled ? 'translate-x-8' : 'translate-x-0.5'
+                    }`}>
+                      {autoCashOutEnabled ? (
+                        <Zap size={14} className="text-green-500" />
+                      ) : (
+                        <ZapOff size={14} className="text-gray-400" />
+                      )}
+                    </div>
+                  </button>
+                </div>
+
+                {/* Multiplier Setting */}
+                {autoCashOutEnabled && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-white/80 text-sm mb-2">Multiplicador de Auto Cashout</label>
+                      <div className="flex items-center space-x-4">
+                        <button 
+                          onClick={() => setAutoCashOut(Math.max(1.01, autoCashOut - 0.1))}
+                          className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl text-white font-bold flex items-center justify-center transition-colors"
+                        >
+                          -
+                        </button>
+                        
+                        <div className="flex-1 bg-orange-500/80 px-6 py-3 rounded-xl text-center">
+                          <div className="text-white font-bold text-xl">{autoCashOut.toFixed(2)}x</div>
+                        </div>
+                        
+                        <button 
+                          onClick={() => setAutoCashOut(autoCashOut + 0.1)}
+                          className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl text-white font-bold flex items-center justify-center transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Multiplier Buttons */}
+                    <div>
+                      <p className="text-white/70 text-sm mb-2">Multiplicadores rápidos:</p>
+                      <div className="flex space-x-2">
+                        {[1.5, 2.0, 3.0, 5.0, 10.0].map(mult => (
+                          <button
+                            key={mult}
+                            onClick={() => setAutoCashOut(mult)}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              autoCashOut === mult
+                                ? 'bg-orange-500/80 text-white'
+                                : 'bg-white/10 text-white/80 hover:bg-white/20'
+                            }`}
+                          >
+                            {mult}x
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-xl p-3">
+                      <p className="text-blue-200 text-sm">
+                        ℹ️ El auto cashout se activará cuando el multiplicador alcance {autoCashOut.toFixed(2)}x
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Strategy Tips */}
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-lg">
+                <h4 className="text-white font-medium mb-3">💡 Consejos de Estrategia</h4>
+                <div className="space-y-2 text-sm text-white/80">
+                  <p>• <strong>Conservador:</strong> 1.5x - 2.0x (Mayor probabilidad, menor ganancia)</p>
+                  <p>• <strong>Moderado:</strong> 2.0x - 5.0x (Balance entre riesgo y recompensa)</p>
+                  <p>• <strong>Arriesgado:</strong> 5.0x+ (Menor probabilidad, mayor ganancia)</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Withdraw Tab */}
           {activeTab === 'withdraw' && (
             <div className="space-y-4 sm:space-y-6">
               {user.isDemo ? (
@@ -505,7 +538,13 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                 </div>
               ) : (
                 <>
-                  {/* Withdrawal Amounts - Mobile grid */}
+                  <div className="bg-green-500/20 backdrop-blur-md border border-green-400/30 rounded-xl p-4 shadow-lg">
+                    <h3 className="text-white font-semibold mb-2">💸 Retiro de Fondos</h3>
+                    <p className="text-green-200 text-sm">1 Moneda = 1 Peso Mexicano</p>
+                    <p className="text-green-200 text-xs mt-1">Retiros procesados en 1-3 días hábiles</p>
+                  </div>
+
+                  {/* Withdrawal Amounts */}
                   <div>
                     <h3 className="text-white font-semibold mb-3 sm:mb-4">Selecciona Monto</h3>
                     <div className="grid grid-cols-3 gap-3 sm:gap-4">
@@ -522,8 +561,8 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                               : 'border-white/20 hover:border-white/30 bg-white/5'
                           }`}
                         >
-                          <div className="text-white font-bold text-base sm:text-lg">${amount}</div>
-                          <div className="text-white/70 text-xs sm:text-sm">USD</div>
+                          <div className="text-white font-bold text-base sm:text-lg">{amount} monedas</div>
+                          <div className="text-white/70 text-xs sm:text-sm">${amount} MXN</div>
                         </button>
                       ))}
                     </div>
@@ -597,7 +636,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                     <div className="space-y-4">
                       <div className="bg-yellow-500/20 backdrop-blur-md border border-yellow-400/30 rounded-xl p-3 sm:p-4 shadow-lg">
                         <p className="text-yellow-200 text-sm">
-                          💳 Se procesará el retiro de ${withdrawalAmount} USD a tu cuenta bancaria
+                          💳 Se procesará el retiro de {withdrawalAmount} monedas (${withdrawalAmount} MXN) a tu cuenta bancaria
                         </p>
                       </div>
                       
@@ -605,22 +644,8 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                         onClick={handleWithdrawal}
                         className="w-full bg-gradient-to-r from-green-500/90 to-blue-500/90 hover:from-green-600/90 hover:to-blue-600/90 backdrop-blur-md border border-green-400/30 text-white font-bold py-3 sm:py-4 rounded-2xl transition-all transform active:scale-95 shadow-2xl"
                       >
-                        💳 Retirar ${withdrawalAmount} USD
+                        💳 Retirar {withdrawalAmount} monedas
                       </button>
-                    </div>
-                  )}
-
-                  {/* Help text when requirements not met */}
-                  {!canWithdraw && (
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg">
-                      <p className="text-white/80 text-sm">
-                        {balance < minWithdrawal 
-                          ? `Saldo mínimo requerido: $${minWithdrawal} USD`
-                          : !user.kyc_verified
-                          ? 'Verificación de identidad requerida'
-                          : 'Completa todos los campos para continuar'
-                        }
-                      </p>
                     </div>
                   )}
                 </>
@@ -628,7 +653,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
             </div>
           )}
 
-          {/* History Tab - Mobile optimized */}
+          {/* History Tab */}
           {activeTab === 'history' && (
             <div className="space-y-4 sm:space-y-6">
               <div>
@@ -660,7 +685,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                           <div className={`font-semibold text-sm sm:text-base ${
                             transaction.type === 'deposit' ? 'text-green-400' : 'text-blue-400'
                           }`}>
-                            {transaction.type === 'deposit' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                            {transaction.type === 'deposit' ? '+' : '-'}{transaction.amount.toFixed(0)} monedas
                           </div>
                           <div className={`text-xs ${
                             transaction.status === 'completed' ? 'text-green-400' :
@@ -681,7 +706,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
             </div>
           )}
 
-          {/* Settings Tab - Mobile optimized */}
+          {/* Settings Tab */}
           {activeTab === 'settings' && (
             <div className="space-y-4 sm:space-y-6">
               <div>
@@ -703,24 +728,6 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                     <span className="text-white/70 text-sm">Tipo de Cuenta:</span>
                     <span className="text-white text-sm">{user?.isDemo ? 'Demo' : 'Real'}</span>
                   </div>
-                  {user?.age && (
-                    <div className="flex justify-between">
-                      <span className="text-white/70 text-sm">Edad:</span>
-                      <span className="text-white text-sm">{user.age} años</span>
-                    </div>
-                  )}
-                  {user?.country && (
-                    <div className="flex justify-between">
-                      <span className="text-white/70 text-sm">País:</span>
-                      <span className="text-white text-sm">{user.country}</span>
-                    </div>
-                  )}
-                  {user?.phone && (
-                    <div className="flex justify-between">
-                      <span className="text-white/70 text-sm">Teléfono:</span>
-                      <span className="text-white text-sm">{user.phone}</span>
-                    </div>
-                  )}
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Verificación KYC:</span>
                     <span className={`text-sm ${user?.kyc_verified ? 'text-green-400' : 'text-red-400'}`}>
@@ -729,70 +736,6 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* Casino Statistics */}
-              <div>
-                <h3 className="text-white font-semibold mb-3 sm:mb-4">Estadísticas del Casino</h3>
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 sm:p-4 space-y-3 shadow-lg">
-                  <div className="flex justify-between">
-                    <span className="text-white/70 text-sm">Total Depositos:</span>
-                    <span className="text-white text-sm">${(user?.total_deposits || 0).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/70 text-sm">Total Retiros:</span>
-                    <span className="text-white text-sm">${(user?.total_withdrawals || 0).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/70 text-sm">Juegos Jugados:</span>
-                    <span className="text-white text-sm">{user?.games_played || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/70 text-sm">Total Apostado:</span>
-                    <span className="text-white text-sm">${(user?.total_wagered || 0).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/70 text-sm">Total Ganado:</span>
-                    <span className="text-white text-sm">${(user?.total_won || 0).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Account Limits */}
-              <div>
-                <h3 className="text-white font-semibold mb-3 sm:mb-4">Límites de Cuenta</h3>
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3 sm:p-4 space-y-3 shadow-lg">
-                  <div className="flex justify-between">
-                    <span className="text-white/70 text-sm">Límite de Depósito:</span>
-                    <span className="text-white text-sm">${(user?.deposit_limit || 1000).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/70 text-sm">Límite de Retiro:</span>
-                    <span className="text-white text-sm">${(user?.withdrawal_limit || 1000).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* KYC Verification Button */}
-              {!user?.kyc_verified && (
-                <div>
-                  <h3 className="text-white font-semibold mb-3 sm:mb-4">Verificación de Identidad</h3>
-                  <div className="bg-yellow-500/20 backdrop-blur-md border border-yellow-400/30 rounded-2xl p-3 sm:p-4 shadow-lg">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <AlertCircle size={20} className="text-yellow-400" />
-                      <span className="text-yellow-300 text-sm font-medium">Verificación Pendiente</span>
-                    </div>
-                    <p className="text-white/70 text-sm mb-3">
-                      Para poder retirar fondos, necesitas completar la verificación de identidad (KYC).
-                    </p>
-                    <button
-                      onClick={() => setShowKYCForm(true)}
-                      className="w-full bg-yellow-500/80 hover:bg-yellow-600/80 backdrop-blur-md border border-yellow-400/30 text-white font-medium py-2 rounded-xl transition-colors active:scale-95 shadow-lg"
-                    >
-                      Completar Verificación
-                    </button>
-                  </div>
-                </div>
-              )}
 
               <button
                 onClick={onLogout}
@@ -805,140 +748,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
           )}
         </div>
 
-        {/* KYC Form Modal */}
-        {showKYCForm && (
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-6 w-full max-w-md shadow-2xl">
-              <h3 className="text-white font-semibold mb-4">Verificación de Identidad</h3>
-              <form className="space-y-4">
-                <input
-                  type="number"
-                  placeholder="Edad"
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="País"
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
-                  required
-                />
-                <input
-                  type="tel"
-                  placeholder="Teléfono"
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
-                  required
-                />
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowKYCForm(false)}
-                    className="flex-1 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white py-3 rounded-xl active:scale-95 shadow-lg"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-500/80 hover:bg-blue-600/80 backdrop-blur-md border border-blue-400/30 text-white py-3 rounded-xl active:scale-95 shadow-lg"
-                  >
-                    Verificar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Add Card Modal - Mobile optimized */}
-        {showAddCard && (
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-6 w-full max-w-md shadow-2xl">
-              <h3 className="text-white font-semibold mb-4">Agregar Tarjeta</h3>
-              <form onSubmit={handleAddCard} className="space-y-4">
-                <input
-                  name="cardNumber"
-                  type="text"
-                  placeholder="Número de tarjeta"
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
-                  required
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    name="expiry"
-                    type="text"
-                    placeholder="MM/YY"
-                    className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
-                    required
-                  />
-                  <input
-                    name="cvv"
-                    type="text"
-                    placeholder="CVV"
-                    className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
-                    required
-                  />
-                </div>
-                <input
-                  name="name"
-                  type="text"
-                  placeholder="Nombre en la tarjeta"
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
-                  required
-                />
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddCard(false)}
-                    className="flex-1 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white py-3 rounded-xl active:scale-95 shadow-lg"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-500/80 hover:bg-blue-600/80 backdrop-blur-md border border-blue-400/30 text-white py-3 rounded-xl active:scale-95 shadow-lg"
-                  >
-                    Agregar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Add PayPal Modal - Mobile optimized */}
-        {showAddPayPal && (
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-6 w-full max-w-md shadow-2xl">
-              <h3 className="text-white font-semibold mb-4">Agregar PayPal</h3>
-              <form onSubmit={handleAddPayPal} className="space-y-4">
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="Email de PayPal"
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-3 text-white text-base placeholder-white/50 focus:border-blue-400/50 focus:outline-none shadow-lg"
-                  required
-                />
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddPayPal(false)}
-                    className="flex-1 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white py-3 rounded-xl active:scale-95 shadow-lg"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-500/80 hover:bg-blue-600/80 backdrop-blur-md border border-blue-400/30 text-white py-3 rounded-xl active:scale-95 shadow-lg"
-                  >
-                    Agregar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Add Bank Modal - Mobile optimized */}
+        {/* Modals */}
         {showAddBank && (
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 sm:p-6 w-full max-w-md shadow-2xl">

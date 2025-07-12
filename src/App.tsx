@@ -105,6 +105,7 @@ function App() {
   const [currentBet, setCurrentBet] = useState(0);
   const [hasCashedOut, setHasCashedOut] = useState(false);
   const [betLocked, setBetLocked] = useState(false);
+  const [nextRoundBet, setNextRoundBet] = useState<number | null>(null); // For betting on next round
   
   // WebSocket connection for multiplayer
   const { gameData, isConnected, connectionStatus, placeBet, cashOut, reconnect } = useGameSocket(
@@ -323,6 +324,7 @@ function App() {
         setCurrentBet(0);
         setHasCashedOut(false);
         setBetLocked(false);
+        setNextRoundBet(null);
       }
     });
 
@@ -408,14 +410,37 @@ function App() {
     }
   }, [gameData.gameState.phase, gameData.gameState.crashPoint]);
 
-  // FIXED: Reset bet state when game phase changes
+  // FIXED: Reset bet state when game phase changes with next round betting
   useEffect(() => {
     if (gameData.gameState.phase === 'waiting') {
-      // Reset bet state for new round
-      setHasActiveBet(false);
-      setCurrentBet(0);
-      setHasCashedOut(false);
-      setBetLocked(false);
+      // Handle next round bet
+      if (nextRoundBet && nextRoundBet <= balance && !hasActiveBet && !betLocked) {
+        const safeBetAmount = Math.min(nextRoundBet, balance);
+        
+        setBetLocked(true);
+        placeBet(safeBetAmount);
+        setBalance(prev => prev - safeBetAmount);
+        setCurrentBet(safeBetAmount);
+        setHasActiveBet(true);
+        setHasCashedOut(false);
+        setNextRoundBet(null);
+        
+        setChatMessages(prev => [...prev, {
+          id: Date.now(),
+          username: user?.name || 'Jugador',
+          message: `🚀 Apuesta automática de ${safeBetAmount.toFixed(0)} monedas para la nueva ronda`,
+          timestamp: new Date(),
+          type: 'user'
+        }]);
+        
+        setTimeout(() => setBetLocked(false), 1000);
+      } else {
+        // Reset bet state for new round
+        setHasActiveBet(false);
+        setCurrentBet(0);
+        setHasCashedOut(false);
+        setBetLocked(false);
+      }
     } else if (gameData.gameState.phase === 'crashed') {
       // Handle crash - lose bet if not cashed out
       if (hasActiveBet && !hasCashedOut) {
@@ -433,7 +458,7 @@ function App() {
         setChatMessages(prev => [...prev, {
           id: Date.now(),
           username: user?.name || 'Jugador',
-          message: `💥 Perdido en ${(gameData.gameState.crashPoint || gameData.gameState.multiplier).toFixed(2)}x - €${currentBet.toFixed(2)}`,
+          message: `💥 Perdido en ${(gameData.gameState.crashPoint || gameData.gameState.multiplier).toFixed(2)}x - ${currentBet.toFixed(0)} monedas`,
           timestamp: new Date(),
           type: 'user'
         }]);
@@ -447,7 +472,7 @@ function App() {
         setBetLocked(false);
       }, 2000);
     }
-  }, [gameData.gameState.phase, gameData.gameState.crashPoint, hasActiveBet, hasCashedOut, currentBet, user?.name]);
+  }, [gameData.gameState.phase, gameData.gameState.crashPoint, hasActiveBet, hasCashedOut, currentBet, user?.name, nextRoundBet, balance, betLocked, placeBet]);
 
   // Auto cash out logic for multiplayer
   useEffect(() => {
@@ -478,7 +503,7 @@ function App() {
       setChatMessages(prev => [...prev, {
         id: Date.now(),
         username: user?.name || 'Jugador',
-        message: `💰 50% Auto Cashout en ${currentMultiplier.toFixed(2)}x por €${halfWinnings.toFixed(2)}!`,
+        message: `💰 50% Auto Cashout en ${currentMultiplier.toFixed(2)}x por ${halfWinnings.toFixed(0)} monedas!`,
         timestamp: new Date(),
         type: 'user'
       }]);
@@ -566,6 +591,7 @@ function App() {
     setCurrentBet(0);
     setHasCashedOut(false);
     setBetLocked(false);
+    setNextRoundBet(null);
   };
 
   // Payment functions
@@ -578,14 +604,13 @@ function App() {
   };
 
   const handleDeposit = (amount: number, methodId: string) => {
-    const method = paymentMethods.find(m => m.id === methodId);
-    if (!method || user?.isDemo) return;
+    if (user?.isDemo) return;
 
     const transaction: Transaction = {
       id: Date.now().toString(),
       type: 'deposit',
       amount,
-      method: method.type === 'card' ? `**** ${method.last4}` : method.email || 'PayPal',
+      method: 'Compra rápida',
       status: 'completed',
       timestamp: new Date()
     };
@@ -599,7 +624,7 @@ function App() {
             type: 'deposit',
             amount,
             status: 'completed',
-            payment_method: method.type === 'card' ? `**** ${method.last4}` : method.email || 'PayPal'
+            payment_method: 'Compra rápida'
           }
         ]);
       } catch (e) {
@@ -658,7 +683,7 @@ function App() {
     }
   };
 
-  // FIXED: Improved multiplayer game functions with bet locking
+  // FIXED: Improved multiplayer game functions with next round betting
   const handlePlaceBet = () => {
     if (gameData.gameState.phase === 'waiting' && betAmount <= balance && !hasActiveBet && !betLocked && !autoBotConfig.isActive) {
       const safeBetAmount = Math.min(betAmount, balance);
@@ -678,13 +703,24 @@ function App() {
       setChatMessages(prev => [...prev, {
         id: Date.now(),
         username: user?.name || 'Jugador',
-        message: `🚀 Apuesta colocada de €${safeBetAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+        message: `🚀 Apuesta colocada de ${safeBetAmount.toFixed(0)} monedas`,
         timestamp: new Date(),
         type: 'user'
       }]);
       
       // Unlock after a short delay
       setTimeout(() => setBetLocked(false), 1000);
+    } else if (gameData.gameState.phase === 'flying' && betAmount <= balance && !nextRoundBet) {
+      // Allow betting for next round during current game
+      setNextRoundBet(betAmount);
+      
+      setChatMessages(prev => [...prev, {
+        id: Date.now(),
+        username: user?.name || 'Jugador',
+        message: `⏳ Apuesta de ${betAmount.toFixed(0)} monedas programada para la próxima ronda`,
+        timestamp: new Date(),
+        type: 'user'
+      }]);
     }
   };
 
@@ -719,7 +755,7 @@ function App() {
       setChatMessages(prev => [...prev, {
         id: Date.now(),
         username: user?.name || 'Jugador',
-        message: `💰 ¡Retirado en ${gameData.gameState.multiplier.toFixed(2)}x por €${totalWinnings.toLocaleString('es-MX', { minimumFractionDigits: 2 })}! (Ganancia neta: €${netProfit.toLocaleString('es-MX', { minimumFractionDigits: 2 })})`,
+        message: `💰 ¡Retirado en ${gameData.gameState.multiplier.toFixed(2)}x por ${totalWinnings.toFixed(0)} monedas! (Ganancia neta: ${netProfit.toFixed(0)} monedas)`,
         timestamp: new Date(),
         type: 'user'
       }]);
@@ -749,7 +785,8 @@ function App() {
   };
 
   // Game state calculations
-  const canBet = gameData.gameState.phase === 'waiting' && !hasActiveBet && betAmount <= balance && !autoBotConfig.isActive && !autoBetEnabled && !betLocked;
+  const canBet = (gameData.gameState.phase === 'waiting' && !hasActiveBet && betAmount <= balance && !autoBotConfig.isActive && !autoBetEnabled && !betLocked) || 
+                 (gameData.gameState.phase === 'flying' && !nextRoundBet && betAmount <= balance);
   const canCashOut = hasActiveBet && gameData.gameState.phase === 'flying' && gameData.gameState.multiplier >= 1 && !hasCashedOut && !betLocked;
   const currentWin = hasActiveBet ? currentBet * gameData.gameState.multiplier : 0;
 
@@ -827,7 +864,7 @@ function App() {
                   className="w-6 h-6 rounded-full"
                 />
                 <div className="text-left">
-                  <div className="text-white text-xs font-medium">€{balance.toFixed(2)}</div>
+                  <div className="text-white text-xs font-medium">{balance.toFixed(0)} monedas</div>
                   {user.isDemo && <div className="text-purple-300 text-xs">Demo</div>}
                 </div>
               </button>
@@ -922,6 +959,17 @@ function App() {
           </div>
         </div>
 
+        {/* Next Round Bet Indicator */}
+        {nextRoundBet && (
+          <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-40">
+            <div className="bg-blue-500/80 backdrop-blur-md border border-blue-400/30 rounded-xl px-4 py-2">
+              <div className="text-white text-sm font-medium">
+                ⏳ Próxima ronda: {nextRoundBet.toFixed(0)} monedas
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* NEW Mobile Betting Panel */}
         <MobileBettingPanel
           balance={balance}
@@ -1010,6 +1058,10 @@ function App() {
             onAddPaymentMethod={handleAddPaymentMethod}
             onDeposit={handleDeposit}
             onWithdrawal={handleWithdrawal}
+            autoCashOutEnabled={autoCashOutEnabled}
+            setAutoCashOutEnabled={setAutoCashOutEnabled}
+            autoCashOut={autoCashOut}
+            setAutoCashOut={setAutoCashOut}
           />
         )}
       </div>
@@ -1050,7 +1102,7 @@ function App() {
           {/* Left Side - Game Info */}
           <div className="flex items-center space-x-4">
             <div className="text-white text-sm">
-              <div>Spaceman Multijugador €1 - €100</div>
+              <div>Spaceman Multijugador 1 - 100 monedas</div>
               <div className="text-xs text-white/70">Jugador: {user.name}</div>
             </div>
           </div>
@@ -1104,9 +1156,20 @@ function App() {
       <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-40 space-y-3">
         <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl p-3">
           <div className="text-white/70 text-xs">Balance</div>
-          <div className="text-white font-bold">€{balance.toFixed(2)}</div>
+          <div className="text-white font-bold">{balance.toFixed(0)} monedas</div>
+          <div className="text-white/60 text-xs">≈ ${balance.toFixed(0)} MXN</div>
         </div>
       </div>
+
+      {/* Next Round Bet Indicator */}
+      {nextRoundBet && (
+        <div className="absolute left-4 top-1/3 z-40">
+          <div className="bg-blue-500/80 backdrop-blur-md border border-blue-400/30 rounded-xl p-3">
+            <div className="text-white/70 text-xs">Próxima Ronda</div>
+            <div className="text-white font-bold">{nextRoundBet.toFixed(0)} monedas</div>
+          </div>
+        </div>
+      )}
 
       {/* Chat Panel - Desktop */}
       {showChat && (
@@ -1140,49 +1203,49 @@ function App() {
             <div className="flex items-center space-x-2">
               <button 
                 onClick={() => setBetAmount(1)}
-                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
                 className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
               >
-                €1
+                1
               </button>
               <button 
                 onClick={() => setBetAmount(5)}
-                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
                 className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
               >
-                €5
+                5
               </button>
               <button 
                 onClick={() => handleButtonPress(decreaseBet)}
-                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
                 className="w-8 h-8 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded text-white font-bold flex items-center justify-center"
               >
                 <ChevronLeft size={16} />
               </button>
               <div className="bg-purple-500/80 px-4 py-2 rounded-xl">
                 <div className="text-white/80 text-xs">Bet</div>
-                <div className="text-white font-bold">€{betAmount}</div>
+                <div className="text-white font-bold">{betAmount} monedas</div>
               </div>
               <button 
                 onClick={() => handleButtonPress(increaseBet)}
-                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
                 className="w-8 h-8 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded text-white font-bold flex items-center justify-center"
               >
                 <ChevronRight size={16} />
               </button>
               <button 
                 onClick={() => setBetAmount(10)}
-                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
                 className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
               >
-                €10
+                10
               </button>
               <button 
                 onClick={() => setBetAmount(25)}
-                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
                 className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
               >
-                €25
+                25
               </button>
             </div>
           </div>
@@ -1204,18 +1267,24 @@ function App() {
                   : 'bg-white/20 cursor-not-allowed'
               }`}
             >
-              {canCashOut ? 'COBRAR' : 'APOSTAR'}
+              {canCashOut ? 'COBRAR' : 
+               gameData.gameState.phase === 'flying' && !hasActiveBet ? 'PRÓXIMA RONDA' : 
+               'APOSTAR'}
             </button>
             
             <div className="text-white text-lg font-bold">
-              {canCashOut ? `€${currentWin.toFixed(2)}` : `${gameData.gameState.multiplier.toFixed(2)}x`}
+              {canCashOut ? `${currentWin.toFixed(0)} monedas` : `${gameData.gameState.multiplier.toFixed(2)}x`}
             </div>
           </div>
 
           {/* Right - Total Bet */}
           <div className="text-right">
             <div className="text-white/70 text-sm">Total Bet</div>
-            <div className="text-white font-bold">€{hasActiveBet ? currentBet.toFixed(2) : betAmount.toFixed(2)}</div>
+            <div className="text-white font-bold">
+              {hasActiveBet ? `${currentBet.toFixed(0)} monedas` : 
+               nextRoundBet ? `${nextRoundBet.toFixed(0)} monedas (próxima)` :
+               `${betAmount.toFixed(0)} monedas`}
+            </div>
           </div>
         </div>
 
@@ -1269,6 +1338,10 @@ function App() {
           onAddPaymentMethod={handleAddPaymentMethod}
           onDeposit={handleDeposit}
           onWithdrawal={handleWithdrawal}
+          autoCashOutEnabled={autoCashOutEnabled}
+          setAutoCashOutEnabled={setAutoCashOutEnabled}
+          autoCashOut={autoCashOut}
+          setAutoCashOut={setAutoCashOut}
         />
       )}
     </div>
