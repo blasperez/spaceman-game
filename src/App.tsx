@@ -82,8 +82,6 @@ interface AutoBotConfig {
   stopOnLoss: boolean;
 }
 
-
-
 function App() {
   // Auth state
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -93,6 +91,7 @@ function App() {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [sessionChecked, setSessionChecked] = useState(false);
   
   // Mobile orientation detection
   const [isLandscape, setIsLandscape] = useState(false);
@@ -105,6 +104,7 @@ function App() {
   const [hasActiveBet, setHasActiveBet] = useState(false);
   const [currentBet, setCurrentBet] = useState(0);
   const [hasCashedOut, setHasCashedOut] = useState(false);
+  const [betLocked, setBetLocked] = useState(false);
   
   // WebSocket connection for multiplayer
   const { gameData, isConnected, connectionStatus, placeBet, cashOut, reconnect } = useGameSocket(
@@ -159,19 +159,43 @@ function App() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  // Check for existing session on app load
+  // FIXED: Improved session checking with timeout
   useEffect(() => {
     const checkExistingSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('🔍 Checking existing session...');
+        
+        // Set a timeout to prevent infinite loading
+        const timeoutId = setTimeout(() => {
+          console.log('⏰ Session check timeout, proceeding without session');
+          setIsLoading(false);
+          setSessionChecked(true);
+        }, 5000);
+
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        clearTimeout(timeoutId);
+
+        if (error) {
+          console.error('❌ Session check error:', error);
+          setIsLoading(false);
+          setSessionChecked(true);
+          return;
+        }
 
         if (session?.user) {
-          // Cargamos (o creamos) el perfil
-          const { data: profile } = await supabase
+          console.log('✅ Found existing session for:', session.user.email);
+          
+          // Load or create profile
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
+
+          if (profileError && profileError.code !== 'PGRST116') {
+            console.error('❌ Profile fetch error:', profileError);
+          }
 
           let userProfile: UserProfile;
 
@@ -181,7 +205,7 @@ function App() {
               name: profile.full_name || session.user.user_metadata?.full_name || 'Usuario',
               email: profile.email || session.user.email || '',
               avatar: profile.avatar_url || session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Usuario')}&background=random`,
-              provider: 'google',
+              provider: profile.provider || 'google',
               balance: profile.balance || 1000,
               isDemo: false,
               age: profile.age,
@@ -198,7 +222,7 @@ function App() {
               total_won: profile.total_won || 0
             };
           } else {
-            // Perfil básico si no existe
+            // Create basic profile if doesn't exist
             userProfile = {
               id: session.user.id,
               name: session.user.user_metadata?.full_name || 'Usuario',
@@ -208,94 +232,106 @@ function App() {
               balance: 1000,
               isDemo: false
             };
-            await supabase.from('profiles').insert([{
-              id: userProfile.id,
-              email: userProfile.email,
-              full_name: userProfile.name,
-              avatar_url: userProfile.avatar,
-              balance: userProfile.balance
-            }]);
+            
+            // Try to create profile in background
+            try {
+              await supabase.from('profiles').insert([{
+                id: userProfile.id,
+                email: userProfile.email,
+                full_name: userProfile.name,
+                avatar_url: userProfile.avatar,
+                balance: userProfile.balance
+              }]);
+            } catch (insertError) {
+              console.warn('⚠️ Could not create profile:', insertError);
+            }
           }
 
           setUser(userProfile);
           setBalance(userProfile.balance);
+          console.log('✅ User profile loaded successfully');
+        } else {
+          console.log('ℹ️ No existing session found');
         }
       } catch (error) {
-        console.error('Error checking session:', error);
+        console.error('💥 Session check failed:', error);
+      } finally {
+        setIsLoading(false);
+        setSessionChecked(true);
       }
-
-      // Siempre desac­tivamos loading, con o sin éxito
-      setIsLoading(false);
     };
     
-    checkExistingSession();
-  }, []);
+    if (!sessionChecked) {
+      checkExistingSession();
+    }
+  }, [sessionChecked]);
 
-  // Listen for auth state changes
+  // FIXED: Improved auth state listener
   useEffect(() => {
+    if (!sessionChecked) return;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
-      console.log('Auth state changed:', event, session?.user?.email);
+      console.log('🔄 Auth state changed:', event, session?.user?.email);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        // Handle sign in
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          const userProfile: UserProfile = {
-            id: profile.id,
-            name: profile.full_name || session.user.user_metadata?.full_name || 'Usuario',
-            email: profile.email || session.user.email || '',
-            avatar: profile.avatar_url || session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Usuario')}&background=random`,
-            provider: 'google',
-            balance: profile.balance || 1000.00,
-            isDemo: false,
-            age: profile.age,
-            country: profile.country,
-            phone: profile.phone,
-            kyc_verified: profile.kyc_verified || false,
-            withdrawal_methods: profile.withdrawal_methods || [],
-            deposit_limit: profile.deposit_limit || 1000,
-            withdrawal_limit: profile.withdrawal_limit || 1000,
-            total_deposits: profile.total_deposits || 0,
-            total_withdrawals: profile.total_withdrawals || 0,
-            games_played: profile.games_played || 0,
-            total_wagered: profile.total_wagered || 0,
-            total_won: profile.total_won || 0
-          };
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
           
-          setUser(userProfile);
-          setBalance(userProfile.balance);
-          setIsLoading(false);
-        } else {
-          // Si no se encontró perfil
-          setIsLoading(false);
+          if (profile) {
+            const userProfile: UserProfile = {
+              id: profile.id,
+              name: profile.full_name || session.user.user_metadata?.full_name || 'Usuario',
+              email: profile.email || session.user.email || '',
+              avatar: profile.avatar_url || session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Usuario')}&background=random`,
+              provider: profile.provider || 'google',
+              balance: profile.balance || 1000.00,
+              isDemo: false,
+              age: profile.age,
+              country: profile.country,
+              phone: profile.phone,
+              kyc_verified: profile.kyc_verified || false,
+              withdrawal_methods: profile.withdrawal_methods || [],
+              deposit_limit: profile.deposit_limit || 1000,
+              withdrawal_limit: profile.withdrawal_limit || 1000,
+              total_deposits: profile.total_deposits || 0,
+              total_withdrawals: profile.total_withdrawals || 0,
+              games_played: profile.games_played || 0,
+              total_wagered: profile.total_wagered || 0,
+              total_won: profile.total_won || 0
+            };
+            
+            setUser(userProfile);
+            setBalance(userProfile.balance);
+          }
+        } catch (error) {
+          console.error('❌ Error loading profile after sign in:', error);
         }
       } else if (event === 'SIGNED_OUT') {
-        // Handle sign out
+        console.log('👋 User signed out');
         setUser(null);
         setBalance(1000.00);
         setGameHistory([]);
         setTransactions([]);
         setPaymentMethods([]);
-        setAutoBotConfig((prev: AutoBotConfig) => ({ ...prev, isActive: false, currentRounds: 0, totalProfit: 0 }));
+        setAutoBotConfig(prev => ({ ...prev, isActive: false, currentRounds: 0, totalProfit: 0 }));
         setAutoBetEnabled(false);
-        setIsLoading(false);
+        setHasActiveBet(false);
+        setCurrentBet(0);
+        setHasCashedOut(false);
+        setBetLocked(false);
       }
-
-      // En cualquier caso, desactivamos loading por si quedara activo
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [sessionChecked]);
 
   // Save user data to database when balance changes
   useEffect(() => {
-    if (user && !user.isDemo) {
+    if (user && !user.isDemo && sessionChecked) {
       const saveUserData = async () => {
         try {
           const { error } = await supabase
@@ -307,10 +343,10 @@ function App() {
             .eq('id', user.id);
           
           if (error) {
-            console.error('Error saving user data:', error);
+            console.error('❌ Error saving user data:', error);
           }
         } catch (error) {
-          console.error('Error saving user data:', error);
+          console.error('❌ Error saving user data:', error);
         }
       };
       
@@ -318,7 +354,7 @@ function App() {
       const timeoutId = setTimeout(saveUserData, 1000);
       return () => clearTimeout(timeoutId);
     }
-  }, [balance, user]);
+  }, [balance, user, sessionChecked]);
 
   // Save game history to database
   const saveGameHistory = async (gameHistory: GameHistory) => {
@@ -335,10 +371,10 @@ function App() {
           }]);
         
         if (error) {
-          console.error('Error saving game history:', error);
+          console.error('❌ Error saving game history:', error);
         }
       } catch (error) {
-        console.error('Error saving game history:', error);
+        console.error('❌ Error saving game history:', error);
       }
     }
   };
@@ -372,9 +408,50 @@ function App() {
     }
   }, [gameData.gameState.phase, gameData.gameState.crashPoint]);
 
+  // FIXED: Reset bet state when game phase changes
+  useEffect(() => {
+    if (gameData.gameState.phase === 'waiting') {
+      // Reset bet state for new round
+      setHasActiveBet(false);
+      setCurrentBet(0);
+      setHasCashedOut(false);
+      setBetLocked(false);
+    } else if (gameData.gameState.phase === 'crashed') {
+      // Handle crash - lose bet if not cashed out
+      if (hasActiveBet && !hasCashedOut) {
+        const lostGame: GameHistory = {
+          id: Date.now(),
+          multiplier: gameData.gameState.crashPoint || gameData.gameState.multiplier,
+          betAmount: currentBet,
+          winAmount: 0,
+          timestamp: new Date()
+        };
+        
+        setGameHistory(prev => [...prev, lostGame]);
+        saveGameHistory(lostGame);
+        
+        setChatMessages(prev => [...prev, {
+          id: Date.now(),
+          username: user?.name || 'Jugador',
+          message: `💥 Perdido en ${(gameData.gameState.crashPoint || gameData.gameState.multiplier).toFixed(2)}x - €${currentBet.toFixed(2)}`,
+          timestamp: new Date(),
+          type: 'user'
+        }]);
+      }
+      
+      // Reset for next round
+      setTimeout(() => {
+        setHasActiveBet(false);
+        setCurrentBet(0);
+        setHasCashedOut(false);
+        setBetLocked(false);
+      }, 2000);
+    }
+  }, [gameData.gameState.phase, gameData.gameState.crashPoint, hasActiveBet, hasCashedOut, currentBet, user?.name]);
+
   // Auto cash out logic for multiplayer
   useEffect(() => {
-    if (!hasActiveBet || gameData.gameState.phase !== 'flying' || hasCashedOut) return;
+    if (!hasActiveBet || gameData.gameState.phase !== 'flying' || hasCashedOut || betLocked) return;
     
     const currentMultiplier = gameData.gameState.multiplier;
     
@@ -408,11 +485,11 @@ function App() {
       
       setAutoCashOut50Enabled(false);
     }
-  }, [gameData.gameState.multiplier, gameData.gameState.phase, hasActiveBet, autoBotConfig, autoCashOutEnabled, autoCashOut, autoCashOut50Enabled, autoCashOut50, currentBet, user?.name, hasCashedOut]);
+  }, [gameData.gameState.multiplier, gameData.gameState.phase, hasActiveBet, autoBotConfig, autoCashOutEnabled, autoCashOut, autoCashOut50Enabled, autoCashOut50, currentBet, user?.name, hasCashedOut, betLocked]);
 
   // Auto betting logic for multiplayer
   useEffect(() => {
-    if (autoBetEnabled && !autoBotConfig.isActive && gameData.gameState.phase === 'waiting' && !hasActiveBet && gameData.gameState.countdown <= 5 && gameData.gameState.countdown > 0) {
+    if (autoBetEnabled && !autoBotConfig.isActive && gameData.gameState.phase === 'waiting' && !hasActiveBet && !betLocked && gameData.gameState.countdown <= 5 && gameData.gameState.countdown > 0) {
       if (autoBetAmount > balance) {
         setAutoBetEnabled(false);
         setChatMessages(prev => [...prev, {
@@ -427,17 +504,17 @@ function App() {
       
       handlePlaceBet();
     }
-  }, [autoBetEnabled, autoBotConfig.isActive, gameData.gameState.phase, hasActiveBet, gameData.gameState.countdown, autoBetAmount, balance]);
+  }, [autoBetEnabled, autoBotConfig.isActive, gameData.gameState.phase, hasActiveBet, betLocked, gameData.gameState.countdown, autoBetAmount, balance]);
 
   // Bet amount control functions
   const increaseBet = () => {
-    if (!hasActiveBet && !autoBotConfig.isActive && gameData.gameState.phase === 'waiting') {
+    if (!hasActiveBet && !autoBotConfig.isActive && !betLocked && gameData.gameState.phase === 'waiting') {
       setBetAmount(prev => Math.min(prev + 1, balance));
     }
   };
 
   const decreaseBet = () => {
-    if (!hasActiveBet && !autoBotConfig.isActive && gameData.gameState.phase === 'waiting') {
+    if (!hasActiveBet && !autoBotConfig.isActive && !betLocked && gameData.gameState.phase === 'waiting') {
       setBetAmount(prev => Math.max(prev - 1, 1));
     }
   };
@@ -468,13 +545,12 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Logout error:', error);
+        console.error('❌ Logout error:', error);
       }
     } catch (error) {
-      console.error('Logout exception:', error);
+      console.error('❌ Logout exception:', error);
     }
     
     // Reset local state
@@ -486,7 +562,10 @@ function App() {
     setPaymentMethods([]);
     setAutoBotConfig(prev => ({ ...prev, isActive: false, currentRounds: 0, totalProfit: 0 }));
     setAutoBetEnabled(false);
-    setIsLoading(false);
+    setHasActiveBet(false);
+    setCurrentBet(0);
+    setHasCashedOut(false);
+    setBetLocked(false);
   };
 
   // Payment functions
@@ -511,7 +590,7 @@ function App() {
       timestamp: new Date()
     };
 
-    // Guardar en Supabase
+    // Save to Supabase
     (async () => {
       try {
         await supabase.from('transactions').insert([
@@ -524,7 +603,7 @@ function App() {
           }
         ]);
       } catch (e) {
-        console.error('Error inserting deposit transaction', e);
+        console.error('❌ Error inserting deposit transaction', e);
       }
     })();
 
@@ -551,7 +630,7 @@ function App() {
       timestamp: new Date()
     };
 
-    // Guardar en Supabase
+    // Save to Supabase
     (async () => {
       try {
         await supabase.from('transactions').insert([
@@ -564,7 +643,7 @@ function App() {
           }
         ]);
       } catch (e) {
-        console.error('Error inserting withdrawal transaction', e);
+        console.error('❌ Error inserting withdrawal transaction', e);
       }
     })();
 
@@ -579,10 +658,13 @@ function App() {
     }
   };
 
-  // Multiplayer game functions
+  // FIXED: Improved multiplayer game functions with bet locking
   const handlePlaceBet = () => {
-    if (gameData.gameState.phase === 'waiting' && betAmount <= balance && !hasActiveBet && !autoBotConfig.isActive) {
+    if (gameData.gameState.phase === 'waiting' && betAmount <= balance && !hasActiveBet && !betLocked && !autoBotConfig.isActive) {
       const safeBetAmount = Math.min(betAmount, balance);
+      
+      // Lock betting to prevent double bets
+      setBetLocked(true);
       
       // Place bet via WebSocket
       placeBet(safeBetAmount);
@@ -600,11 +682,17 @@ function App() {
         timestamp: new Date(),
         type: 'user'
       }]);
+      
+      // Unlock after a short delay
+      setTimeout(() => setBetLocked(false), 1000);
     }
   };
 
   const handleCashOut = useCallback(() => {
-    if (hasActiveBet && gameData.gameState.phase === 'flying' && gameData.gameState.multiplier >= 1 && !hasCashedOut) {
+    if (hasActiveBet && gameData.gameState.phase === 'flying' && gameData.gameState.multiplier >= 1 && !hasCashedOut && !betLocked) {
+      // Lock to prevent double cash out
+      setBetLocked(true);
+      
       // Cash out via WebSocket
       cashOut();
       
@@ -626,9 +714,6 @@ function App() {
       // Save game history to database
       saveGameHistory(newGame);
       
-      setHasActiveBet(false);
-      setCurrentBet(0);
-      
       const netProfit = totalWinnings - currentBet;
       
       setChatMessages(prev => [...prev, {
@@ -638,8 +723,11 @@ function App() {
         timestamp: new Date(),
         type: 'user'
       }]);
+      
+      // Unlock after delay
+      setTimeout(() => setBetLocked(false), 1000);
     }
-  }, [hasActiveBet, gameData.gameState.phase, currentBet, gameData.gameState.multiplier, user?.name, hasCashedOut, cashOut, saveGameHistory]);
+  }, [hasActiveBet, gameData.gameState.phase, currentBet, gameData.gameState.multiplier, user?.name, hasCashedOut, betLocked, cashOut, saveGameHistory]);
 
   const handleSendMessage = (message: string) => {
     const newMessage: ChatMessage = {
@@ -661,8 +749,8 @@ function App() {
   };
 
   // Game state calculations
-  const canBet = gameData.gameState.phase === 'waiting' && !hasActiveBet && betAmount <= balance && !autoBotConfig.isActive && !autoBetEnabled;
-  const canCashOut = hasActiveBet && gameData.gameState.phase === 'flying' && gameData.gameState.multiplier >= 1 && !hasCashedOut;
+  const canBet = gameData.gameState.phase === 'waiting' && !hasActiveBet && betAmount <= balance && !autoBotConfig.isActive && !autoBetEnabled && !betLocked;
+  const canCashOut = hasActiveBet && gameData.gameState.phase === 'flying' && gameData.gameState.multiplier >= 1 && !hasCashedOut && !betLocked;
   const currentWin = hasActiveBet ? currentBet * gameData.gameState.multiplier : 0;
 
   if (isLoading) {
@@ -699,12 +787,7 @@ function App() {
         <div className="meteor"></div>
         <div className="nebula"></div>
         <div className="nebula"></div>
-        {/* PNG background image used in desktop */}
-        <img
-          src="/png-png-urbanbrush-13297 copy.png"
-          alt="Spaceman background"
-          className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
-        />
+
         {/* Enhanced Game Board - Mobile Full Screen */}
         <div className="absolute inset-0">
           <EnhancedGameBoard
@@ -886,7 +969,7 @@ function App() {
             <div className="h-full overflow-y-auto p-4">
               <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 h-full">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-white font-bold text-lg">Chat</h3>
+                  <h3 className="text-white font-bold text-lg">Chat Global</h3>
                   <button
                     onClick={() => setShowChat(false)}
                     className="p-2 bg-white/10 hover:bg-white/20 rounded-lg"
@@ -933,7 +1016,7 @@ function App() {
     );
   }
 
-  // DESKTOP LAYOUT (unchanged)
+  // DESKTOP LAYOUT
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden space-background">
       {/* Space Background Animations */}
@@ -949,6 +1032,7 @@ function App() {
       <div className="meteor"></div>
       <div className="nebula"></div>
       <div className="nebula"></div>
+      
       {/* FULL SCREEN Game Board */}
       <div className="absolute inset-0">
         <MultiplayerGameBoard
@@ -967,7 +1051,7 @@ function App() {
           <div className="flex items-center space-x-4">
             <div className="text-white text-sm">
               <div>Spaceman Multijugador €1 - €100</div>
-              <div className="text-xs text-white/70">Game ID: {gameData.gameState.gameId}</div>
+              <div className="text-xs text-white/70">Jugador: {user.name}</div>
             </div>
           </div>
 
@@ -980,6 +1064,12 @@ function App() {
 
           {/* Right Side - Controls */}
           <div className="flex items-center space-x-2">
+            <button 
+              onClick={() => setShowChat(!showChat)}
+              className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg transition-colors"
+            >
+              <Users size={16} className="text-white" />
+            </button>
             <button 
               onClick={() => setSoundEnabled(!soundEnabled)}
               className={`p-2 backdrop-blur-md border border-white/20 rounded-lg transition-colors ${
@@ -1018,6 +1108,30 @@ function App() {
         </div>
       </div>
 
+      {/* Chat Panel - Desktop */}
+      {showChat && (
+        <div className="absolute right-4 top-20 bottom-20 z-40 w-80">
+          <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl h-full">
+            <div className="flex items-center justify-between p-4 border-b border-white/20">
+              <h3 className="text-white font-bold">Chat Global</h3>
+              <button
+                onClick={() => setShowChat(false)}
+                className="p-1 bg-white/10 hover:bg-white/20 rounded-lg"
+              >
+                <X size={16} className="text-white" />
+              </button>
+            </div>
+            <div className="h-full">
+              <Chat 
+                messages={chatMessages} 
+                onSendMessage={handleSendMessage} 
+                username={user?.name || 'Jugador'} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Controls - Horizontal Layout */}
       <div className="absolute bottom-0 left-0 right-0 z-40 bg-black/20 backdrop-blur-xl border-t border-white/10 p-4">
         <div className="flex items-center justify-between max-w-6xl mx-auto">
@@ -1026,21 +1140,21 @@ function App() {
             <div className="flex items-center space-x-2">
               <button 
                 onClick={() => setBetAmount(1)}
-                disabled={hasActiveBet || autoBotConfig.isActive || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
                 className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
               >
                 €1
               </button>
               <button 
                 onClick={() => setBetAmount(5)}
-                disabled={hasActiveBet || autoBotConfig.isActive || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
                 className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
               >
                 €5
               </button>
               <button 
                 onClick={() => handleButtonPress(decreaseBet)}
-                disabled={hasActiveBet || autoBotConfig.isActive || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
                 className="w-8 h-8 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded text-white font-bold flex items-center justify-center"
               >
                 <ChevronLeft size={16} />
@@ -1051,21 +1165,21 @@ function App() {
               </div>
               <button 
                 onClick={() => handleButtonPress(increaseBet)}
-                disabled={hasActiveBet || autoBotConfig.isActive || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
                 className="w-8 h-8 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded text-white font-bold flex items-center justify-center"
               >
                 <ChevronRight size={16} />
               </button>
               <button 
                 onClick={() => setBetAmount(10)}
-                disabled={hasActiveBet || autoBotConfig.isActive || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
                 className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
               >
                 €10
               </button>
               <button 
                 onClick={() => setBetAmount(25)}
-                disabled={hasActiveBet || autoBotConfig.isActive || gameData.gameState.phase !== 'waiting'}
+                disabled={hasActiveBet || autoBotConfig.isActive || betLocked || gameData.gameState.phase !== 'waiting'}
                 className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
               >
                 €25

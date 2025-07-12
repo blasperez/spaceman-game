@@ -44,6 +44,7 @@ export const useGameSocket = (userId: string, userName: string) => {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const betLockRef = useRef(false);
 
   // Get WebSocket URL based on environment
   const getWebSocketUrl = () => {
@@ -55,9 +56,9 @@ export const useGameSocket = (userId: string, userName: string) => {
     // Production URLs - try multiple endpoints
     if (import.meta.env.PROD) {
       const productionUrls = [
+        'wss://spaceman-game-production.up.railway.app',
         'wss://spaceman-server-production.up.railway.app',
-        'wss://spaceman-game-server.herokuapp.com',
-        'wss://spaceman-ws.vercel.app'
+        'wss://spaceman-game-server.herokuapp.com'
       ];
       
       // Return first URL for now, could implement fallback logic
@@ -86,6 +87,7 @@ export const useGameSocket = (userId: string, userName: string) => {
         setIsConnected(true);
         setConnectionStatus('connected');
         reconnectAttempts.current = 0;
+        betLockRef.current = false;
         
         // Send player identification
         socketRef.current?.send(JSON.stringify({
@@ -99,7 +101,7 @@ export const useGameSocket = (userId: string, userName: string) => {
           const message = JSON.parse(event.data);
           handleServerMessage(message);
         } catch (error) {
-          console.error('Error parsing server message:', error);
+          console.error('❌ Error parsing server message:', error);
         }
       };
       
@@ -107,6 +109,7 @@ export const useGameSocket = (userId: string, userName: string) => {
         console.log(`🔴 Disconnected from game server (${event.code}): ${event.reason}`);
         setIsConnected(false);
         setConnectionStatus('disconnected');
+        betLockRef.current = false;
         
         // Auto-reconnect with exponential backoff
         if (reconnectAttempts.current < maxReconnectAttempts) {
@@ -125,13 +128,14 @@ export const useGameSocket = (userId: string, userName: string) => {
       };
       
       socketRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('❌ WebSocket error:', error);
         setConnectionStatus('error');
         setIsConnected(false);
+        betLockRef.current = false;
       };
       
     } catch (error) {
-      console.error('Failed to connect to game server:', error);
+      console.error('❌ Failed to connect to game server:', error);
       setConnectionStatus('error');
       setIsConnected(false);
       
@@ -158,7 +162,8 @@ export const useGameSocket = (userId: string, userName: string) => {
           ...prev.gameState,
           phase: 'waiting',
           countdown: 10,
-          multiplier: 1.00
+          multiplier: 1.00,
+          gameId: `local_${Date.now()}`
         }
       }));
       
@@ -246,6 +251,11 @@ export const useGameSocket = (userId: string, userName: string) => {
           totalPlayers: message.data.totalPlayers || prevData.totalPlayers,
           totalBetAmount: message.data.totalBetAmount || prevData.totalBetAmount
         }));
+        
+        // Reset bet lock when new round starts
+        if (message.data.gameState.phase === 'waiting') {
+          betLockRef.current = false;
+        }
         break;
         
       case 'player_bets_update':
@@ -267,14 +277,22 @@ export const useGameSocket = (userId: string, userName: string) => {
           }
         }));
         console.log(`💥 Game crashed at ${message.data.crashPoint.toFixed(2)}x`);
+        betLockRef.current = false;
         break;
         
       case 'cash_out_success':
         console.log(`💰 Cash out successful: ${message.data.winAmount.toFixed(2)} at ${message.data.multiplier.toFixed(2)}x`);
+        betLockRef.current = false;
+        break;
+        
+      case 'bet_placed':
+        console.log(`🎰 Bet placed successfully: €${message.data.betAmount}`);
+        betLockRef.current = false;
         break;
         
       case 'error':
-        console.error('Server error:', message.data.message);
+        console.error('❌ Server error:', message.data.message);
+        betLockRef.current = false;
         break;
         
       case 'server_shutdown':
@@ -282,25 +300,38 @@ export const useGameSocket = (userId: string, userName: string) => {
         break;
         
       default:
-        console.log('Unknown message type:', message.type);
+        console.log('❓ Unknown message type:', message.type);
     }
   };
 
-  // Send bet to server
+  // FIXED: Send bet to server with duplicate prevention
   const placeBet = (betAmount: number) => {
+    if (betLockRef.current) {
+      console.warn('⚠️ Bet already in progress, ignoring duplicate request');
+      return;
+    }
+
     if (socketRef.current && isConnected) {
+      betLockRef.current = true;
+      
       socketRef.current.send(JSON.stringify({
         type: 'place_bet',
         data: {
           userId,
           userName,
           betAmount,
-          gameId: gameData.gameState.gameId
+          gameId: gameData.gameState.gameId,
+          timestamp: Date.now()
         }
       }));
       console.log(`🎰 Placing bet: €${betAmount}`);
+      
+      // Auto-unlock after timeout as safety measure
+      setTimeout(() => {
+        betLockRef.current = false;
+      }, 3000);
     } else {
-      console.warn('Cannot place bet: not connected to server');
+      console.warn('⚠️ Cannot place bet: not connected to server');
       
       // Local simulation fallback
       if (import.meta.env.DEV) {
@@ -309,20 +340,33 @@ export const useGameSocket = (userId: string, userName: string) => {
     }
   };
 
-  // Send cash out to server
+  // FIXED: Send cash out to server with duplicate prevention
   const cashOut = () => {
+    if (betLockRef.current) {
+      console.warn('⚠️ Cash out already in progress, ignoring duplicate request');
+      return;
+    }
+
     if (socketRef.current && isConnected) {
+      betLockRef.current = true;
+      
       socketRef.current.send(JSON.stringify({
         type: 'cash_out',
         data: {
           userId,
           gameId: gameData.gameState.gameId,
-          multiplier: gameData.gameState.multiplier
+          multiplier: gameData.gameState.multiplier,
+          timestamp: Date.now()
         }
       }));
       console.log(`💸 Cashing out at ${gameData.gameState.multiplier.toFixed(2)}x`);
+      
+      // Auto-unlock after timeout as safety measure
+      setTimeout(() => {
+        betLockRef.current = false;
+      }, 3000);
     } else {
-      console.warn('Cannot cash out: not connected to server');
+      console.warn('⚠️ Cannot cash out: not connected to server');
       
       // Local simulation fallback
       if (import.meta.env.DEV) {
@@ -337,6 +381,7 @@ export const useGameSocket = (userId: string, userName: string) => {
       clearTimeout(reconnectTimeoutRef.current);
     }
     reconnectAttempts.current = 0;
+    betLockRef.current = false;
     setConnectionStatus('connecting');
     connect();
   };

@@ -60,8 +60,6 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     return 'text-purple-400';
   };
 
-  
-
   return (
     <div className="relative w-full h-full bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 overflow-hidden">
       {/* Connection Status */}
@@ -78,8 +76,9 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       </div>
 
-      {/* Stars background */}
+      {/* FIXED: Enhanced space background with planets visible on desktop */}
       <div className="absolute inset-0">
+        {/* Stars */}
         {stars.map((star, index) => (
           <div
             key={index}
@@ -94,6 +93,73 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             }}
           />
         ))}
+
+        {/* FIXED: Visible planets for desktop */}
+        <div 
+          className="absolute rounded-full opacity-80 shadow-2xl"
+          style={{ 
+            left: '8%',
+            top: '15%',
+            width: '80px',
+            height: '80px',
+            background: 'radial-gradient(circle at 30% 30%, #60A5FA, #3B82F6, #1E40AF)',
+            boxShadow: '0 0 40px rgba(59, 130, 246, 0.5), inset -12px -12px 25px rgba(0,0,0,0.3)',
+            animation: 'planetFloat 30s linear infinite'
+          }}
+        />
+        
+        <div 
+          className="absolute rounded-full opacity-70 shadow-2xl"
+          style={{ 
+            left: '85%',
+            top: '20%',
+            width: '60px',
+            height: '60px',
+            background: 'radial-gradient(circle at 30% 30%, #A78BFA, #8B5CF6, #7C3AED)',
+            boxShadow: '0 0 30px rgba(147, 51, 234, 0.5), inset -10px -10px 20px rgba(0,0,0,0.3)',
+            animation: 'planetFloat2 40s linear infinite'
+          }}
+        />
+        
+        <div 
+          className="absolute rounded-full opacity-60 shadow-2xl"
+          style={{ 
+            left: '90%',
+            top: '70%',
+            width: '100px',
+            height: '100px',
+            background: 'radial-gradient(circle at 30% 30%, #FB923C, #F97316, #EA580C)',
+            boxShadow: '0 0 50px rgba(251, 146, 60, 0.4), inset -15px -15px 30px rgba(0,0,0,0.3)',
+            animation: 'planetFloat3 50s linear infinite'
+          }}
+        />
+
+        {/* Moons */}
+        <div 
+          className="absolute rounded-full opacity-75 shadow-xl"
+          style={{ 
+            left: '15%',
+            top: '80%',
+            width: '40px',
+            height: '40px',
+            background: 'radial-gradient(circle at 30% 30%, #D1D5DB, #9CA3AF, #6B7280)',
+            boxShadow: '0 0 20px rgba(156, 163, 175, 0.6), inset -8px -8px 15px rgba(0,0,0,0.4)',
+            animation: 'moonFloat 25s linear infinite'
+          }}
+        />
+        
+        <div 
+          className="absolute rounded-full opacity-80 shadow-xl"
+          style={{ 
+            left: '75%',
+            top: '10%',
+            width: '30px',
+            height: '30px',
+            background: 'radial-gradient(circle at 30% 30%, #FEF3C7, #FBBF24, #F59E0B)',
+            boxShadow: '0 0 15px rgba(250, 204, 21, 0.7), inset -6px -6px 10px rgba(0,0,0,0.2)',
+            animation: 'moonFloat2 35s linear infinite'
+          }}
+        />
       </div>
 
       {/* Game Status - Waiting */}
@@ -164,7 +230,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       )}
 
-      {/* Spaceman */}
+      {/* FIXED: Use PNG spaceman from public folder */}
       <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 ${
         gameState.phase === 'crashed' ? 'animate-bounce scale-125' : ''
       } ${gameState.phase === 'flying' ? 'animate-pulse scale-110' : 'scale-100'}`}>
@@ -255,6 +321,42 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
           )}
         </div>
       </div>
+
+      {/* FIXED: Add CSS animations for planets */}
+      <style jsx>{`
+        @keyframes planetFloat {
+          0% { transform: translateX(0) translateY(0) rotate(0deg); }
+          25% { transform: translateX(20px) translateY(-10px) rotate(90deg); }
+          50% { transform: translateX(0) translateY(-20px) rotate(180deg); }
+          75% { transform: translateX(-20px) translateY(-10px) rotate(270deg); }
+          100% { transform: translateX(0) translateY(0) rotate(360deg); }
+        }
+        
+        @keyframes planetFloat2 {
+          0% { transform: translateX(0) translateY(0) rotate(0deg); }
+          33% { transform: translateX(-15px) translateY(15px) rotate(120deg); }
+          66% { transform: translateX(15px) translateY(10px) rotate(240deg); }
+          100% { transform: translateX(0) translateY(0) rotate(360deg); }
+        }
+        
+        @keyframes planetFloat3 {
+          0% { transform: translateX(0) translateY(0) rotate(0deg); }
+          50% { transform: translateX(-25px) translateY(25px) rotate(180deg); }
+          100% { transform: translateX(0) translateY(0) rotate(360deg); }
+        }
+        
+        @keyframes moonFloat {
+          0% { transform: translateX(0) translateY(0) scale(1); }
+          50% { transform: translateX(10px) translateY(-15px) scale(1.1); }
+          100% { transform: translateX(0) translateY(0) scale(1); }
+        }
+        
+        @keyframes moonFloat2 {
+          0% { transform: translateX(0) translateY(0) scale(1); }
+          50% { transform: translateX(-8px) translateY(12px) scale(1.05); }
+          100% { transform: translateX(0) translateY(0) scale(1); }
+        }
+      `}</style>
     </div>
   );
 };

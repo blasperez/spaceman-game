@@ -210,7 +210,7 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
           </div>
         </div>
 
-        {/* Spaceman */}
+        {/* FIXED: Use PNG spaceman from public folder */}
         <div
           className="absolute transition-all duration-100 ease-linear z-20"
           style={{
@@ -219,8 +219,15 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
             transform: 'translate(-50%, -50%)'
           }}
         >
-          <div className="text-6xl animate-bounce" style={{ animationDuration: '2s' }}>
-            🧑‍🚀
+          <div className="w-16 h-16 flex items-center justify-center">
+            <img 
+              src="/png-png-urbanbrush-13297 copy.png" 
+              alt="Spaceman"
+              className="w-full h-full object-contain"
+              style={{
+                filter: gamePhase === 'flying' ? 'brightness(1.3) saturate(1.3) drop-shadow(0 0 15px rgba(255,165,0,0.7))' : 'none'
+              }}
+            />
           </div>
         </div>
 
