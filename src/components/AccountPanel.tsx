@@ -155,17 +155,25 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
     setProcessingPayment(true);
     
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate Stripe payment processing
+      console.log('🔒 Initiating Stripe payment for $', amount);
       
-      // In a real implementation, this would integrate with Stripe/PayPal
+      // Simulate Stripe Checkout redirect
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // In a real implementation, this would integrate with Stripe
+      // const stripe = await stripePromise;
+      // const { error } = await stripe.redirectToCheckout({
+      //   sessionId: session.id
+      // });
+      
       onDeposit(amount, 'quick_payment');
       
       // Show success message
-      alert(`¡Depósito exitoso! Se agregaron ${amount} monedas a tu cuenta por $${amount} MXN`);
+      alert(`¡Depósito exitoso con Stripe! Se agregaron ${amount} monedas a tu cuenta por $${amount} USD`);
       
     } catch (error) {
-      alert('Error en el procesamiento del pago. Intenta nuevamente.');
+      alert('Error en el procesamiento con Stripe. Intenta nuevamente.');
     } finally {
       setProcessingPayment(false);
     }
@@ -323,30 +331,80 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                 </div>
               </div>
 
-              {/* Recent Games */}
-              <div>
-                <h3 className="text-white font-semibold mb-3 sm:mb-4">Juegos Recientes</h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-blue-400/30 rounded-xl p-4 shadow-lg">
+                <h3 className="text-white font-semibold mb-2 flex items-center">
+                  <svg className="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 2v12h16V6H4zm2 2h8v2H6V8zm0 4h12v2H6v-2z"/>
+                  </svg>
+                  💰 Compra Segura con Stripe
+                </h3>
+                <p className="text-blue-200 text-sm">1 USD = 1 Moneda del juego</p>
+                <p className="text-blue-200 text-xs mt-1">
+                  🔒 Pago seguro con Stripe • Tarjetas de crédito/débito • PayPal • Apple Pay
+                </p>
+                <p className="text-green-300 text-xs mt-1">
+                  ⚡ Procesamiento instantáneo • Retiros a cuenta bancaria en 1-3 días
+                </p>
                   {gameHistory.slice(-5).reverse().map(game => (
                     <div key={game.id} className="flex items-center justify-between bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 shadow-lg">
                       <div className="flex items-center space-x-3">
                         <div className={`w-2 h-2 rounded-full ${
-                          game.winAmount > game.betAmount ? 'bg-green-400' : 'bg-red-400'
+                <h3 className="text-white font-semibold mb-3 sm:mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+                  </svg>
+                  Compra Rápida con Stripe
+                </h3>
                         }`} />
                         <span className="text-white text-sm sm:text-base">{game.multiplier.toFixed(2)}x</span>
                       </div>
                       <div className="text-right">
                         <div className={`font-semibold text-sm sm:text-base ${
                           game.winAmount > game.betAmount ? 'text-green-400' : 'text-red-400'
-                        }`}>
+                      className="bg-gradient-to-r from-green-500/80 to-blue-500/80 hover:from-green-600/80 hover:to-blue-600/80 disabled:from-gray-500/80 disabled:to-gray-600/80 backdrop-blur-md border border-green-400/30 rounded-2xl p-4 transition-all active:scale-95 shadow-lg relative overflow-hidden"
                           {game.winAmount > game.betAmount ? '+' : ''}{(game.winAmount - game.betAmount).toFixed(0)}
+                      <div className="relative z-10">
+                        <div className="text-white font-bold text-lg">{amount} monedas</div>
+                        <div className="text-green-200 text-sm">${amount} USD</div>
+                        <div className="text-green-300 text-xs mt-1">
+                          {amount >= 100 ? '🎁 +5% bonus' : '⚡ Instantáneo'}
                         </div>
-                        <div className="text-white/60 text-xs">
+                      </div>
+                      {amount >= 100 && (
+                        <div className="absolute top-2 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full font-bold">
+                          POPULAR
+                        </div>
+                      )}
                           {game.timestamp.toLocaleTimeString()}
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
                         </div>
                       </div>
                     </div>
                   ))}
+                </div>
+                
+                {/* Stripe Features */}
+                <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3">
+                  <h4 className="text-white font-medium mb-2 text-sm">✨ Métodos de Pago Aceptados</h4>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-white/80">
+                    <div className="flex items-center">
+                      <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                      Visa, Mastercard, Amex
+                    </div>
+                    <div className="flex items-center">
+                      <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                      PayPal, Apple Pay
+                    </div>
+                    <div className="flex items-center">
+                      <span className="w-2 h-2 bg-purple-400 rounded-full mr-2"></span>
+                      Google Pay, Samsung Pay
+                    </div>
+                    <div className="flex items-center">
+                      <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                      Transferencia bancaria
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -538,22 +596,38 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                 </div>
               ) : (
                 <>
-                  <div className="bg-green-500/20 backdrop-blur-md border border-green-400/30 rounded-xl p-4 shadow-lg">
-                    <h3 className="text-white font-semibold mb-2">💸 Retiro de Fondos</h3>
-                    <p className="text-green-200 text-sm">1 Moneda = 1 Peso Mexicano</p>
-                    <p className="text-green-200 text-xs mt-1">Retiros procesados en 1-3 días hábiles</p>
+                  <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-md border border-green-400/30 rounded-xl p-4 shadow-lg">
+                    <h3 className="text-white font-semibold mb-2 flex items-center">
+                      <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
+                      </svg>
+                      💸 Retiro con Stripe Connect
+                    </h3>
+                    <p className="text-green-200 text-sm">1 Moneda = 1 USD directo a tu cuenta</p>
+                    <p className="text-green-200 text-xs mt-1">
+                      🏦 Retiros automáticos a cuenta bancaria • 1-3 días hábiles
+                    </p>
+                    <p className="text-blue-300 text-xs mt-1">
+                      ⚡ Sin comisiones ocultas • Tipo de cambio real
+                    </p>
                   </div>
 
                   {/* Withdrawal Amounts */}
                   <div>
-                    <h3 className="text-white font-semibold mb-3 sm:mb-4">Selecciona Monto</h3>
+                    <h3 className="text-white font-semibold mb-3 sm:mb-4 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.51-1.31c-.562-.649-1.413-1.076-2.353-1.253V5z" clipRule="evenodd"/>
+                      </svg>
+                      Retiro Rápido
+                    </h3>
                     <div className="grid grid-cols-3 gap-3 sm:gap-4">
                       {withdrawalAmounts.map(amount => (
                         <button
                           key={amount}
                           onClick={() => setWithdrawalAmount(amount)}
                           disabled={amount > balance}
-                          className={`p-3 sm:p-4 rounded-2xl border-2 transition-all active:scale-95 backdrop-blur-md shadow-lg ${
+                          className={`p-3 sm:p-4 rounded-2xl border-2 transition-all active:scale-95 backdrop-blur-md shadow-lg relative ${
                             withdrawalAmount === amount
                               ? 'border-blue-400/50 bg-blue-400/10'
                               : amount > balance
@@ -562,7 +636,10 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                           }`}
                         >
                           <div className="text-white font-bold text-base sm:text-lg">{amount} monedas</div>
-                          <div className="text-white/70 text-xs sm:text-sm">${amount} MXN</div>
+                          <div className="text-white/70 text-xs sm:text-sm">${amount} USD</div>
+                          <div className="text-green-400 text-xs mt-1">
+                            {amount >= 500 ? '🚀 Express' : '⚡ Rápido'}
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -726,12 +803,12 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Tipo de Cuenta:</span>
-                    <span className="text-white text-sm">{user?.isDemo ? 'Demo' : 'Real'}</span>
+                <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-md border border-yellow-400/30 rounded-xl p-4 shadow-lg">
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/70 text-sm">Verificación KYC:</span>
-                    <span className={`text-sm ${user?.kyc_verified ? 'text-green-400' : 'text-red-400'}`}>
-                      {user?.kyc_verified ? '✓ Verificado' : '✗ Pendiente'}
+                      <p className="text-yellow-200 font-medium">🔒 Procesando pago con Stripe...</p>
+                      <p className="text-yellow-300 text-sm">Conexión segura SSL • Tu información está protegida</p>
                     </span>
                   </div>
                 </div>

@@ -272,9 +272,11 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
       {gameState.phase === 'waiting' && gameState.countdown > 0 && (
         <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 text-center">
           <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-blue-400/30 rounded-3xl p-8 shadow-2xl">
-            <div className="text-white text-3xl font-bold mb-4 drop-shadow-2xl">🚀 PRÓXIMO VUELO</div>
+            <div className="text-white text-3xl font-bold mb-4 drop-shadow-2xl">
+              {gameState.countdown > 0 ? '🚀 COLOCA TUS APUESTAS' : '🚀 PRÓXIMO VUELO'}
+            </div>
             
-            {/* Countdown Circle - FIXED for 20 seconds */}
+            {/* Countdown Circle - 20 seconds betting window */}
             <div className="relative w-32 h-32 mx-auto mb-4">
               <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
                 <circle

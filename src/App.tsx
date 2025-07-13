@@ -412,7 +412,7 @@ function App() {
 
   // FIXED: Reset bet state when game phase changes with next round betting
   useEffect(() => {
-    if (gameData.gameState.phase === 'waiting') {
+    if (gameData.gameState.phase === 'waiting' && gameData.gameState.countdown <= 20 && gameData.gameState.countdown > 0) {
       // Handle next round bet
       if (nextRoundBet && nextRoundBet <= balance && !hasActiveBet && !betLocked) {
         const safeBetAmount = Math.min(nextRoundBet, balance);
@@ -685,7 +685,7 @@ function App() {
 
   // FIXED: Improved multiplayer game functions with next round betting
   const handlePlaceBet = () => {
-    if (gameData.gameState.phase === 'waiting' && betAmount <= balance && !hasActiveBet && !betLocked && !autoBotConfig.isActive) {
+    if (gameData.gameState.phase === 'waiting' && gameData.gameState.countdown > 0 && gameData.gameState.countdown <= 20 && betAmount <= balance && !hasActiveBet && !betLocked && !autoBotConfig.isActive) {
       const safeBetAmount = Math.min(betAmount, balance);
       
       // Lock betting to prevent double bets
@@ -710,17 +710,17 @@ function App() {
       
       // Unlock after a short delay
       setTimeout(() => setBetLocked(false), 1000);
-    } else if (gameData.gameState.phase === 'flying' && betAmount <= balance && !nextRoundBet) {
-      // Allow betting for next round during current game
-      setNextRoundBet(betAmount);
-      
-      setChatMessages(prev => [...prev, {
-        id: Date.now(),
-        username: user?.name || 'Jugador',
-        message: `⏳ Apuesta de ${betAmount.toFixed(0)} monedas programada para la próxima ronda`,
-        timestamp: new Date(),
-        type: 'user'
-      }]);
+    } else {
+      // Show message when betting is not allowed
+      if (gameData.gameState.phase !== 'waiting') {
+        setChatMessages(prev => [...prev, {
+          id: Date.now(),
+          username: 'Sistema',
+          message: `⚠️ Solo puedes apostar durante la ventana de apuestas (20 segundos)`,
+          timestamp: new Date(),
+          type: 'system'
+        }]);
+      }
     }
   };
 
@@ -785,8 +785,7 @@ function App() {
   };
 
   // Game state calculations
-  const canBet = (gameData.gameState.phase === 'waiting' && !hasActiveBet && betAmount <= balance && !autoBotConfig.isActive && !autoBetEnabled && !betLocked) || 
-                 (gameData.gameState.phase === 'flying' && !nextRoundBet && betAmount <= balance);
+  const canBet = gameData.gameState.phase === 'waiting' && gameData.gameState.countdown > 0 && gameData.gameState.countdown <= 20 && !hasActiveBet && betAmount <= balance && !autoBotConfig.isActive && !autoBetEnabled && !betLocked;
   const canCashOut = hasActiveBet && gameData.gameState.phase === 'flying' && gameData.gameState.multiplier >= 1 && !hasCashedOut && !betLocked;
   const currentWin = hasActiveBet ? currentBet * gameData.gameState.multiplier : 0;
 
