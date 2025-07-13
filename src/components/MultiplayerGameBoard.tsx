@@ -187,9 +187,10 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '120px',
             background: 'radial-gradient(circle at 30% 30%, #60A5FA, #3B82F6, #1E40AF)',
             boxShadow: '0 0 50px rgba(59, 130, 246, 0.6), inset -15px -15px 30px rgba(0,0,0,0.4)',
-            animation: 'planetFloat1 35s linear infinite',
+            animation: 'planetFloat1 25s linear infinite',
             top: '15%',
-            filter: 'brightness(1.5)'
+            filter: 'brightness(1.8)',
+            zIndex: 1
           }}
         />
         
@@ -200,9 +201,10 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '100px',
             background: 'radial-gradient(circle at 30% 30%, #A78BFA, #8B5CF6, #7C3AED)',
             boxShadow: '0 0 40px rgba(147, 51, 234, 0.6), inset -12px -12px 25px rgba(0,0,0,0.4)',
-            animation: 'planetFloat2 45s linear infinite',
+            animation: 'planetFloat2 30s linear infinite',
             top: '25%',
-            filter: 'brightness(1.4)'
+            filter: 'brightness(1.6)',
+            zIndex: 1
           }}
         />
         
@@ -213,9 +215,10 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '140px',
             background: 'radial-gradient(circle at 30% 30%, #FB923C, #F97316, #EA580C)',
             boxShadow: '0 0 60px rgba(251, 146, 60, 0.5), inset -18px -18px 35px rgba(0,0,0,0.4)',
-            animation: 'planetFloat3 55s linear infinite',
+            animation: 'planetFloat3 35s linear infinite',
             top: '60%',
-            filter: 'brightness(1.3)'
+            filter: 'brightness(1.5)',
+            zIndex: 1
           }}
         />
 
@@ -227,9 +230,10 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '50px',
             background: 'radial-gradient(circle at 30% 30%, #D1D5DB, #9CA3AF, #6B7280)',
             boxShadow: '0 0 25px rgba(156, 163, 175, 0.7), inset -8px -8px 15px rgba(0,0,0,0.5)',
-            animation: 'moonFloat1 30s linear infinite',
+            animation: 'moonFloat1 20s linear infinite',
             top: '35%',
-            filter: 'brightness(1.2)'
+            filter: 'brightness(1.4)',
+            zIndex: 1
           }}
         />
         
@@ -240,9 +244,10 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '40px',
             background: 'radial-gradient(circle at 30% 30%, #FEF3C7, #FBBF24, #F59E0B)',
             boxShadow: '0 0 20px rgba(250, 204, 21, 0.8), inset -6px -6px 12px rgba(0,0,0,0.3)',
-            animation: 'moonFloat2 40s linear infinite',
+            animation: 'moonFloat2 25s linear infinite',
             top: '75%',
-            filter: 'brightness(1.3)'
+            filter: 'brightness(1.5)',
+            zIndex: 1
           }}
         />
       </div>

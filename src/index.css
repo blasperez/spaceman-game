@@ -180,59 +180,59 @@
   animation: twinkle 4s ease-in-out infinite;
 }
 
-/* FIXED: Planetas se mueven de IZQUIERDA a DERECHA (como si el astronauta volara hacia la derecha) */
+/* FIXED: Planetas se mueven de DERECHA a IZQUIERDA (como si el astronauta volara hacia la derecha) */
 @keyframes planetFloat1 {
   0% {
-    transform: translateX(-200px) translateY(0px) rotate(0deg);
-    left: -200px;
+    transform: translateX(0px) translateY(0px) rotate(0deg);
+    left: calc(100vw + 200px);
   }
   100% {
-    transform: translateX(calc(100vw + 200px)) translateY(20px) rotate(360deg);
-    left: calc(100vw + 200px);
+    transform: translateX(calc(-100vw - 400px)) translateY(20px) rotate(360deg);
+    left: -200px;
   }
 }
 
 @keyframes planetFloat2 {
   0% {
-    transform: translateX(-200px) translateY(0px) rotate(0deg);
-    left: -200px;
+    transform: translateX(0px) translateY(0px) rotate(0deg);
+    left: calc(100vw + 200px);
   }
   100% {
-    transform: translateX(calc(100vw + 200px)) translateY(-15px) rotate(-360deg);
-    left: calc(100vw + 200px);
+    transform: translateX(calc(-100vw - 400px)) translateY(-15px) rotate(-360deg);
+    left: -200px;
   }
 }
 
 @keyframes planetFloat3 {
   0% {
-    transform: translateX(-200px) translateY(0px) rotate(0deg);
-    left: -200px;
+    transform: translateX(0px) translateY(0px) rotate(0deg);
+    left: calc(100vw + 200px);
   }
   100% {
-    transform: translateX(calc(100vw + 200px)) translateY(10px) rotate(180deg);
-    left: calc(100vw + 200px);
+    transform: translateX(calc(-100vw - 400px)) translateY(10px) rotate(180deg);
+    left: -200px;
   }
 }
 
 @keyframes moonFloat1 {
   0% {
-    transform: translateX(-100px) translateY(0px) scale(1);
-    left: -100px;
+    transform: translateX(0px) translateY(0px) scale(1);
+    left: calc(100vw + 100px);
   }
   100% {
-    transform: translateX(calc(100vw + 100px)) translateY(25px) scale(1.1);
-    left: calc(100vw + 100px);
+    transform: translateX(calc(-100vw - 200px)) translateY(25px) scale(1.1);
+    left: -100px;
   }
 }
 
 @keyframes moonFloat2 {
   0% {
-    transform: translateX(-100px) translateY(0px) scale(1);
-    left: -100px;
+    transform: translateX(0px) translateY(0px) scale(1);
+    left: calc(100vw + 100px);
   }
   100% {
-    transform: translateX(calc(100vw + 100px)) translateY(-20px) scale(1.05);
-    left: calc(100vw + 100px);
+    transform: translateX(calc(-100vw - 200px)) translateY(-20px) scale(1.05);
+    left: -100px;
   }
 }
 
