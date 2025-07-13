@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Phone, Calendar, MapPin, FileText, Shield, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, MapPin, FileText, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface UserProfileFormProps {
   user: {

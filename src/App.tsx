@@ -156,9 +156,9 @@ function App() {
     }
   ]);
 
-  // Mock payment methods and transactions
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  // Mock payment methods and transactions (temporarily unused)
+  const [, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [, setTransactions] = useState<Transaction[]>([]);
 
   // FIXED: Improved session checking with timeout
   useEffect(() => {
@@ -568,120 +568,120 @@ function App() {
     setBalance(1000.00);
   };
 
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('❌ Logout error:', error);
-      }
-    } catch (error) {
-      console.error('❌ Logout exception:', error);
-    }
+  // const _handleLogout = async () => {
+  //   try {
+  //     const { error } = await supabase.auth.signOut();
+  //     if (error) {
+  //       console.error('❌ Logout error:', error);
+  //     }
+  //   } catch (error) {
+  //     console.error('❌ Logout exception:', error);
+  //   }
     
-    // Reset local state
-    setUser(null);
-    setShowAccountPanel(false);
-    setBalance(1000.00);
-    setGameHistory([]);
-    setTransactions([]);
-    setPaymentMethods([]);
-    setAutoBotConfig(prev => ({ ...prev, isActive: false, currentRounds: 0, totalProfit: 0 }));
-    setAutoBetEnabled(false);
-    setHasActiveBet(false);
-    setCurrentBet(0);
-    setHasCashedOut(false);
-    setBetLocked(false);
-    setNextRoundBet(null);
-  };
+  //   // Reset local state
+  //   setUser(null);
+  //   setShowAccountPanel(false);
+  //   setBalance(1000.00);
+  //   setGameHistory([]);
+  //   setTransactions([]);
+  //   setPaymentMethods([]);
+  //   setAutoBotConfig(prev => ({ ...prev, isActive: false, currentRounds: 0, totalProfit: 0 }));
+  //   setAutoBetEnabled(false);
+  //   setHasActiveBet(false);
+  //   setCurrentBet(0);
+  //   setHasCashedOut(false);
+  //   setBetLocked(false);
+  //   setNextRoundBet(null);
+  // };
 
-  // Payment functions
-  const handleAddPaymentMethod = (method: Omit<PaymentMethod, 'id'>) => {
-    const newMethod: PaymentMethod = {
-      ...method,
-      id: Date.now().toString()
-    };
-    setPaymentMethods(prev => [...prev, newMethod]);
-  };
+  // Payment functions (temporarily unused)
+  // const _handleAddPaymentMethod = (method: Omit<PaymentMethod, 'id'>) => {
+  //   const newMethod: PaymentMethod = {
+  //     ...method,
+  //     id: Date.now().toString()
+  //   };
+  //   setPaymentMethods(prev => [...prev, newMethod]);
+  // };
 
-  const handleDeposit = (amount: number, methodId: string) => {
-    if (user?.isDemo) return;
+  // const _handleDeposit = (amount: number, _methodId: string) => {
+  //   if (user?.isDemo) return;
 
-    const transaction: Transaction = {
-      id: Date.now().toString(),
-      type: 'deposit',
-      amount,
-      method: 'Compra rápida',
-      status: 'completed',
-      timestamp: new Date()
-    };
+  //   const transaction: Transaction = {
+  //     id: Date.now().toString(),
+  //     type: 'deposit',
+  //     amount,
+  //     method: 'Compra rápida',
+  //     status: 'completed',
+  //     timestamp: new Date()
+  //   };
 
-    // Save to Supabase
-    (async () => {
-      try {
-        await supabase.from('transactions').insert([
-          {
-            user_id: user?.id,
-            type: 'deposit',
-            amount,
-            status: 'completed',
-            payment_method: 'Compra rápida'
-          }
-        ]);
-      } catch (e) {
-        console.error('❌ Error inserting deposit transaction', e);
-      }
-    })();
+  //   // Save to Supabase
+  //   (async () => {
+  //     try {
+  //       await supabase.from('transactions').insert([
+  //         {
+  //           user_id: user?.id,
+  //           type: 'deposit',
+  //           amount,
+  //           status: 'completed',
+  //           payment_method: 'Compra rápida'
+  //         }
+  //       ]);
+  //     } catch (e) {
+  //       console.error('❌ Error inserting deposit transaction', e);
+  //     }
+  //   })();
 
-    setTransactions(prev => [...prev, transaction]);
-    setBalance(prev => prev + amount);
-    if (user) {
-      setUser({ 
-        ...user, 
-        balance: user.balance + amount,
-        total_deposits: (user.total_deposits || 0) + amount
-      });
-    }
-  };
+  //   setTransactions(prev => [...prev, transaction]);
+  //   setBalance(prev => prev + amount);
+  //   if (user) {
+  //     setUser({ 
+  //       ...user, 
+  //       balance: user.balance + amount,
+  //       total_deposits: (user.total_deposits || 0) + amount
+  //     });
+  //   }
+  // };
 
-  const handleWithdrawal = (amount: number, method: string) => {
-    if (!user || user.isDemo || amount > balance) return;
+  // const _handleWithdrawal = (amount: number, method: string) => {
+  //   if (!user || user.isDemo || amount > balance) return;
 
-    const transaction: Transaction = {
-      id: Date.now().toString(),
-      type: 'withdrawal',
-      amount,
-      method,
-      status: 'pending',
-      timestamp: new Date()
-    };
+  //   const transaction: Transaction = {
+  //     id: Date.now().toString(),
+  //     type: 'withdrawal',
+  //     amount,
+  //     method,
+  //     status: 'pending',
+  //     timestamp: new Date()
+  //   };
 
-    // Save to Supabase
-    (async () => {
-      try {
-        await supabase.from('transactions').insert([
-          {
-            user_id: user.id,
-            type: 'withdrawal',
-            amount,
-            status: 'pending',
-            payment_method: method
-          }
-        ]);
-      } catch (e) {
-        console.error('❌ Error inserting withdrawal transaction', e);
-      }
-    })();
+  //   // Save to Supabase
+  //   (async () => {
+  //     try {
+  //       await supabase.from('transactions').insert([
+  //         {
+  //           user_id: user.id,
+  //           type: 'withdrawal',
+  //           amount,
+  //           status: 'pending',
+  //           payment_method: method
+  //         }
+  //       ]);
+  //     } catch (e) {
+  //       console.error('❌ Error inserting withdrawal transaction', e);
+  //     }
+  //   })();
 
-    setTransactions(prev => [...prev, transaction]);
-    setBalance(prev => prev - amount);
-    if (user) {
-      setUser({ 
-        ...user, 
-        balance: user.balance - amount,
-        total_withdrawals: (user.total_withdrawals || 0) + amount
-      });
-    }
-  };
+  //   setTransactions(prev => [...prev, transaction]);
+  //   setBalance(prev => prev - amount);
+  //   if (user) {
+  //     setUser({ 
+  //       ...user, 
+  //       balance: user.balance - amount,
+  //       total_withdrawals: (user.total_withdrawals || 0) + amount
+  //     });
+  //   }
+  // };
 
   // FIXED: Improved multiplayer game functions with next round betting
   const handlePlaceBet = () => {
@@ -1047,20 +1047,8 @@ function App() {
         {/* Account Panel */}
         {showAccountPanel && (
           <AccountPanel
-            user={user}
-            balance={balance}
-            gameHistory={gameHistory}
-            transactions={transactions}
-            paymentMethods={paymentMethods}
+            isOpen={showAccountPanel}
             onClose={() => setShowAccountPanel(false)}
-            onLogout={handleLogout}
-            onAddPaymentMethod={handleAddPaymentMethod}
-            onDeposit={handleDeposit}
-            onWithdrawal={handleWithdrawal}
-            autoCashOutEnabled={autoCashOutEnabled}
-            setAutoCashOutEnabled={setAutoCashOutEnabled}
-            autoCashOut={autoCashOut}
-            setAutoCashOut={setAutoCashOut}
           />
         )}
       </div>
@@ -1327,20 +1315,8 @@ function App() {
       {/* Account Panel */}
       {showAccountPanel && (
         <AccountPanel
-          user={user}
-          balance={balance}
-          gameHistory={gameHistory}
-          transactions={transactions}
-          paymentMethods={paymentMethods}
+          isOpen={showAccountPanel}
           onClose={() => setShowAccountPanel(false)}
-          onLogout={handleLogout}
-          onAddPaymentMethod={handleAddPaymentMethod}
-          onDeposit={handleDeposit}
-          onWithdrawal={handleWithdrawal}
-          autoCashOutEnabled={autoCashOutEnabled}
-          setAutoCashOutEnabled={setAutoCashOutEnabled}
-          autoCashOut={autoCashOut}
-          setAutoCashOut={setAutoCashOut}
         />
       )}
     </div>

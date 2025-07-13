@@ -54,31 +54,70 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
           avatar_url: string | null
           balance: number | null
+          country: string | null
           created_at: string | null
+          deposit_limit: number | null
           email: string
           full_name: string | null
+          games_played: number | null
           id: string
+          kyc_verified: boolean | null
+          phone: string | null
+          provider: string | null
+          total_deposits: number | null
+          total_wagered: number | null
+          total_withdrawals: number | null
+          total_won: number | null
           updated_at: string | null
+          withdrawal_limit: number | null
+          withdrawal_methods: Json | null
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
           balance?: number | null
+          country?: string | null
           created_at?: string | null
+          deposit_limit?: number | null
           email: string
           full_name?: string | null
+          games_played?: number | null
           id: string
+          kyc_verified?: boolean | null
+          phone?: string | null
+          provider?: string | null
+          total_deposits?: number | null
+          total_wagered?: number | null
+          total_withdrawals?: number | null
+          total_won?: number | null
           updated_at?: string | null
+          withdrawal_limit?: number | null
+          withdrawal_methods?: Json | null
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
           balance?: number | null
+          country?: string | null
           created_at?: string | null
+          deposit_limit?: number | null
           email?: string
           full_name?: string | null
+          games_played?: number | null
           id?: string
+          kyc_verified?: boolean | null
+          phone?: string | null
+          provider?: string | null
+          total_deposits?: number | null
+          total_wagered?: number | null
+          total_withdrawals?: number | null
+          total_won?: number | null
           updated_at?: string | null
+          withdrawal_limit?: number | null
+          withdrawal_methods?: Json | null
         }
         Relationships: []
       }

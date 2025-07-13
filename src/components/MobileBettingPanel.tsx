@@ -106,13 +106,13 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
   };
 
   const increaseBet = () => {
-    if (!hasActiveBet && !autoBotConfig.isActive && gamePhase === 'waiting' && gameData.gameState.countdown > 0 && gameData.gameState.countdown <= 20) {
+    if (!hasActiveBet && !autoBotConfig.isActive && gamePhase === 'waiting') {
       setBetAmount(Math.min(betAmount + 5, balance));
     }
   };
 
   const decreaseBet = () => {
-    if (!hasActiveBet && !autoBotConfig.isActive && gamePhase === 'waiting' && gameData.gameState.countdown > 0 && gameData.gameState.countdown <= 20) {
+    if (!hasActiveBet && !autoBotConfig.isActive && gamePhase === 'waiting') {
       setBetAmount(Math.max(betAmount - 5, 1));
     }
   };

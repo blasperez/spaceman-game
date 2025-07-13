@@ -168,7 +168,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username })
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Shield size={16} className="text-green-400" title="Chat moderado" />
+          <Shield size={16} className="text-green-400" />
           <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
             <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
