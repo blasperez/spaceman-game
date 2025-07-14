@@ -12,6 +12,7 @@ import { StripeCheckout } from './components/StripeCheckout';
 import { SuccessPage } from './components/SuccessPage';
 import { CancelPage } from './components/CancelPage';
 import { InGameDeposit } from './components/InGameDeposit';
+import { AuthCallback } from './components/AuthCallback';
 import { SubscriptionStatus } from './components/SubscriptionStatus';
 import { useGameSocket } from './hooks/useGameSocket';
 import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, X, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
@@ -1250,6 +1251,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<GameApp />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/cancel" element={<CancelPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
