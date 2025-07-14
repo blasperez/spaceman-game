@@ -170,19 +170,19 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
               </div>
             </div>
 
-            {/* Center - Main Action Button */}
+            {/* Center - Main Action Button with fluid animations */}
             <button
               onClick={handleMainAction}
               disabled={!canBet && !canCashOut}
-              className={`px-8 py-3 rounded-2xl font-bold text-white transition-all ${
+              className={`px-8 py-3 rounded-2xl font-bold text-white shadow-lg ${
                 canCashOut 
-                  ? 'bg-green-500/90 hover:bg-green-600/90 shadow-lg shadow-green-500/30' 
+                  ? 'bg-green-500/90 shadow-green-500/30 btn-cash-out btn-appear' 
                   : canBet
-                  ? 'bg-blue-500/90 hover:bg-blue-600/90 shadow-lg shadow-blue-500/30'
-                  : 'bg-white/20 cursor-not-allowed'
+                  ? 'bg-blue-500/90 shadow-blue-500/30 btn-bet btn-gelatin'
+                  : 'bg-white/20 cursor-not-allowed opacity-50'
               }`}
             >
-              {canCashOut ? 'COBRAR' : 'APOSTAR'}
+              {canCashOut ? '💰 COBRAR' : '🚀 APOSTAR'}
             </button>
 
             {/* Right - Win Amount */}

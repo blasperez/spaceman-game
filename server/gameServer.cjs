@@ -18,6 +18,10 @@ app.use(cors({
 
 app.use(express.json());
 
+// Import Stripe API routes
+const stripeRoutes = require('./stripe-api.cjs');
+app.use('/api', stripeRoutes);
+
 // Servir archivos estáticos desde la carpeta dist (donde Vite genera el build)
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
@@ -46,7 +50,7 @@ let currentGame = {
   gameId: generateGameId(),
   phase: 'waiting', // 'waiting', 'flying', 'crashed'
   multiplier: 1.00,
-  countdown: 10,
+  countdown: 20,
   crashPoint: null,
   startTime: null,
   activeBets: new Map(), // playerId -> bet info
@@ -127,7 +131,7 @@ function startNewRound() {
     gameId: generateGameId(),
     phase: 'waiting',
     multiplier: 1.00,
-    countdown: 10,
+    countdown: 20,
     crashPoint: generateCrashPoint(),
     startTime: null,
     activeBets: new Map(),
