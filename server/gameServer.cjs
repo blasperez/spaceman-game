@@ -21,14 +21,9 @@ app.use(express.json());
 // Servir archivos estáticos desde la carpeta dist (donde Vite genera el build)
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
-// Ruta principal para servir index.html desde dist
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
-});
-
-// Manejar rutas de React (SPA)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+// Health check endpoint for Railway y readiness probe
+app.get('/ready', (req, res) => {
+  res.status(200).send('OK');
 });
 
 // Health check endpoint for Railway
@@ -39,6 +34,16 @@ app.get('/health', (req, res) => {
     players: currentGame.players.size,
     gamePhase: currentGame.phase
   });
+});
+
+// Ruta principal para servir index.html desde dist
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+});
+
+// Manejar rutas de React (SPA)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
 // Game state
@@ -414,7 +419,7 @@ server.listen(PORT, () => {
   console.log(`🚀 WebSocket server running on port ${PORT}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log('🎯 Ready for multiplayer connections!');
-  
+  console.log('✅ /ready endpoint is available for health checks');
   // Start the first round
   startNewRound();
 });
