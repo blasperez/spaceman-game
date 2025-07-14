@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase'
 import EnhancedGameBoard from './components/EnhancedGameBoard';
 import { Statistics } from './components/Statistics';
@@ -1211,12 +1211,105 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<GameApp />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/cancel" element={<CancelPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
+}
+
+// Componente para manejar el callback de autenticación
+function AuthCallback() {
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      try {
+        console.log('🔄 Processing auth callback...');
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('❌ Auth callback error:', error);
+          setError('Error al procesar la autenticación');
+          setIsProcessing(false);
+          return;
+        }
+
+        if (session?.user) {
+          console.log('✅ Auth callback successful for:', session.user.email);
+          
+          // Crear o cargar perfil del usuario
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (!profile) {
+            // Crear perfil si no existe
+            const userProfile = {
+              id: session.user.id,
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name || 'Usuario',
+              avatar_url: session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || 'Usuario')}&background=random`,
+              balance: 1000,
+              provider: 'google'
+            };
+
+            await supabase.from('profiles').insert([userProfile]);
+            console.log('✅ User profile created');
+          }
+
+          // Redirigir al juego
+          navigate('/', { replace: true });
+        } else {
+          console.log('❌ No session found in callback');
+          setError('No se pudo completar la autenticación');
+          setIsProcessing(false);
+        }
+      } catch (error) {
+        console.error('💥 Auth callback exception:', error);
+        setError('Error inesperado durante la autenticación');
+        setIsProcessing(false);
+      }
+    };
+
+    handleAuthCallback();
+  }, [navigate]);
+
+  if (isProcessing) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Completando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 text-lg mb-4">{error}</p>
+          <button 
+            onClick={() => navigate('/', { replace: true })}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 export default App;
