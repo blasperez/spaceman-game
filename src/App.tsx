@@ -755,7 +755,7 @@ function GameApp() {
                 />
                 <div className="text-left">
                   <div className="text-white text-xs font-medium">{balance.toFixed(0)} monedas</div>
-                  {user.isDemo && <div className="text-purple-300 text-xs">Demo</div>}
+                  {amount}
                 </div>
               </button>
             </div>
@@ -868,7 +868,7 @@ function GameApp() {
         )}
 
         {/* NEW Mobile Betting Panel */}
-        <MobileBettingPanel
+        <BettingPanel
           balance={balance}
           betAmount={betAmount}
           setBetAmount={setBetAmount}
@@ -879,12 +879,19 @@ function GameApp() {
           currentWin={currentWin}
           autoCashOut={autoCashOut}
           setAutoCashOut={setAutoCashOut}
+          autoPlay={false}
+          setAutoPlay={() => {}}
           hasActiveBet={hasActiveBet}
           gamePhase={gameData.gameState.phase}
           currentBet={currentBet}
+          lastBetAmount={betAmount}
           autoBotConfig={autoBotConfig}
           autoCashOutEnabled={autoCashOutEnabled}
           setAutoCashOutEnabled={setAutoCashOutEnabled}
+          autoBetEnabled={autoBetEnabled}
+          setAutoBetEnabled={setAutoBetEnabled}
+          autoBetAmount={autoBetAmount}
+          setAutoBetAmount={() => {}}
           multiplier={gameData.gameState.multiplier}
           onShowAutoBotPanel={() => setShowAutoBotPanel(true)}
         />
@@ -1012,23 +1019,22 @@ function GameApp() {
             >
               <CreditCard size={16} className="text-green-400" />
             </button>
-            <button 
+                Balance: {balance.toFixed(0)} monedas
               onClick={() => setShowChat(!showChat)}
               className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg transition-colors"
-            >
+              {canCashOut ? (
               <Users size={16} className="text-white" />
             </button>
-            <button 
+                    Win: {currentWin.toFixed(0)} monedas
               onClick={() => setSoundEnabled(!soundEnabled)}
               className={`p-2 backdrop-blur-md border border-white/20 rounded-lg transition-colors ${
                 soundEnabled 
-                  ? 'bg-green-500/20 hover:bg-green-500/30 border-green-400/30' 
-                  : 'bg-red-500/20 hover:bg-red-500/30 border-red-400/30'
+                    className="px-8 py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-lg transition-colors"
               }`}
             >
-              {soundEnabled ? (
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-500 text-white rounded-lg font-bold text-lg transition-colors"
                 <Volume2 size={16} className="text-green-400" />
-              ) : (
+                  APOSTAR
                 <VolumeX size={16} className="text-red-400" />
               )}
             </button>
@@ -1180,9 +1186,7 @@ function GameApp() {
           <div className="text-right">
             <div className="text-white/70 text-sm">Total Bet</div>
             <div className="text-white font-bold">
-              {hasActiveBet ? `${currentBet.toFixed(0)} monedas` : 
-               nextRoundBet ? `${nextRoundBet.toFixed(0)} monedas (próxima)` :
-               `${betAmount.toFixed(0)} monedas`}
+              {hasActiveBet ? `${currentBet.toFixed(0)} monedas` : `${betAmount.toFixed(0)} monedas`}
             </div>
           </div>
         </div>

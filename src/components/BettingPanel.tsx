@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart3, Settings, Zap, ZapOff } from 'lucide-react';
 
 interface AutoBotConfig {
   isActive: boolean;
@@ -37,6 +37,10 @@ interface BettingPanelProps {
   setAutoBetEnabled: (value: boolean) => void;
   autoBetAmount: number;
   setAutoBetAmount: (value: number) => void;
+  autoCashOutEnabled: boolean;
+  setAutoCashOutEnabled: (value: boolean) => void;
+  multiplier: number;
+  onShowAutoBotPanel: () => void;
 }
 
 export const BettingPanel: React.FC<BettingPanelProps> = ({
@@ -49,7 +53,12 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
   canCashOut,
   currentWin,
   hasActiveBet,
-  autoBotConfig
+  autoBotConfig,
+  autoCashOut,
+  setAutoCashOut,
+  autoCashOutEnabled,
+  setAutoCashOutEnabled,
+  onShowAutoBotPanel
 }) => {
   const [lastTapTime, setLastTapTime] = useState(0);
 
@@ -63,13 +72,13 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
 
   const increaseBet = () => {
     if (!hasActiveBet && !autoBotConfig.isActive) {
-      setBetAmount(Math.min(betAmount + 50, balance));
+      setBetAmount(Math.min(betAmount + 5, balance));
     }
   };
 
   const decreaseBet = () => {
     if (!hasActiveBet && !autoBotConfig.isActive) {
-      setBetAmount(Math.max(betAmount - 50, 10));
+      setBetAmount(Math.max(betAmount - 5, 1));
     }
   };
 
@@ -77,20 +86,20 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* TRANSPARENT Bet Control - NO BACKGROUND BOXES */}
+      {/* Bet Control */}
       <div className="text-center">
         <div className="text-white/90 text-sm mb-2 drop-shadow-lg">Apuesta</div>
         <div className="flex items-center justify-center space-x-4">
           <button
             onClick={() => handleButtonPress(decreaseBet)}
-            disabled={isDisabled || betAmount <= 10}
+            disabled={isDisabled || betAmount <= 1}
             className="w-12 h-12 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white font-bold text-xl transition-all active:scale-95 shadow-lg"
           >
             <ChevronLeft size={24} />
           </button>
           
           <div className="text-center min-w-[140px]">
-            <div className="text-yellow-400 text-2xl font-bold drop-shadow-lg">${betAmount.toLocaleString('es-MX')}</div>
+            <div className="text-yellow-400 text-2xl font-bold drop-shadow-lg">{betAmount} monedas</div>
           </div>
           
           <button
@@ -103,7 +112,68 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
         </div>
       </div>
 
-      {/* SINGLE BUTTON - APOSTAR/RETIRAR - TRANSPARENT */}
+      {/* Quick Bet Amounts */}
+      <div className="flex justify-center space-x-2">
+        {[1, 5, 10, 25, 50].map(amount => (
+          <button
+            key={amount}
+            onClick={() => setBetAmount(amount)}
+            disabled={isDisabled || amount > balance}
+            className="w-12 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-lg text-white font-bold text-xs flex items-center justify-center transition-all"
+          >
+            {amount}
+          </button>
+        ))}
+      </div>
+
+      {/* Auto Cash Out Control */}
+      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setAutoCashOutEnabled(!autoCashOutEnabled)}
+              className={`w-10 h-5 rounded-full transition-all duration-300 ${
+                autoCashOutEnabled 
+                  ? 'bg-green-500 shadow-lg shadow-green-500/30' 
+                  : 'bg-white/20'
+              }`}
+            >
+              <div className={`w-4 h-4 bg-white rounded-full transition-all duration-300 flex items-center justify-center ${
+                autoCashOutEnabled ? 'translate-x-5' : 'translate-x-0.5'
+              }`}>
+                {autoCashOutEnabled ? (
+                  <Zap size={10} className="text-green-500" />
+                ) : (
+                  <ZapOff size={10} className="text-gray-400" />
+                )}
+              </div>
+            </button>
+            <span className="text-white text-sm">Auto Cash Out</span>
+          </div>
+          
+          {autoCashOutEnabled && (
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => setAutoCashOut(Math.max(1.01, autoCashOut - 0.1))}
+                className="w-6 h-6 bg-white/20 hover:bg-white/30 rounded text-white text-xs flex items-center justify-center"
+              >
+                -
+              </button>
+              <div className="bg-orange-500/80 px-2 py-1 rounded text-white text-sm font-bold min-w-[50px] text-center">
+                {autoCashOut.toFixed(1)}x
+              </div>
+              <button 
+                onClick={() => setAutoCashOut(autoCashOut + 0.1)}
+                className="w-6 h-6 bg-white/20 hover:bg-white/30 rounded text-white text-xs flex items-center justify-center"
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Action Button - FIXED: Show CASH OUT when can cash out */}
       <div>
         <button
           onClick={canCashOut ? onCashOut : onPlaceBet}
@@ -117,19 +187,25 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
           }`}
         >
           <div className="text-white font-bold text-lg drop-shadow-lg">
-            {canCashOut ? 'RETIRAR' : 'APOSTAR'}
+            {canCashOut ? 'CASH OUT' : 'APOSTAR'}
           </div>
           <div className="text-white text-2xl font-bold drop-shadow-lg">
             {canCashOut 
-              ? `$${currentWin.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` 
-              : `$${betAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
+              ? `${currentWin.toFixed(2)} monedas` 
+              : `${betAmount} monedas`
             }
           </div>
         </button>
       </div>
 
-      {/* TRANSPARENT Side Controls - Only BarChart3 remains */}
-      <div className="flex justify-center">
+      {/* Side Controls */}
+      <div className="flex justify-center space-x-2">
+        <button 
+          onClick={onShowAutoBotPanel}
+          className="p-3 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-xl transition-all active:scale-95 shadow-lg"
+        >
+          <Settings size={20} className="text-white" />
+        </button>
         <button className="p-3 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-xl transition-all active:scale-95 shadow-lg">
           <BarChart3 size={20} className="text-white" />
         </button>
