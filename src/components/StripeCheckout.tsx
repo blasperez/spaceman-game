@@ -13,7 +13,7 @@ export const StripeCheckout: React.FC<StripeCheckoutProps> = ({ onClose }) => {
   const [customAmount, setCustomAmount] = useState(50);
   const [showCustom, setShowCustom] = useState(false);
 
-  const handleCheckout = async (coins: number, amount: number) => {
+  const handleCheckout = async (coins: number, _amount: number) => {
     setLoading(true);
     setError(null);
 
