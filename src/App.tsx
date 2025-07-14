@@ -552,41 +552,44 @@ function GameApp() {
 
   // FIXED: Improved multiplayer game functions with next round betting
   const handlePlaceBet = () => {
-    if (gameData.gameState.phase === 'waiting' && gameData.gameState.countdown > 0 && gameData.gameState.countdown <= 20 && betAmount <= balance && !hasActiveBet && !betLocked && !autoBotConfig.isActive) {
+    if (
+      gameData.gameState.phase === 'waiting' &&
+      gameData.gameState.countdown > 0 &&
+      gameData.gameState.countdown <= 20 &&
+      betAmount <= balance &&
+      !betLocked &&
+      !autoBotConfig.isActive
+    ) {
       const safeBetAmount = Math.min(betAmount, balance);
-      
-      // Lock betting to prevent double bets
       setBetLocked(true);
-      
-      // Place bet via WebSocket
       placeBet(safeBetAmount);
-      
-      // Update local state
       setBalance(prev => prev - safeBetAmount);
-      setCurrentBet(safeBetAmount);
+      setCurrentBet(prev => prev + safeBetAmount); // Suma la apuesta
       setHasActiveBet(true);
       setHasCashedOut(false);
-      
-      setChatMessages(prev => [...prev, {
-        id: Date.now(),
-        username: user?.name || 'Jugador',
-        message: `🚀 Apuesta colocada de ${safeBetAmount.toFixed(0)} monedas`,
-        timestamp: new Date(),
-        type: 'user'
-      }]);
-      
-      // Unlock after a short delay
+      setChatMessages(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          username: user?.name || 'Jugador',
+          message: `🚀 Apuesta colocada de ${safeBetAmount.toFixed(0)} monedas`,
+          timestamp: new Date(),
+          type: 'user',
+        },
+      ]);
       setTimeout(() => setBetLocked(false), 1000);
     } else {
-      // Show message when betting is not allowed
       if (gameData.gameState.phase !== 'waiting') {
-        setChatMessages(prev => [...prev, {
-          id: Date.now(),
-          username: 'Sistema',
-          message: `⚠️ Solo puedes apostar durante la ventana de apuestas (20 segundos)`,
-          timestamp: new Date(),
-          type: 'system'
-        }]);
+        setChatMessages(prev => [
+          ...prev,
+          {
+            id: Date.now(),
+            username: 'Sistema',
+            message: `⚠️ Solo puedes apostar durante la ventana de apuestas (20 segundos)` ,
+            timestamp: new Date(),
+            type: 'system',
+          },
+        ]);
       }
     }
   };
