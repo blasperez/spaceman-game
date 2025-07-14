@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase'
 import EnhancedGameBoard from './components/EnhancedGameBoard';
 import { Statistics } from './components/Statistics';
@@ -7,8 +8,12 @@ import { LoginScreen } from './components/LoginScreen';
 import { AccountPanel } from './components/AccountPanel';
 import { AutoBotPanel } from './components/AutoBotPanel';
 import { ConnectionStatus } from './components/ConnectionStatus';
+import { StripeCheckout } from './components/StripeCheckout';
+import { SuccessPage } from './components/SuccessPage';
+import { CancelPage } from './components/CancelPage';
+import { SubscriptionStatus } from './components/SubscriptionStatus';
 import { useGameSocket } from './hooks/useGameSocket';
-import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, X, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
 import { MobileBettingPanel } from './components/MobileBettingPanel';
 
@@ -82,7 +87,7 @@ interface AutoBotConfig {
   stopOnLoss: boolean;
 }
 
-function App() {
+function GameApp() {
   // Auth state
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showAccountPanel, setShowAccountPanel] = useState(false);
@@ -90,6 +95,7 @@ function App() {
   const [showAutoBotPanel, setShowAutoBotPanel] = useState(false);
   const [showStatistics, setShowStatistics] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
   
@@ -568,121 +574,6 @@ function App() {
     setBalance(1000.00);
   };
 
-  // const _handleLogout = async () => {
-  //   try {
-  //     const { error } = await supabase.auth.signOut();
-  //     if (error) {
-  //       console.error('❌ Logout error:', error);
-  //     }
-  //   } catch (error) {
-  //     console.error('❌ Logout exception:', error);
-  //   }
-    
-  //   // Reset local state
-  //   setUser(null);
-  //   setShowAccountPanel(false);
-  //   setBalance(1000.00);
-  //   setGameHistory([]);
-  //   setTransactions([]);
-  //   setPaymentMethods([]);
-  //   setAutoBotConfig(prev => ({ ...prev, isActive: false, currentRounds: 0, totalProfit: 0 }));
-  //   setAutoBetEnabled(false);
-  //   setHasActiveBet(false);
-  //   setCurrentBet(0);
-  //   setHasCashedOut(false);
-  //   setBetLocked(false);
-  //   setNextRoundBet(null);
-  // };
-
-  // Payment functions (temporarily unused)
-  // const _handleAddPaymentMethod = (method: Omit<PaymentMethod, 'id'>) => {
-  //   const newMethod: PaymentMethod = {
-  //     ...method,
-  //     id: Date.now().toString()
-  //   };
-  //   setPaymentMethods(prev => [...prev, newMethod]);
-  // };
-
-  // const _handleDeposit = (amount: number, _methodId: string) => {
-  //   if (user?.isDemo) return;
-
-  //   const transaction: Transaction = {
-  //     id: Date.now().toString(),
-  //     type: 'deposit',
-  //     amount,
-  //     method: 'Compra rápida',
-  //     status: 'completed',
-  //     timestamp: new Date()
-  //   };
-
-  //   // Save to Supabase
-  //   (async () => {
-  //     try {
-  //       await supabase.from('transactions').insert([
-  //         {
-  //           user_id: user?.id,
-  //           type: 'deposit',
-  //           amount,
-  //           status: 'completed',
-  //           payment_method: 'Compra rápida'
-  //         }
-  //       ]);
-  //     } catch (e) {
-  //       console.error('❌ Error inserting deposit transaction', e);
-  //     }
-  //   })();
-
-  //   setTransactions(prev => [...prev, transaction]);
-  //   setBalance(prev => prev + amount);
-  //   if (user) {
-  //     setUser({ 
-  //       ...user, 
-  //       balance: user.balance + amount,
-  //       total_deposits: (user.total_deposits || 0) + amount
-  //     });
-  //   }
-  // };
-
-  // const _handleWithdrawal = (amount: number, method: string) => {
-  //   if (!user || user.isDemo || amount > balance) return;
-
-  //   const transaction: Transaction = {
-  //     id: Date.now().toString(),
-  //     type: 'withdrawal',
-  //     amount,
-  //     method,
-  //     status: 'pending',
-  //     timestamp: new Date()
-  //   };
-
-  //   // Save to Supabase
-  //   (async () => {
-  //     try {
-  //       await supabase.from('transactions').insert([
-  //         {
-  //           user_id: user.id,
-  //           type: 'withdrawal',
-  //           amount,
-  //           status: 'pending',
-  //           payment_method: method
-  //         }
-  //       ]);
-  //     } catch (e) {
-  //       console.error('❌ Error inserting withdrawal transaction', e);
-  //     }
-  //   })();
-
-  //   setTransactions(prev => [...prev, transaction]);
-  //   setBalance(prev => prev - amount);
-  //   if (user) {
-  //     setUser({ 
-  //       ...user, 
-  //       balance: user.balance - amount,
-  //       total_withdrawals: (user.total_withdrawals || 0) + amount
-  //     });
-  //   }
-  // };
-
   // FIXED: Improved multiplayer game functions with next round betting
   const handlePlaceBet = () => {
     if (gameData.gameState.phase === 'waiting' && gameData.gameState.countdown > 0 && gameData.gameState.countdown <= 20 && betAmount <= balance && !hasActiveBet && !betLocked && !autoBotConfig.isActive) {
@@ -879,6 +770,13 @@ function App() {
             {/* Right - Controls */}
             <div className="flex items-center space-x-2">
               <button 
+                onClick={() => setShowStripeCheckout(true)}
+                className="p-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-md border border-green-400/30 rounded-lg transition-colors"
+              >
+                <CreditCard size={16} className="text-green-400" />
+              </button>
+              
+              <button 
                 onClick={() => setSoundEnabled(!soundEnabled)}
                 className={`p-2 backdrop-blur-md border border-white/20 rounded-lg transition-colors ${
                   soundEnabled 
@@ -1051,6 +949,11 @@ function App() {
             onClose={() => setShowAccountPanel(false)}
           />
         )}
+
+        {/* Stripe Checkout */}
+        {showStripeCheckout && (
+          <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
+        )}
       </div>
     );
   }
@@ -1104,6 +1007,12 @@ function App() {
           {/* Right Side - Controls */}
           <div className="flex items-center space-x-2">
             <button 
+              onClick={() => setShowStripeCheckout(true)}
+              className="p-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-md border border-green-400/30 rounded-lg transition-colors"
+            >
+              <CreditCard size={16} className="text-green-400" />
+            </button>
+            <button 
               onClick={() => setShowChat(!showChat)}
               className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg transition-colors"
             >
@@ -1139,13 +1048,16 @@ function App() {
         </div>
       </header>
 
-      {/* Left Side Panel - Balance */}
+      {/* Left Side Panel - Balance & Subscription */}
       <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-40 space-y-3">
         <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl p-3">
           <div className="text-white/70 text-xs">Balance</div>
           <div className="text-white font-bold">{balance.toFixed(0)} monedas</div>
           <div className="text-white/60 text-xs">≈ ${balance.toFixed(0)} MXN</div>
         </div>
+        
+        {/* Subscription Status */}
+        <SubscriptionStatus />
       </div>
 
       {/* Next Round Bet Indicator */}
@@ -1319,7 +1231,25 @@ function App() {
           onClose={() => setShowAccountPanel(false)}
         />
       )}
+
+      {/* Stripe Checkout */}
+      {showStripeCheckout && (
+        <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
+      )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<GameApp />} />
+        <Route path="/success" element={<SuccessPage />} />
+        <Route path="/cancel" element={<CancelPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   );
 }
 
