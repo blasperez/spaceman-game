@@ -260,31 +260,31 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
     try {
       console.log('🔍 Iniciando login de Google...');
       console.log('🔍 Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-      console.log('🔍 Google Client ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
       console.log('🔍 Current origin:', window.location.origin);
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
+            hd: undefined // Remove hosted domain restriction
           }
         }
       });
       
       if (error) {
         console.error('❌ Error con Google:', error);
-        setMessage('Error con Google: ' + error.message);
+        setMessage('Error con Google OAuth. Intenta de nuevo.');
         setAuthLoading(false);
       } else {
         console.log('✅ Redirección iniciada correctamente');
-        // No necesitamos hacer nada más aquí, la redirección ocurre automáticamente
+        // La redirección ocurre automáticamente
       }
     } catch (error) {
       console.error('❌ Error al conectar con Google:', error);
-      setMessage('Error al conectar con Google: ' + (error as Error).message);
+      setMessage('Error de conexión. Verifica tu internet e intenta de nuevo.');
       setAuthLoading(false);
     }
   };

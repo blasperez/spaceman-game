@@ -179,7 +179,18 @@ function GameApp() {
           setSessionChecked(true);
         }, 5000);
 
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Try to get session with retry logic
+        let session = null;
+        let error = null;
+        
+        for (let i = 0; i < 3; i++) {
+          const result = await supabase.auth.getSession();
+          session = result.data.session;
+          error = result.error;
+          
+          if (!error || i === 2) break;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
         
         clearTimeout(timeoutId);
 
