@@ -180,14 +180,14 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
           disabled={!canBet && !canCashOut}
           className={`w-full backdrop-blur-md border-2 rounded-2xl p-4 text-center transition-all active:scale-95 shadow-2xl ${
             canCashOut 
-              ? 'bg-green-500/80 border-green-400/50 hover:bg-green-600/80' 
+              ? 'bg-red-600/90 border-red-400/50 hover:bg-red-700/90' 
               : canBet
               ? 'bg-blue-500/80 border-blue-400/50 hover:bg-blue-600/80'
               : 'bg-white/20 border-white/30 cursor-not-allowed'
           }`}
         >
           <div className="text-white font-bold text-lg drop-shadow-lg">
-            {canCashOut ? 'CASH OUT' : 'APOSTAR'}
+            {canCashOut ? 'RETIRAR' : 'APOSTAR'}
           </div>
           <div className="text-white text-2xl font-bold drop-shadow-lg">
             {canCashOut 

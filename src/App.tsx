@@ -1140,13 +1140,13 @@ function GameApp() {
               disabled={!canBet && !canCashOut}
               className={`px-8 py-3 rounded-xl font-bold text-white transition-all ${
                 canCashOut 
-                  ? 'bg-green-500/80 hover:bg-green-600/80' 
+                  ? 'bg-red-600/90 hover:bg-red-700/90' 
                   : canBet
                   ? 'bg-green-500/80 hover:bg-green-600/80'
                   : 'bg-white/20 cursor-not-allowed'
               }`}
             >
-              {canCashOut ? 'CASH OUT' : 'APOSTAR'}
+              {canCashOut ? 'RETIRAR' : 'APOSTAR'}
             </button>
             
             <div className="text-white text-lg font-bold">
