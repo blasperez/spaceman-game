@@ -426,10 +426,9 @@ function GameApp() {
     }
   }, [gameData.gameState.phase, gameData.gameState.crashPoint]);
 
-  // FIXED: Reset bet state when game phase changes with next round betting
+  // FIXED: Reset bet state SOLO cuando inicia nueva ronda (countdown === 20)
   useEffect(() => {
-    if (gameData.gameState.phase === 'waiting' && gameData.gameState.countdown <= 20 && gameData.gameState.countdown > 0) {
-      // Reset bet state for new round (removed next round betting logic)
+    if (gameData.gameState.phase === 'waiting' && gameData.gameState.countdown === 20) {
       setHasActiveBet(false);
       setCurrentBet(0);
       setHasCashedOut(false);
@@ -465,7 +464,7 @@ function GameApp() {
         setBetLocked(false);
       }, 2000);
     }
-  }, [gameData.gameState.phase, gameData.gameState.crashPoint, hasActiveBet, hasCashedOut, currentBet, user?.name, balance, betLocked, placeBet]);
+  }, [gameData.gameState.phase, gameData.gameState.countdown, gameData.gameState.crashPoint, hasActiveBet, hasCashedOut, currentBet, user?.name, balance, betLocked, placeBet]);
 
   // Auto cash out logic for multiplayer
   useEffect(() => {
