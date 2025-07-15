@@ -102,81 +102,29 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
       return;
     }
 
-    // Minimum withdrawal validation
-    if (amount < 10) {
-      setError('Monto mínimo de retiro: $10');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
     try {
-      // Step 1: Create Stripe payout intent
-      const response = await fetch('/api/create-payout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: amount * 100, // Convert to cents
-          currency: 'usd',
-          user_id: user?.id,
-          method: 'bank_account'
-        }),
-      });
-
-      const { payoutIntent, error: stripeError } = await response.json();
-
-      if (stripeError) {
-        setError(`Error de Stripe: ${stripeError}`);
-        setLoading(false);
-        return;
-      }
-
-      // Step 2: Create withdrawal transaction in Supabase
-      const { error: dbError } = await supabase
+      // Create withdrawal transaction
+      const { error } = await supabase
         .from('transactions')
         .insert({
           user_id: user?.id,
           type: 'withdrawal',
           amount: amount,
-          payment_method: 'stripe_payout',
-          status: 'pending',
-          stripe_payment_intent_id: payoutIntent.id,
-          created_at: new Date().toISOString()
+          payment_method: 'pending',
+          status: 'pending'
         });
 
-      if (dbError) {
-        setError('Error guardando transacción en base de datos');
-        setLoading(false);
-        return;
-      }
-
-      // Step 3: Update user balance
-      const { error: balanceError } = await supabase
-        .from('users')
-        .update({ 
-          balance: userProfile.balance - amount,
-          total_withdrawals: (userProfile.total_withdrawals || 0) + amount
-        })
-        .eq('id', user?.id);
-
-      if (balanceError) {
-        setError('Error actualizando balance');
-        setLoading(false);
+      if (error) {
+        setError('Error procesando retiro');
         return;
       }
 
       setWithdrawAmount('');
       setError(null);
-      alert(`✅ Retiro de $${amount} procesado exitosamente. Será enviado a tu método de pago en 1-3 días hábiles.`);
+      alert('Solicitud de retiro enviada. Será procesada en 24-48 horas.');
       fetchUserData(); // Refresh data
     } catch (err) {
-      console.error('Withdrawal error:', err);
-      setError('Error procesando retiro. Por favor intenta nuevamente.');
-    } finally {
-      setLoading(false);
+      setError('Error procesando retiro');
     }
   };
 

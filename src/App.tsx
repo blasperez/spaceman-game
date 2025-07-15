@@ -11,8 +11,6 @@ import { ConnectionStatus } from './components/ConnectionStatus';
 import { StripeCheckout } from './components/StripeCheckout';
 import { SuccessPage } from './components/SuccessPage';
 import { CancelPage } from './components/CancelPage';
-import { InGameDeposit } from './components/InGameDeposit';
-import { AuthCallback } from './components/AuthCallback';
 import { SubscriptionStatus } from './components/SubscriptionStatus';
 import { useGameSocket } from './hooks/useGameSocket';
 import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, X, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
@@ -98,7 +96,6 @@ function GameApp() {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
-  const [showInGameDeposit, setShowInGameDeposit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
   
@@ -659,18 +656,6 @@ function GameApp() {
     setChatMessages(prev => [...prev, newMessage]);
   };
 
-  const handleDepositSuccess = (amount: number) => {
-    // Actualizar balance localmente
-    if (user) {
-      setUser({
-        ...user,
-        balance: user.balance + amount
-      });
-    }
-    // Mostrar mensaje de éxito
-    alert(`✅ Depósito exitoso! Se agregaron $${amount} a tu cuenta.`);
-  };
-
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
@@ -759,15 +744,6 @@ function GameApp() {
                 />
                 <div className="text-left">
                   <div className="text-white text-xs font-medium">{balance.toFixed(0)} monedas</div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowInGameDeposit(true);
-                    }}
-                    className="text-green-400 text-xs hover:text-green-300 transition-colors"
-                  >
-                    + Agregar fondos
-                  </button>
                 </div>
               </button>
             </div>
@@ -964,15 +940,6 @@ function GameApp() {
         {/* Stripe Checkout */}
         {showStripeCheckout && (
           <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
-        )}
-
-        {showInGameDeposit && (
-          <InGameDeposit
-            isOpen={showInGameDeposit}
-            onClose={() => setShowInGameDeposit(false)}
-            onSuccess={handleDepositSuccess}
-            currentBalance={balance}
-          />
         )}
       </div>
     );
@@ -1244,16 +1211,6 @@ function GameApp() {
       {/* Stripe Checkout */}
       {showStripeCheckout && (
         <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
-      )}
-
-      {/* In-Game Deposit */}
-      {showInGameDeposit && (
-        <InGameDeposit
-          isOpen={showInGameDeposit}
-          onClose={() => setShowInGameDeposit(false)}
-          onSuccess={handleDepositSuccess}
-          currentBalance={balance}
-        />
       )}
     </div>
   );

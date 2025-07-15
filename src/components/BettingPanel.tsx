@@ -93,7 +93,7 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
           <button
             onClick={() => handleButtonPress(decreaseBet)}
             disabled={isDisabled || betAmount <= 1}
-            className="w-12 h-12 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg btn-elastic"
+            className="w-12 h-12 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white font-bold text-xl transition-all active:scale-95 shadow-lg"
           >
             <ChevronLeft size={24} />
           </button>
@@ -105,7 +105,7 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
           <button
             onClick={() => handleButtonPress(increaseBet)}
             disabled={isDisabled || betAmount >= balance}
-            className="w-12 h-12 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg btn-elastic"
+            className="w-12 h-12 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white font-bold text-xl transition-all active:scale-95 shadow-lg"
           >
             <ChevronRight size={24} />
           </button>
@@ -173,21 +173,21 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
         </div>
       </div>
 
-      {/* Main Action Button - FIXED: Show CASH OUT when can cash out with fluid animations */}
+      {/* Main Action Button - FIXED: Show CASH OUT when can cash out */}
       <div>
         <button
           onClick={canCashOut ? onCashOut : onPlaceBet}
           disabled={!canBet && !canCashOut}
-          className={`w-full backdrop-blur-md border-2 rounded-2xl p-4 text-center shadow-2xl ${
+          className={`w-full backdrop-blur-md border-2 rounded-2xl p-4 text-center transition-all active:scale-95 shadow-2xl ${
             canCashOut 
-              ? 'bg-green-500/80 border-green-400/50 btn-cash-out btn-appear' 
+              ? 'bg-red-600/90 border-red-400/50 hover:bg-red-700/90' 
               : canBet
-              ? 'bg-blue-500/80 border-blue-400/50 btn-bet btn-gelatin'
-              : 'bg-white/20 border-white/30 cursor-not-allowed opacity-50'
+              ? 'bg-blue-500/80 border-blue-400/50 hover:bg-blue-600/80'
+              : 'bg-white/20 border-white/30 cursor-not-allowed'
           }`}
         >
           <div className="text-white font-bold text-lg drop-shadow-lg">
-            {canCashOut ? '💰 CASH OUT' : '🚀 APOSTAR'}
+            {canCashOut ? 'RETIRAR' : 'APOSTAR'}
           </div>
           <div className="text-white text-2xl font-bold drop-shadow-lg">
             {canCashOut 

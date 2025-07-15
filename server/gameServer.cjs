@@ -18,29 +18,8 @@ app.use(cors({
 
 app.use(express.json());
 
-// Import Stripe API routes
-const stripeRoutes = require('./stripe-api.cjs');
-app.use('/api', stripeRoutes);
-
 // Servir archivos estáticos desde la carpeta dist (donde Vite genera el build)
-const distPath = path.join(__dirname, '..', 'dist');
-console.log(`📁 Static files path: ${distPath}`);
-
-// Check if dist folder exists
-const fs = require('fs');
-if (fs.existsSync(distPath)) {
-  console.log('✅ Dist folder found, serving static files');
-  app.use(express.static(distPath));
-} else {
-  console.log('⚠️  Dist folder not found, creating fallback');
-  // Fallback for when build hasn't completed yet
-  app.get('*', (req, res) => {
-    if (req.path.startsWith('/api') || req.path === '/health' || req.path === '/ready') {
-      return; // Let API routes handle themselves
-    }
-    res.status(503).send('Build in progress, please wait...');
-  });
-}
+app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // Health check endpoint for Railway y readiness probe
 app.get('/ready', (req, res) => {
@@ -49,40 +28,11 @@ app.get('/ready', (req, res) => {
 
 // Health check endpoint for Railway
 app.get('/health', (req, res) => {
-  try {
-    const healthData = {
-      status: 'healthy', 
-      timestamp: new Date().toISOString(),
-      players: currentGame ? currentGame.players.size : 0,
-      gamePhase: currentGame ? currentGame.phase : 'initializing',
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      port: PORT
-    };
-    
-    console.log('✅ Health check successful:', healthData);
-    res.status(200).json(healthData);
-  } catch (error) {
-    console.error('❌ Health check failed:', error);
-    res.status(500).json({ 
-      status: 'unhealthy', 
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Simple readiness probe
-app.get('/ready', (req, res) => {
-  res.status(200).send('OK');
-});
-
-// API status endpoint
-app.get('/api/status', (req, res) => {
-  res.status(200).json({
-    api: 'online',
+  res.status(200).json({ 
+    status: 'healthy', 
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    players: currentGame.players.size,
+    gamePhase: currentGame.phase
   });
 });
 
@@ -101,7 +51,7 @@ let currentGame = {
   gameId: generateGameId(),
   phase: 'waiting', // 'waiting', 'flying', 'crashed'
   multiplier: 1.00,
-  countdown: 20,
+  countdown: 10,
   crashPoint: null,
   startTime: null,
   activeBets: new Map(), // playerId -> bet info
@@ -182,7 +132,7 @@ function startNewRound() {
     gameId: generateGameId(),
     phase: 'waiting',
     multiplier: 1.00,
-    countdown: 20,
+    countdown: 10,
     crashPoint: generateCrashPoint(),
     startTime: null,
     activeBets: new Map(),
@@ -468,8 +418,6 @@ server.listen(PORT, () => {
   console.log('🎮 Spaceman Game Server Starting...');
   console.log(`🚀 WebSocket server running on port ${PORT}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`💚 Health check available at: http://localhost:${PORT}/health`);
-  console.log(`🕐 Server started at: ${new Date().toISOString()}`);
   console.log('🎯 Ready for multiplayer connections!');
   console.log('✅ /ready endpoint is available for health checks');
   // Start the first round

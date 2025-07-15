@@ -180,37 +180,37 @@
   animation: twinkle 4s ease-in-out infinite;
 }
 
-/* CORRECTED: Planetas se mueven de IZQUIERDA a DERECHA (como debe ser) */
+/* FIXED: Planetas se mueven de DERECHA a IZQUIERDA (como si el astronauta volara hacia la derecha) */
 @keyframes planetFloat1 {
   0% {
-    transform: translateX(-600px) translateY(0px) rotate(0deg);
-    left: -400px;
+    transform: translateX(calc(100vw + 400px)) translateY(0px) rotate(0deg);
+    left: calc(100vw + 200px);
   }
   100% {
-    transform: translateX(calc(100vw + 400px)) translateY(20px) rotate(360deg);
-    left: calc(100vw + 200px);
+    transform: translateX(-600px) translateY(20px) rotate(-360deg);
+    left: -400px;
   }
 }
 
 @keyframes planetFloat2 {
   0% {
-    transform: translateX(-600px) translateY(0px) rotate(0deg);
-    left: -400px;
+    transform: translateX(calc(100vw + 400px)) translateY(0px) rotate(0deg);
+    left: calc(100vw + 200px);
   }
   100% {
-    transform: translateX(calc(100vw + 400px)) translateY(-15px) rotate(-360deg);
-    left: calc(100vw + 200px);
+    transform: translateX(-600px) translateY(-15px) rotate(360deg);
+    left: -400px;
   }
 }
 
 @keyframes planetFloat3 {
   0% {
-    transform: translateX(-600px) translateY(0px) rotate(0deg);
-    left: -400px;
+    transform: translateX(calc(100vw + 400px)) translateY(0px) rotate(0deg);
+    left: calc(100vw + 200px);
   }
   100% {
-    transform: translateX(calc(100vw + 400px)) translateY(10px) rotate(180deg);
-    left: calc(100vw + 200px);
+    transform: translateX(-600px) translateY(10px) rotate(-180deg);
+    left: -400px;
   }
 }
 
@@ -418,102 +418,4 @@
     width: 140px;
     height: 140px;
   }
-}
-
-/* Animaciones fluidas tipo "goma" para botones */
-@keyframes gelatin {
-  from, to {
-    transform: scale(1);
-  }
-  25% {
-    transform: scale(0.9, 1.1);
-  }
-  50% {
-    transform: scale(1.1, 0.9);
-  }
-  75% {
-    transform: scale(0.95, 1.05);
-  }
-}
-
-@keyframes bounce-in {
-  0% {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-  70% {
-    transform: scale(0.9);
-    opacity: 0.9;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes elastic-press {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.85) rotateZ(-2deg); }
-  100% { transform: scale(1); }
-}
-
-.btn-gelatin {
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  transform-origin: center center;
-}
-
-.btn-gelatin:hover {
-  transform: scale(1.05);
-  transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.btn-gelatin:active {
-  animation: gelatin 0.6s ease-in-out;
-  transform: scale(0.95);
-}
-
-.btn-elastic {
-  transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.btn-elastic:active {
-  animation: elastic-press 0.4s ease-out;
-}
-
-.btn-cash-out {
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-origin: center;
-}
-
-.btn-cash-out:hover {
-  transform: scale(1.08) translateY(-2px);
-  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
-}
-
-.btn-cash-out:active {
-  animation: gelatin 0.5s ease-in-out;
-  transform: scale(0.92);
-}
-
-.btn-bet {
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-origin: center;
-}
-
-.btn-bet:hover {
-  transform: scale(1.08) translateY(-2px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-}
-
-.btn-bet:active {
-  animation: gelatin 0.5s ease-in-out;
-  transform: scale(0.92);
-}
-
-.btn-appear {
-  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }

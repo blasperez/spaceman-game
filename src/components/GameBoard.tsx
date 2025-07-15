@@ -175,15 +175,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       const interval = setInterval(() => {
         setPlanetPositions(prev => ({
           planet1: {
-            x: prev.planet1.x + 0.4 > 125 ? -25 : prev.planet1.x + 0.4,
+            x: prev.planet1.x - 0.4 < -25 ? 125 : prev.planet1.x - 0.4,
             y: prev.planet1.y + Math.sin(Date.now() * 0.001) * 0.15
           },
           planet2: {
-            x: prev.planet2.x + 0.3 > 130 ? -30 : prev.planet2.x + 0.3,
+            x: prev.planet2.x - 0.3 < -30 ? 130 : prev.planet2.x - 0.3,
             y: prev.planet2.y + Math.cos(Date.now() * 0.0008) * 0.12
           },
           planet3: {
-            x: prev.planet3.x + 0.35 > 135 ? -35 : prev.planet3.x + 0.35,
+            x: prev.planet3.x - 0.35 < -35 ? 135 : prev.planet3.x - 0.35,
             y: prev.planet3.y + Math.sin(Date.now() * 0.0012) * 0.1
           },
           moon1: {
@@ -521,7 +521,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   fill="transparent"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 50}`}
-                  strokeDashoffset={`${2 * Math.PI * 50 * (countdown / 20)}`}
+                  strokeDashoffset={`${2 * Math.PI * 50 * (countdown / 9)}`}
                   className="transition-all duration-1000 ease-linear"
                 />
                 <defs>

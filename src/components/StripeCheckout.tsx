@@ -13,7 +13,7 @@ export const StripeCheckout: React.FC<StripeCheckoutProps> = ({ onClose }) => {
   const [customAmount, setCustomAmount] = useState(50);
   const [showCustom, setShowCustom] = useState(false);
 
-  const handleCheckout = async (coins: number, amount: number) => {
+  const handleCheckout = async (coins: number, _amount: number) => {
     setLoading(true);
     setError(null);
 
@@ -25,54 +25,37 @@ export const StripeCheckout: React.FC<StripeCheckoutProps> = ({ onClose }) => {
         return;
       }
 
-      // Step 1: Create payment intent with Stripe
-      const response = await fetch('/api/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: amount * 100, // Convert to cents
-          currency: 'usd',
-          user_id: session.user.id
-        }),
-      });
-
-      const { client_secret, payment_intent_id, error: paymentError } = await response.json();
-
-      if (paymentError) {
-        setError(`Error de pago: ${paymentError}`);
-        return;
-      }
-
-      // Step 2: In a real app, you'd use Stripe Elements to collect payment
-      // For demo purposes, we'll simulate a successful payment
-      console.log('Payment Intent created:', payment_intent_id);
+      // For now, simulate the purchase since we need to set up Stripe products first
+      // In production, this would call the Stripe checkout endpoint
       
-      // Step 3: Confirm payment (in real app, this would be done via Stripe Elements)
-      const confirmResponse = await fetch('/api/confirm-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          payment_intent_id: payment_intent_id,
-          user_id: session.user.id
-        }),
-      });
+      // Simulate successful purchase by adding coins directly to balance
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('id', session.user.id)
+        .single();
 
-      const { success, new_balance, error: confirmError } = await confirmResponse.json();
-
-      if (confirmError) {
-        setError(`Error confirmando pago: ${confirmError}`);
-        return;
+      if (profileError) {
+        throw new Error('Error al obtener el perfil del usuario');
       }
 
-      if (success) {
-        alert(`✅ Compra exitosa! Se agregaron ${coins} monedas a tu cuenta. Nuevo balance: ${new_balance}`);
-        onClose(); // Close the modal
-        window.location.reload(); // Refresh to show new balance
+      const newBalance = (profile.balance || 0) + coins;
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ balance: newBalance })
+        .eq('id', session.user.id);
+
+      if (updateError) {
+        throw new Error('Error al actualizar el balance');
       }
+
+      // Close modal and show success
+      onClose();
+      alert(`¡Compra exitosa! Se agregaron ${coins} monedas a tu cuenta.`);
+      
+      // Refresh the page to update balance
+      window.location.reload();
 
     } catch (err: any) {
       console.error('Checkout error:', err);
