@@ -42,14 +42,9 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-// Ruta principal para servir index.html desde dist
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
-});
-
-// Manejar rutas de React (SPA)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+// Health check endpoint for Railway y readiness probe
+app.get('/ready', (req, res) => {
+  res.status(200).send('OK');
 });
 
 // Health check endpoint for Railway
@@ -89,6 +84,16 @@ app.get('/api/status', (req, res) => {
     timestamp: new Date().toISOString(),
     version: '1.0.0'
   });
+});
+
+// Ruta principal para servir index.html desde dist
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+});
+
+// Manejar rutas de React (SPA)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
 // Game state
@@ -466,7 +471,7 @@ server.listen(PORT, () => {
   console.log(`💚 Health check available at: http://localhost:${PORT}/health`);
   console.log(`🕐 Server started at: ${new Date().toISOString()}`);
   console.log('🎯 Ready for multiplayer connections!');
-  
+  console.log('✅ /ready endpoint is available for health checks');
   // Start the first round
   startNewRound();
 });

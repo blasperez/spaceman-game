@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase'
 import EnhancedGameBoard from './components/EnhancedGameBoard';
 import { Statistics } from './components/Statistics';
@@ -182,7 +182,18 @@ function GameApp() {
           setSessionChecked(true);
         }, 5000);
 
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Try to get session with retry logic
+        let session = null;
+        let error = null;
+        
+        for (let i = 0; i < 3; i++) {
+          const result = await supabase.auth.getSession();
+          session = result.data.session;
+          error = result.error;
+          
+          if (!error || i === 2) break;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
         
         clearTimeout(timeoutId);
 
@@ -418,10 +429,9 @@ function GameApp() {
     }
   }, [gameData.gameState.phase, gameData.gameState.crashPoint]);
 
-  // FIXED: Reset bet state when game phase changes with next round betting
+  // FIXED: Reset bet state SOLO cuando inicia nueva ronda (countdown === 20)
   useEffect(() => {
-    if (gameData.gameState.phase === 'waiting' && gameData.gameState.countdown <= 20 && gameData.gameState.countdown > 0) {
-      // Reset bet state for new round (removed next round betting logic)
+    if (gameData.gameState.phase === 'waiting' && gameData.gameState.countdown === 20) {
       setHasActiveBet(false);
       setCurrentBet(0);
       setHasCashedOut(false);
@@ -457,7 +467,7 @@ function GameApp() {
         setBetLocked(false);
       }, 2000);
     }
-  }, [gameData.gameState.phase, gameData.gameState.crashPoint, hasActiveBet, hasCashedOut, currentBet, user?.name, balance, betLocked, placeBet]);
+  }, [gameData.gameState.phase, gameData.gameState.countdown, gameData.gameState.crashPoint, hasActiveBet, hasCashedOut, currentBet, user?.name, balance, betLocked, placeBet]);
 
   // Auto cash out logic for multiplayer
   useEffect(() => {
@@ -555,41 +565,44 @@ function GameApp() {
 
   // FIXED: Improved multiplayer game functions with next round betting
   const handlePlaceBet = () => {
-    if (gameData.gameState.phase === 'waiting' && gameData.gameState.countdown > 0 && gameData.gameState.countdown <= 20 && betAmount <= balance && !hasActiveBet && !betLocked && !autoBotConfig.isActive) {
+    if (
+      gameData.gameState.phase === 'waiting' &&
+      gameData.gameState.countdown > 0 &&
+      gameData.gameState.countdown <= 20 &&
+      betAmount <= balance &&
+      !betLocked &&
+      !autoBotConfig.isActive
+    ) {
       const safeBetAmount = Math.min(betAmount, balance);
-      
-      // Lock betting to prevent double bets
       setBetLocked(true);
-      
-      // Place bet via WebSocket
       placeBet(safeBetAmount);
-      
-      // Update local state
       setBalance(prev => prev - safeBetAmount);
-      setCurrentBet(safeBetAmount);
+      setCurrentBet(prev => prev + safeBetAmount); // Suma la apuesta
       setHasActiveBet(true);
       setHasCashedOut(false);
-      
-      setChatMessages(prev => [...prev, {
-        id: Date.now(),
-        username: user?.name || 'Jugador',
-        message: `🚀 Apuesta colocada de ${safeBetAmount.toFixed(0)} monedas`,
-        timestamp: new Date(),
-        type: 'user'
-      }]);
-      
-      // Unlock after a short delay
+      setChatMessages(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          username: user?.name || 'Jugador',
+          message: `🚀 Apuesta colocada de ${safeBetAmount.toFixed(0)} monedas`,
+          timestamp: new Date(),
+          type: 'user',
+        },
+      ]);
       setTimeout(() => setBetLocked(false), 1000);
     } else {
-      // Show message when betting is not allowed
       if (gameData.gameState.phase !== 'waiting') {
-        setChatMessages(prev => [...prev, {
-          id: Date.now(),
-          username: 'Sistema',
-          message: `⚠️ Solo puedes apostar durante la ventana de apuestas (20 segundos)`,
-          timestamp: new Date(),
-          type: 'system'
-        }]);
+        setChatMessages(prev => [
+          ...prev,
+          {
+            id: Date.now(),
+            username: 'Sistema',
+            message: `⚠️ Solo puedes apostar durante la ventana de apuestas (20 segundos)` ,
+            timestamp: new Date(),
+            type: 'system',
+          },
+        ]);
       }
     }
   };
@@ -1159,13 +1172,13 @@ function GameApp() {
               disabled={!canBet && !canCashOut}
               className={`px-8 py-3 rounded-xl font-bold text-white transition-all ${
                 canCashOut 
-                  ? 'bg-green-500/80 hover:bg-green-600/80' 
+                  ? 'bg-red-600/90 hover:bg-red-700/90' 
                   : canBet
                   ? 'bg-green-500/80 hover:bg-green-600/80'
                   : 'bg-white/20 cursor-not-allowed'
               }`}
             >
-              {canCashOut ? 'CASH OUT' : 'APOSTAR'}
+              {canCashOut ? 'RETIRAR' : 'APOSTAR'}
             </button>
             
             <div className="text-white text-lg font-bold">
@@ -1258,6 +1271,98 @@ function App() {
       </Routes>
     </Router>
   );
+}
+
+// Componente para manejar el callback de autenticación
+function AuthCallback() {
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      try {
+        console.log('🔄 Processing auth callback...');
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('❌ Auth callback error:', error);
+          setError('Error al procesar la autenticación');
+          setIsProcessing(false);
+          return;
+        }
+
+        if (session?.user) {
+          console.log('✅ Auth callback successful for:', session.user.email);
+          
+          // Crear o cargar perfil del usuario
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (!profile) {
+            // Crear perfil si no existe
+            const userProfile = {
+              id: session.user.id,
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name || 'Usuario',
+              avatar_url: session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || 'Usuario')}&background=random`,
+              balance: 1000,
+              provider: 'google'
+            };
+
+            await supabase.from('profiles').insert([userProfile]);
+            console.log('✅ User profile created');
+          }
+
+          // Redirigir al juego
+          navigate('/', { replace: true });
+        } else {
+          console.log('❌ No session found in callback');
+          setError('No se pudo completar la autenticación');
+          setIsProcessing(false);
+        }
+      } catch (error) {
+        console.error('💥 Auth callback exception:', error);
+        setError('Error inesperado durante la autenticación');
+        setIsProcessing(false);
+      }
+    };
+
+    handleAuthCallback();
+  }, [navigate]);
+
+  if (isProcessing) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Completando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 text-lg mb-4">{error}</p>
+          <button 
+            onClick={() => navigate('/', { replace: true })}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 export default App;
