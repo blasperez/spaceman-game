@@ -107,7 +107,7 @@ export const StripeCheckout: React.FC<StripeCheckoutProps> = ({ onClose }) => {
               <button
                 onClick={() => handleCheckout(product.coins, product.amount)}
                 disabled={loading}
-                className="w-full flex items-center justify-center space-x-2 bg-blue-500/80 hover:bg-blue-600/80 disabled:bg-gray-500/80 backdrop-blur-md border border-blue-400/30 text-white py-3 rounded-xl transition-all"
+                className="gelatin-button w-full flex items-center justify-center space-x-2 bg-blue-500/80 hover:bg-blue-600/80 disabled:bg-gray-500/80 backdrop-blur-md border border-blue-400/30 text-white py-3 rounded-xl transition-all min-h-[48px]"
               >
                 {loading ? (
                   <Loader2 size={20} className="animate-spin" />
@@ -153,7 +153,7 @@ export const StripeCheckout: React.FC<StripeCheckoutProps> = ({ onClose }) => {
                 <button
                   onClick={() => handleCheckout(customAmount, customAmount)}
                   disabled={loading || customAmount < 10}
-                  className="w-full flex items-center justify-center space-x-2 bg-purple-500/80 hover:bg-purple-600/80 disabled:bg-gray-500/80 backdrop-blur-md border border-purple-400/30 text-white py-3 rounded-xl transition-all"
+                  className="gelatin-button w-full flex items-center justify-center space-x-2 bg-purple-500/80 hover:bg-purple-600/80 disabled:bg-gray-500/80 backdrop-blur-md border border-purple-400/30 text-white py-3 rounded-xl transition-all min-h-[48px]"
                 >
                   {loading ? (
                     <Loader2 size={20} className="animate-spin" />

@@ -304,7 +304,7 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                 <button
                   onClick={toggleBot}
                   disabled={!canStartBot && !config.isActive}
-                  className={`flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl font-bold transition-all backdrop-blur-md shadow-lg ${
+                  className={`gelatin-button flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl font-bold transition-all backdrop-blur-md shadow-lg min-h-[48px] ${
                     config.isActive
                       ? 'bg-red-500/80 hover:bg-red-600/80 border border-red-400/30 text-white'
                       : canStartBot
@@ -319,7 +319,7 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                 <button
                   onClick={resetStats}
                   disabled={config.isActive}
-                  className="px-6 py-3 bg-white/10 hover:bg-white/20 disabled:bg-white/5 disabled:cursor-not-allowed backdrop-blur-md border border-white/20 text-white rounded-xl transition-colors shadow-lg"
+                  className="gelatin-button px-6 py-3 bg-white/10 hover:bg-white/20 disabled:bg-white/5 disabled:cursor-not-allowed backdrop-blur-md border border-white/20 text-white rounded-xl transition-colors shadow-lg min-w-[48px] min-h-[48px] flex items-center justify-center"
                 >
                   <RotateCcw size={20} />
                 </button>

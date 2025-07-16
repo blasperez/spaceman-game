@@ -210,7 +210,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
                       <div className="space-y-4">
                         <button
                           onClick={onShowStripeCheckout}
-                          className="w-full bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 p-4 rounded-xl text-white flex items-center justify-center gap-2 transition-all"
+                          className="gelatin-button w-full bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 p-4 rounded-xl text-white flex items-center justify-center gap-2 transition-all min-h-[48px]"
                         >
                           <Upload size={20} />
                           Depositar Fondos
@@ -229,7 +229,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
                             <button
                               onClick={handleWithdraw}
                               disabled={!withdrawAmount || parseFloat(withdrawAmount) > (userProfile?.balance || 0)}
-                              className="bg-orange-500/20 hover:bg-orange-500/30 disabled:bg-white/10 border border-orange-400/30 disabled:border-white/20 px-4 py-2 rounded-lg text-white disabled:text-white/50 flex items-center gap-2 transition-all"
+                              className="gelatin-button bg-orange-500/20 hover:bg-orange-500/30 disabled:bg-white/10 border border-orange-400/30 disabled:border-white/20 px-4 py-2 rounded-lg text-white disabled:text-white/50 flex items-center gap-2 transition-all min-h-[44px]"
                             >
                               <Download size={16} />
                               Retirar
@@ -419,7 +419,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
                       <h3 className="text-red-400 text-lg font-semibold mb-4">Zona de Peligro</h3>
                       <button
                         onClick={signOut}
-                        className="bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 text-red-400 py-3 px-6 rounded-lg font-medium transition-all"
+                        className="gelatin-button bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 text-red-400 py-3 px-6 rounded-lg font-medium transition-all min-h-[48px]"
                       >
                         Cerrar Sesión
                       </button>
