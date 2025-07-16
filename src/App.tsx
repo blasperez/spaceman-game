@@ -687,7 +687,7 @@ function GameApp() {
   // MOBILE LAYOUT
   if (isMobile) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden space-background ${
+      <div className={`min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden space-background mobile-container ${
         isLandscape ? 'landscape-mode' : 'portrait-mode'
       }`}>
         {/* Space Background Animations */}
@@ -704,38 +704,14 @@ function GameApp() {
         <div className="nebula"></div>
         <div className="nebula"></div>
 
-        {/* Enhanced Game Board - Mobile Full Screen */}
-        <div className="absolute inset-0">
-          <EnhancedGameBoard
-            multiplier={gameData.gameState.multiplier}
-            gamePhase={gameData.gameState.phase}
-            countdown={gameData.gameState.countdown}
-            soundEnabled={soundEnabled}
-            onSoundToggle={() => setSoundEnabled(!soundEnabled)}
-            balance={balance}
-            betAmount={betAmount}
-            setBetAmount={setBetAmount}
-            onPlaceBet={handlePlaceBet}
-            onCashOut={handleCashOut}
-            canBet={canBet}
-            canCashOut={canCashOut}
-            hasActiveBet={hasActiveBet}
-            currentWin={currentWin}
-            autoCashOutEnabled={autoCashOutEnabled}
-            setAutoCashOutEnabled={setAutoCashOutEnabled}
-            autoCashOut={autoCashOut}
-            setAutoCashOut={setAutoCashOut}
-          />
-        </div>
-
-        {/* MOBILE Top Header - Compact */}
-        <header className="absolute top-0 left-0 right-0 z-50 bg-black/30 backdrop-blur-xl border-b border-white/10 p-2">
+        {/* MOBILE Top Header - Fixed */}
+        <header className="mobile-header bg-black/30 backdrop-blur-xl border-b border-white/10">
           <div className="flex items-center justify-between">
             {/* Left - Balance & User */}
             <div className="flex items-center space-x-2">
-              <button 
+              <button
                 onClick={() => setShowAccountPanel(true)}
-                className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 transition-colors"
+                className="gelatin-button flex items-center space-x-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2 transition-colors"
               >
                 <img 
                   src={user.avatar} 
@@ -743,7 +719,7 @@ function GameApp() {
                   className="w-6 h-6 rounded-full"
                 />
                 <div className="text-left">
-                  <div className="text-white text-xs font-medium">{balance.toFixed(0)} monedas</div>
+                  <div className="text-white text-sm font-medium">{balance.toFixed(0)} monedas</div>
                 </div>
               </button>
             </div>
@@ -757,16 +733,16 @@ function GameApp() {
 
             {/* Right - Controls */}
             <div className="flex items-center space-x-2">
-              <button 
+              <button
                 onClick={() => setShowStripeCheckout(true)}
-                className="p-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-md border border-green-400/30 rounded-lg transition-colors"
+                className="gelatin-button p-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-md border border-green-400/30 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <CreditCard size={16} className="text-green-400" />
               </button>
               
-              <button 
+              <button
                 onClick={() => setSoundEnabled(!soundEnabled)}
-                className={`p-2 backdrop-blur-md border border-white/20 rounded-lg transition-colors ${
+                className={`gelatin-button p-2 backdrop-blur-md border border-white/20 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
                   soundEnabled 
                     ? 'bg-green-500/20 hover:bg-green-500/30 border-green-400/30' 
                     : 'bg-red-500/20 hover:bg-red-500/30 border-red-400/30'
@@ -779,9 +755,9 @@ function GameApp() {
                 )}
               </button>
               
-              <button 
+              <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg transition-colors"
+                className="gelatin-button p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <Menu size={16} className="text-white" />
               </button>
@@ -789,35 +765,123 @@ function GameApp() {
           </div>
         </header>
 
-        {/* MOBILE Side Menu */}
-        {showMobileMenu && (
-          <div className="absolute top-16 right-2 z-50 bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl p-3 space-y-2">
-            <button
-              onClick={() => {
-                setShowStatistics(!showStatistics);
-                setShowMobileMenu(false);
-              }}
-              className="w-full flex items-center space-x-2 p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm"
-            >
-              <BarChart3 size={16} />
-              <span>Estadísticas</span>
-            </button>
-            
-            <button
-              onClick={() => {
-                setShowChat(!showChat);
-                setShowMobileMenu(false);
-              }}
-              className="w-full flex items-center space-x-2 p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm"
-            >
-              <Users size={16} />
-              <span>Chat</span>
-            </button>
-          </div>
-        )}
+        {/* Mobile Game Area */}
+        <div className="mobile-game-area">
+          {/* Game Status - Waiting with countdown */}
+          {gameData.gameState.phase === 'waiting' && gameData.gameState.countdown > 0 && (
+            <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 text-center z-30">
+              <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-blue-400/30 rounded-3xl p-6 shadow-2xl">
+                <div className="text-white text-2xl font-bold mb-4 drop-shadow-2xl">
+                  {gameData.gameState.countdown > 0 ? '🚀 COLOCA TUS APUESTAS' : '🚀 PRÓXIMO VUELO'}
+                </div>
+                
+                {/* Countdown Circle */}
+                <div className="relative w-24 h-24 mx-auto mb-4">
+                  <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 120 120">
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="50"
+                      stroke="rgba(255,255,255,0.2)"
+                      strokeWidth="8"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="50"
+                      stroke="url(#gradient)"
+                      strokeWidth="8"
+                      fill="transparent"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 50}`}
+                      strokeDashoffset={`${2 * Math.PI * 50 * (gameData.gameState.countdown / 20)}`}
+                      className="transition-all duration-1000 ease-linear"
+                    />
+                    <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#3B82F6" />
+                        <stop offset="50%" stopColor="#8B5CF6" />
+                        <stop offset="100%" stopColor="#EF4444" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-3xl font-bold text-white drop-shadow-2xl animate-pulse">
+                      {gameData.gameState.countdown}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="text-blue-200 text-lg drop-shadow-xl animate-pulse">
+                  ✨ ¡Coloca tus apuestas! ✨
+                </div>
+              </div>
+            </div>
+          )}
 
-        {/* Recent Multipliers - Top of screen */}
-        <div className="absolute top-16 left-0 right-0 z-30 p-2">
+          {/* Multiplier Display - Flying */}
+          {gameData.gameState.phase === 'flying' && (
+            <div className="mobile-multiplier-display">
+              <div className="text-center">
+                <span className={`mobile-multiplier-text font-bold ${
+                  gameData.gameState.multiplier < 1.5 ? 'text-white' :
+                  gameData.gameState.multiplier < 2 ? 'text-yellow-400' :
+                  gameData.gameState.multiplier < 5 ? 'text-orange-400' :
+                  gameData.gameState.multiplier < 10 ? 'text-red-400' :
+                  'text-purple-400'
+                } drop-shadow-2xl animate-pulse`}
+                      style={{ 
+                        textShadow: '0 0 30px rgba(255, 255, 255, 0.9), 0 0 60px rgba(255, 255, 255, 0.7)',
+                        filter: 'brightness(1.3)',
+                        transform: `scale(${1 + (gameData.gameState.multiplier - 1) * 0.1})`
+                      }}>
+                  {gameData.gameState.multiplier.toFixed(2)}x
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Spaceman */}
+          <div className={`mobile-spaceman ${
+            gameData.gameState.phase === 'crashed' ? 'animate-bounce scale-125' : ''
+          } ${gameData.gameState.phase === 'flying' ? 'animate-pulse scale-110' : 'scale-100'}`}>
+            <div className="relative">
+              <div className={`w-24 h-24 flex items-center justify-center overflow-hidden ${
+                gameData.gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
+              }`}
+                   style={{
+                     filter: gameData.gameState.phase === 'flying' ? 'brightness(1.4) saturate(1.4) drop-shadow(0 0 25px rgba(255,165,0,0.8))' : 'brightness(1.1)',
+                     transform: gameData.gameState.phase === 'flying' ? `scale(${1 + (gameData.gameState.multiplier - 1) * 0.05})` : 'scale(1)'
+                   }}>
+                <img 
+                  src="/png-png-urbanbrush-13297 copy.png" 
+                  alt="Spaceman"
+                  className="w-full h-full object-contain"
+                  style={{
+                    filter: gameData.gameState.phase === 'flying' ? 'brightness(1.3) saturate(1.3) drop-shadow(0 0 15px rgba(255,165,0,0.7))' : 'none'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Crash Message */}
+          {gameData.gameState.phase === 'crashed' && (
+            <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-10">
+              <div className="bg-red-500/90 border-4 border-red-300/90 rounded-3xl px-8 py-4 backdrop-blur-sm animate-bounce"
+                   style={{ boxShadow: '0 0 40px rgba(239, 68, 68, 0.8)' }}>
+                <span className="text-red-50 font-bold text-xl drop-shadow-2xl">
+                  💥 CRASHED at {gameData.gameState.crashPoint?.toFixed(2)}x!
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Multipliers - Top of game area */}
+        <div className="mobile-recent-multipliers">
           <div className="flex items-center justify-center space-x-1 overflow-x-auto">
             <div className={`px-2 py-1 rounded text-xs font-bold ${
               gameData.gameState.phase === 'flying' ? 'bg-green-500/80 text-white' : 
@@ -844,7 +908,32 @@ function GameApp() {
           </div>
         </div>
 
-        {/* Removed Next Round Bet Indicator */}
+        {/* MOBILE Side Menu */}
+        {showMobileMenu && (
+          <div className="absolute top-16 right-2 z-50 bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl p-3 space-y-2 shadow-2xl">
+            <button
+              onClick={() => {
+                setShowStatistics(!showStatistics);
+                setShowMobileMenu(false);
+              }}
+              className="gelatin-button w-full flex items-center space-x-2 p-3 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm min-h-[44px]"
+            >
+              <BarChart3 size={16} />
+              <span>Estadísticas</span>
+            </button>
+            
+            <button
+              onClick={() => {
+                setShowChat(!showChat);
+                setShowMobileMenu(false);
+              }}
+              className="gelatin-button w-full flex items-center space-x-2 p-3 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm min-h-[44px]"
+            >
+              <Users size={16} />
+              <span>Chat</span>
+            </button>
+          </div>
+        )}
 
         {/* NEW Mobile Betting Panel */}
         <BettingPanel

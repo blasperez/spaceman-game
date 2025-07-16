@@ -311,7 +311,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
             <button
               onClick={handleGoogleLogin}
               disabled={authLoading}
-              className="w-full flex items-center justify-center space-x-3 bg-white hover:bg-gray-100 active:bg-gray-200 disabled:bg-gray-300 text-gray-900 font-medium py-3 sm:py-3 px-4 rounded-xl transition-colors active:scale-95 disabled:scale-100"
+              className="gelatin-button w-full flex items-center justify-center space-x-3 bg-white hover:bg-gray-100 active:bg-gray-200 disabled:bg-gray-300 text-gray-900 font-medium py-3 sm:py-3 px-4 rounded-xl transition-colors disabled:scale-100 min-h-[48px]"
               type="button"
             >
               {authLoading ? (
@@ -364,7 +364,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 w-full text-white py-2 rounded-lg transition-colors"
+              className="gelatin-button bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 w-full text-white py-3 rounded-lg transition-colors min-h-[48px]"
             >
               {loading ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -398,7 +398,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
           {/* Demo mode button */}
           <button
             onClick={handleDemoMode}
-            className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 active:from-purple-800 active:to-blue-800 text-white font-medium py-3 px-4 rounded-xl transition-all transform active:scale-95 mt-2"
+            className="gelatin-button w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 active:from-purple-800 active:to-blue-800 text-white font-medium py-3 px-4 rounded-xl transition-all transform mt-2 min-h-[48px]"
             type="button"
           >
             <Play size={20} />
