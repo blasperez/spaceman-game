@@ -87,23 +87,23 @@
 
 /* Gelatin button classes */
 .gelatin-button {
-  transition: all 0.1s ease-in-out;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   transform-origin: center;
   will-change: transform;
 }
 
 .gelatin-button:active {
-  animation: gelatinPress 0.25s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: gelatinPress 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 .gelatin-button:hover:not(:active) {
-  animation: gelatin 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: gelatin 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 /* Mobile-specific gelatin effects */
 @media (max-width: 768px) {
   .gelatin-button:active {
-    animation: gelatinPress 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: gelatinPress 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     transform: scale(0.95);
   }
   
@@ -175,26 +175,107 @@
   animation: slideDown 0.3s ease-out;
 }
 
+/* Pulsing arrow animation */
+@keyframes pulseArrow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* Cash out button glow animation */
+@keyframes redGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2);
+    background: linear-gradient(135deg, #ef4444, #dc2626, #b91c1c);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.6), 0 0 90px rgba(239, 68, 68, 0.4);
+    background: linear-gradient(135deg, #f87171, #ef4444, #dc2626);
+  }
+}
+
+.cash-out-button {
+  animation: redGlow 1.5s ease-in-out infinite;
+  border: 2px solid rgba(239, 68, 68, 0.8) !important;
+  color: white !important;
+  font-weight: bold !important;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* Floating cash out button for mobile */
+@media (max-width: 768px) {
+  .floating-cash-out {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    min-width: 200px;
+    padding: 16px 24px;
+    border-radius: 25px;
+    font-size: 18px;
+    font-weight: bold;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
 /* Enhanced mobile betting panel styles */
 @media (max-width: 768px) {
   .mobile-betting-panel {
     position: fixed;
-    bottom: 0;
-    left: 0;
+    top: 0;
     right: 0;
+    bottom: 0;
     z-index: 50;
-    max-height: 85vh;
-    border-radius: 20px 20px 0 0;
+    width: 320px;
+    max-width: 85vw;
+    border-radius: 20px 0 0 20px;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
   
   .mobile-betting-panel.collapsed {
-    transform: translateY(calc(100% - 80px));
+    transform: translateX(calc(100% - 60px));
   }
   
   .mobile-betting-panel.expanded {
-    transform: translateY(0);
+    transform: translateX(0);
+  }
+
+  .panel-drag-handle {
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 80px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 20px 0 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-right: none;
+  }
+
+  .panel-drag-arrow {
+    color: white;
+    font-size: 18px;
+    animation: pulseArrow 2s ease-in-out infinite;
+  }
+
+  .mobile-betting-panel.expanded .panel-drag-arrow {
+    transform: rotate(180deg);
   }
 }
 

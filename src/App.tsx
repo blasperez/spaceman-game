@@ -96,6 +96,18 @@ function GameApp() {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
   
