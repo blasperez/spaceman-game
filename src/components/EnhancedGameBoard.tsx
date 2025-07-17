@@ -48,6 +48,21 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
   const [trail, setTrail] = useState<Array<{ x: number; y: number; opacity: number }>>([]);
   const [particles, setParticles] = useState<Array<{ x: number; y: number; vx: number; vy: number; opacity: number; size: number }>>([]);
 
+  // Detectar orientación y ancho de pantalla
+  const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+  useEffect(() => {
+    const handleResize = () => setIsPortrait(window.innerHeight > window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Posición del astronauta en móvil vertical
+  let spacemanYMobile = spacemanY;
+  if (window.innerWidth <= 768 && isPortrait) {
+    if (gamePhase === 'waiting') spacemanYMobile = 90;
+    else if (gamePhase === 'starting' || gamePhase === 'flying') spacemanYMobile = 50;
+  }
+
   // Generate stars
   useEffect(() => {
     const newStars = Array.from({ length: 150 }, () => ({
@@ -212,10 +227,10 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
 
         {/* FIXED: Use PNG spaceman from public folder */}
         <div
-          className="absolute transition-all duration-100 ease-linear z-20"
+          className="absolute transition-all duration-300 ease-in-out z-20"
           style={{
             left: `${spacemanX}%`,
-            top: `${spacemanY}%`,
+            top: `${window.innerWidth <= 768 && isPortrait ? spacemanYMobile : spacemanY}%`,
             transform: 'translate(-50%, -50%)'
           }}
         >

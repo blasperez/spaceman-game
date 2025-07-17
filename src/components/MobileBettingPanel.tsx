@@ -135,11 +135,12 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
       {canCashOut && !isExpanded && (
         <button
           onClick={onCashOut}
-          className="floating-cash-out cash-out-button gelatin-button"
+          className="floating-cash-out cash-out-button gelatin-button animate-pulse"
+          style={{ boxShadow: '0 0 30px 10px #ef4444, 0 0 60px 20px #b91c1c', background: 'linear-gradient(135deg, #ef4444, #b91c1c)' }}
         >
           <div className="text-center">
-            <div className="text-lg font-bold">RETIRAR</div>
-            <div className="text-xl font-extrabold">€{currentWin.toFixed(2)}</div>
+            <div className="text-lg font-bold animate-pulse">RETIRAR</div>
+            <div className="text-xl font-extrabold animate-pulse">€{currentWin.toFixed(2)}</div>
             <div className="text-sm opacity-90">{multiplier.toFixed(2)}x</div>
           </div>
         </button>
@@ -159,14 +160,15 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
       >
         {/* Drag Handle */}
         <div
-          className="panel-drag-handle"
+          className="panel-drag-handle touch-target"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onClick={() => setIsExpanded(!isExpanded)}
+          style={{ boxShadow: '0 0 12px 2px rgba(255,255,255,0.15)', border: '2px solid #fff', borderRight: 'none', background: 'rgba(0,0,0,0.85)' }}
         >
-          <div className="panel-drag-arrow">
-            <ChevronLeft size={20} />
+          <div className="panel-drag-arrow" style={{ filter: 'drop-shadow(0 0 8px #fff)' }}>
+            <ChevronLeft size={28} />
           </div>
         </div>
 
