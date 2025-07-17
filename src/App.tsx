@@ -1,33 +1,15 @@
-import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL as string,
-  import.meta.env.VITE_SUPABASE_ANON_KEY as string
-);
-
-interface Instrument {
-  name: string;
-}
+import React from 'react';
+import EnhancedGameBoard from './components/EnhancedGameBoard';
+import MobileBettingPanel from './components/MobileBettingPanel';
 
 function App() {
-  const [instruments, setInstruments] = useState<Instrument[]>([]);
-
-  useEffect(() => {
-    getInstruments();
-  }, []);
-
-  async function getInstruments() {
-    const { data } = await supabase.from("instruments").select();
-    setInstruments(data || []);
-  }
-
+  // Aquí podrías agregar lógica de rutas o layout si es necesario
   return (
-    <ul>
-      {instruments.map((instrument) => (
-        <li key={instrument.name}>{instrument.name}</li>
-      ))}
-    </ul>
+    <div>
+      <EnhancedGameBoard />
+      {/* El panel de apuestas móvil se debe renderizar según el layout real */}
+      {/* <MobileBettingPanel ...props /> */}
+    </div>
   );
 }
 
