@@ -97,7 +97,6 @@ function GameApp() {
   const [showChat, setShowChat] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
   // Detect mobile device
   useEffect(() => {
