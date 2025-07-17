@@ -15,7 +15,7 @@ import { SubscriptionStatus } from './components/SubscriptionStatus';
 import { useGameSocket } from './hooks/useGameSocket';
 import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, X, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
-import { BettingPanel } from './components/BettingPanel';
+import { MobileBettingPanel } from './components/MobileBettingPanel';
 
 interface GameHistory {
   id: number;
@@ -97,6 +97,7 @@ function GameApp() {
   const [showChat, setShowChat] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Detect mobile device
   useEffect(() => {
@@ -145,6 +146,19 @@ function GameApp() {
     stopOnWin: true,
     stopOnLoss: true
   });
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth <= 768 || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsMobile(isMobileDevice);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Auto Bet States
   const [autoBetEnabled, setAutoBetEnabled] = useState(false);
@@ -811,19 +825,31 @@ function GameApp() {
                       className="transition-all duration-1000 ease-linear"
                     />
                     <defs>
-                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#3B82F6" />
-                        <stop offset="50%" stopColor="#8B5CF6" />
-                        <stop offset="100%" stopColor="#EF4444" />
-                      </linearGradient>
-                    </defs>
+                {isMobile ? (
+                  // Mobile Layout
+                  <div className="mobile-layout">
+                    {/* Mobile Header */}
+                    <div className="mobile-header bg-black/20 backdrop-blur-sm flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xl">🚀</span>
+                        <span className="text-lg font-bold text-white">Spaceman</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="text-white text-sm">
+                          €{user.balance.toFixed(2)}
+                        </div>
+                        <button
+                          onClick={() => setShowAccountPanel(true)}
+                          className="gelatin-button w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center"
+                        >
+                          <img 
+                            src={user.avatar} 
+                            alt="Avatar" 
+                            className="w-6 h-6 rounded-full"
+                          />
+                        </button>
+                      </div>
                   </svg>
-                  
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-white drop-shadow-2xl animate-pulse">
-                      {gameData.gameState.countdown}
-                    </span>
-                  </div>
                 </div>
                 
                 <div className="text-blue-200 text-lg drop-shadow-xl animate-pulse">

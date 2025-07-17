@@ -54,19 +54,19 @@
   }
 }
 
-/* Gelatin Button Animation */
+/* Enhanced Gelatin Button Animation - More Fluid and Slower */
 @keyframes gelatin {
   0% {
     transform: scale(1);
   }
   25% {
-    transform: scale(0.9, 1.1);
+    transform: scale(0.92, 1.08);
   }
   50% {
-    transform: scale(1.1, 0.9);
+    transform: scale(1.08, 0.92);
   }
   75% {
-    transform: scale(0.95, 1.05);
+    transform: scale(0.96, 1.04);
   }
   100% {
     transform: scale(1);
@@ -78,33 +78,33 @@
     transform: scale(1);
   }
   50% {
-    transform: scale(0.85, 1.15);
+    transform: scale(0.88, 1.12);
   }
   100% {
     transform: scale(1);
   }
 }
 
-/* Gelatin button classes */
+/* Enhanced gelatin button classes - Slower and more fluid */
 .gelatin-button {
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transform-origin: center;
   will-change: transform;
 }
 
 .gelatin-button:active {
-  animation: gelatinPress 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: gelatinPress 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .gelatin-button:hover:not(:active) {
-  animation: gelatin 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: gelatin 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Mobile-specific gelatin effects */
+/* Mobile-specific gelatin effects - Slower */
 @media (max-width: 768px) {
   .gelatin-button:active {
-    animation: gelatinPress 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    transform: scale(0.95);
+    animation: gelatinPress 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: scale(0.96);
   }
   
   /* Remove hover effects on mobile */
@@ -134,12 +134,7 @@
 /* Smooth transitions for mobile interactions */
 @media (max-width: 768px) {
   * {
-    transition: all 0.2s ease-in-out;
-  }
-  
-  /* Active states for touch */
-  button:active {
-    /* Removed - handled by gelatin animation */
+    transition: all 0.3s ease-in-out;
   }
   
   /* Prevent double-tap zoom */
@@ -187,7 +182,7 @@
   }
 }
 
-/* Cash out button glow animation */
+/* Cash out button glow animation - Enhanced Red Glow */
 @keyframes redGlow {
   0%, 100% {
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2);
@@ -272,6 +267,7 @@
     color: white;
     font-size: 18px;
     animation: pulseArrow 2s ease-in-out infinite;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   .mobile-betting-panel.expanded .panel-drag-arrow {
@@ -433,7 +429,7 @@
   animation: twinkle 4s ease-in-out infinite;
 }
 
-/* FIXED: Planetas se mueven de DERECHA a IZQUIERDA (como si el astronauta volara hacia la derecha) */
+/* Planet animations - Moving from right to left */
 @keyframes planetFloat1 {
   0% {
     transform: translateX(calc(100vw + 400px)) translateY(0px) rotate(0deg);
@@ -587,7 +583,7 @@
   animation: fireTrail 0.3s ease-out infinite 0.1s;
 }
 
-/* Meteor shower - también de izquierda a derecha */
+/* Meteor shower */
 @keyframes meteor {
   0% {
     transform: translateX(-100px) translateY(-100px) rotate(45deg);
@@ -650,7 +646,7 @@
   animation-delay: 12s;
 }
 
-/* FIXED: Ensure desktop planets are visible and moving correctly */
+/* Desktop planet visibility */
 @media (min-width: 1024px) {
   .planet {
     opacity: 1;

@@ -1,34 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, BarChart3, Settings, Zap, ZapOff } from 'lucide-react';
 
-// Gelatin Button Component
-interface GelatinButtonProps {
-  onClick?: () => void;
-  disabled?: boolean;
-  className?: string;
-  children: React.ReactNode;
-  type?: 'button' | 'submit';
-}
-
-const GelatinButton: React.FC<GelatinButtonProps> = ({ 
-  onClick, 
-  disabled, 
-  className = '', 
-  children, 
-  type = 'button' 
-}) => {
-  return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      className={`gelatin-button ${className}`}
-    >
-      {children}
-    </button>
-  );
-};
-
 interface AutoBotConfig {
   isActive: boolean;
   autoCashOut: number;
@@ -100,13 +72,13 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
 
   const increaseBet = () => {
     if (!hasActiveBet && !autoBotConfig.isActive) {
-      setBetAmount(Math.min(betAmount + 5, balance));
+      setBetAmount(Math.min(betAmount + 1, balance));
     }
   };
 
   const decreaseBet = () => {
     if (!hasActiveBet && !autoBotConfig.isActive) {
-      setBetAmount(Math.max(betAmount - 5, 1));
+      setBetAmount(Math.max(betAmount - 1, 1));
     }
   };
 
@@ -118,39 +90,39 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
       <div className="text-center mb-4">
         <div className="text-white/90 text-sm mb-3 drop-shadow-lg font-medium">Apuesta</div>
         <div className="flex items-center justify-center space-x-4">
-          <GelatinButton
+          <button
             onClick={() => handleButtonPress(decreaseBet)}
             disabled={isDisabled || betAmount <= 1}
-            className="w-12 h-12 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white font-bold text-xl transition-all shadow-lg"
+            className="gelatin-button w-12 h-12 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white font-bold text-xl transition-all shadow-lg"
           >
             <ChevronLeft size={24} />
-          </GelatinButton>
+          </button>
           
           <div className="text-center min-w-[140px] px-4 py-2 bg-purple-500/20 backdrop-blur-md border border-purple-400/30 rounded-xl">
             <div className="text-yellow-400 mobile-bet-amount font-bold drop-shadow-lg">{betAmount} monedas</div>
           </div>
           
-          <GelatinButton
+          <button
             onClick={() => handleButtonPress(increaseBet)}
             disabled={isDisabled || betAmount >= balance}
-            className="w-12 h-12 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white font-bold text-xl transition-all shadow-lg"
+            className="gelatin-button w-12 h-12 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white font-bold text-xl transition-all shadow-lg"
           >
             <ChevronRight size={24} />
-          </GelatinButton>
+          </button>
         </div>
       </div>
 
       {/* Quick Bet Amounts */}
       <div className="flex justify-center space-x-2 mb-4">
         {[1, 5, 10, 25, 50].map(amount => (
-          <GelatinButton
+          <button
             key={amount}
             onClick={() => setBetAmount(amount)}
             disabled={isDisabled || amount > balance}
-            className="w-12 h-10 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-lg text-white font-bold text-xs flex items-center justify-center transition-all shadow-md"
+            className="gelatin-button w-12 h-10 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-lg text-white font-bold text-xs flex items-center justify-center transition-all shadow-md"
           >
             {amount}
-          </GelatinButton>
+          </button>
         ))}
       </div>
 
@@ -158,9 +130,9 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
       <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 mb-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
-            <GelatinButton
+            <button
               onClick={() => setAutoCashOutEnabled(!autoCashOutEnabled)}
-              className={`w-10 h-5 rounded-full transition-all duration-300 ${
+              className={`gelatin-button w-10 h-5 rounded-full transition-all duration-300 ${
                 autoCashOutEnabled 
                   ? 'bg-green-500 shadow-lg shadow-green-500/30' 
                   : 'bg-white/20'
@@ -175,27 +147,27 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
                   <ZapOff size={10} className="text-gray-400" />
                 )}
               </div>
-            </GelatinButton>
+            </button>
             <span className="text-white text-sm">Auto Cash Out</span>
           </div>
           
           {autoCashOutEnabled && (
             <div className="flex items-center space-x-2">
-              <GelatinButton 
+              <button 
                 onClick={() => setAutoCashOut(Math.max(1.01, autoCashOut - 0.1))}
-                className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm flex items-center justify-center font-bold"
+                className="gelatin-button w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm flex items-center justify-center font-bold"
               >
                 -
-              </GelatinButton>
+              </button>
               <div className="bg-orange-500/80 px-3 py-2 rounded-lg text-white text-sm font-bold min-w-[60px] text-center shadow-md">
                 {autoCashOut.toFixed(1)}x
               </div>
-              <GelatinButton 
+              <button 
                 onClick={() => setAutoCashOut(autoCashOut + 0.1)}
-                className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm flex items-center justify-center font-bold"
+                className="gelatin-button w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm flex items-center justify-center font-bold"
               >
                 +
-              </GelatinButton>
+              </button>
             </div>
           )}
         </div>
@@ -203,10 +175,10 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
 
       {/* Main Action Button - FIXED: Show CASH OUT when can cash out */}
       <div className="mb-4">
-        <GelatinButton
+        <button
           onClick={canCashOut ? onCashOut : onPlaceBet}
           disabled={!canBet && !canCashOut}
-          className={`w-full backdrop-blur-md border-2 rounded-2xl p-4 text-center transition-all shadow-2xl min-h-[60px] ${
+          className={`gelatin-button w-full backdrop-blur-md border-2 rounded-2xl p-4 text-center transition-all shadow-2xl min-h-[60px] ${
             canCashOut 
               ? 'bg-red-600/90 border-red-400/50 hover:bg-red-700/90' 
               : canBet
@@ -223,20 +195,20 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
               : `${betAmount} monedas`
             }
           </div>
-        </GelatinButton>
+        </button>
       </div>
 
       {/* Side Controls */}
       <div className="flex justify-center space-x-2">
-        <GelatinButton 
+        <button 
           onClick={onShowAutoBotPanel}
-          className="p-3 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-xl transition-all shadow-lg min-w-[48px] min-h-[48px] flex items-center justify-center"
+          className="gelatin-button p-3 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-xl transition-all shadow-lg min-w-[48px] min-h-[48px] flex items-center justify-center"
         >
           <Settings size={20} className="text-white" />
-        </GelatinButton>
-        <GelatinButton className="p-3 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-xl transition-all shadow-lg min-w-[48px] min-h-[48px] flex items-center justify-center">
+        </button>
+        <button className="gelatin-button p-3 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-xl transition-all shadow-lg min-w-[48px] min-h-[48px] flex items-center justify-center">
           <BarChart3 size={20} className="text-white" />
-        </GelatinButton>
+        </button>
       </div>
     </div>
   );
