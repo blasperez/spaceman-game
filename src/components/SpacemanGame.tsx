@@ -653,7 +653,7 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
             </div>
 
             {/* Center - Main action area */}
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col lg:flex-row items-center gap-2 lg:gap-4 justify-center">
               {hasActiveBet ? (
                 <>
                   <div className="text-center">
