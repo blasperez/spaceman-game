@@ -441,8 +441,8 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
         </div>
       </div>
 
-      {/* Bottom Control Panel */}
-      <div className="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-sm p-4 z-40">
+      {/* Bottom Control Panel - Transparent with Glowing Effects */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 z-40">
         <div className="max-w-7xl mx-auto">
           {/* Auto Cashout Controls */}
           <div className="flex items-center justify-between mb-4">
