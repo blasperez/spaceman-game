@@ -485,10 +485,10 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
                     style={{
                       opacity: Math.min(
                         1,
-                        0.6 + gameData.gameState.multiplier * 0.05,
+                        0.4 + gameData.gameState.multiplier * 0.03,
                       ),
-                      filter: `drop-shadow(0 0 ${gameData.gameState.multiplier}px rgba(6, 182, 212, 0.8))`,
-                      background: `linear-gradient(to top, transparent, rgba(6, 182, 212, ${Math.min(1, 0.8 + gameData.gameState.multiplier * 0.02)}), transparent)`,
+                      filter: `blur(${Math.min(2, gameData.gameState.multiplier * 0.2)}px) drop-shadow(0 0 ${gameData.gameState.multiplier * 2}px rgba(255, 165, 0, 0.9)) drop-shadow(0 0 ${gameData.gameState.multiplier}px rgba(255, 69, 0, 0.7))`,
+                      background: `linear-gradient(to top, transparent, rgba(255, 165, 0, ${Math.min(0.7, 0.4 + gameData.gameState.multiplier * 0.02)}), rgba(255, 255, 255, ${Math.min(0.3, gameData.gameState.multiplier * 0.01)}), transparent)`,
                     }}
                     style={{
                       height: "150px",
