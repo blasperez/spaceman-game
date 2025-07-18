@@ -642,7 +642,11 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
                         /* TODO: Implement 50% cashout */
                       }}
                       disabled={!canCashOut()}
-                      className="bg-green-600 hover:bg-green-500 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-bold text-lg transition-colors"
+                      className="relative bg-gradient-to-r from-green-600/80 to-teal-500/80 hover:from-green-500/90 hover:to-teal-400/90 disabled:from-gray-600/50 disabled:to-slate-600/50 text-white px-6 py-3 rounded-lg font-bold text-lg transition-all duration-300 border border-green-500/50 hover:border-green-400/70 shadow-xl animate-pulse"
+                      style={{
+                        boxShadow: `0 0 ${gameData.gameState.multiplier * 3}px rgba(20, 184, 166, 0.6), inset 0 0 15px rgba(20, 184, 166, 0.1)`,
+                        animation: `pulse ${Math.max(0.6, 2.2 - gameData.gameState.multiplier * 0.1)}s infinite`,
+                      }}
                     >
                       CASHOUT 50%
                       <div className="text-sm">
