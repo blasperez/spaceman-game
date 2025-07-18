@@ -579,7 +579,13 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
                 <button
                   onClick={undoBet}
                   disabled={betHistory.length === 0}
-                  className="bg-gray-600 hover:bg-gray-500 disabled:bg-gray-700 disabled:opacity-50 text-white p-2 rounded-lg transition-colors"
+                  className="relative bg-gradient-to-r from-gray-500/20 to-slate-500/20 hover:from-gray-400/40 hover:to-slate-400/40 disabled:from-gray-700/20 disabled:to-slate-700/20 disabled:opacity-50 text-white p-2 rounded-lg transition-all duration-300 border border-gray-400/30 hover:border-gray-300/50 disabled:border-gray-600/20 shadow-lg hover:shadow-gray-500/25 backdrop-blur-sm"
+                  style={{
+                    boxShadow:
+                      betHistory.length > 0
+                        ? `0 0 ${gameData.gameState.phase === "flying" ? gameData.gameState.multiplier * 2 : 5}px rgba(107, 114, 128, 0.3)`
+                        : "none",
+                  }}
                 >
                   <RotateCcw size={20} />
                 </button>
