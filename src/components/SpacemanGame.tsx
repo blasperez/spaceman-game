@@ -555,7 +555,10 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
                   <button
                     key={amount}
                     onClick={() => updateBetAmount(amount)}
-                    className="bg-purple-600/50 hover:bg-purple-500/50 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                    className="relative bg-gradient-to-r from-purple-500/20 to-blue-500/20 hover:from-purple-400/40 hover:to-blue-400/40 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 border border-purple-400/30 hover:border-purple-300/50 shadow-lg hover:shadow-purple-500/25 backdrop-blur-sm"
+                    style={{
+                      boxShadow: `0 0 ${gameData.gameState.phase === "flying" ? gameData.gameState.multiplier * 2 : 5}px rgba(147, 51, 234, 0.3)`,
+                    }}
                   >
                     +€{amount}
                   </button>
