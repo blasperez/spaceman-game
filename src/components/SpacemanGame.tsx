@@ -588,7 +588,7 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
           {/* Main Betting Controls */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
             {/* Left side - Betting controls */}
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-2 lg:gap-4">
               {/* Quick bet buttons */}
               <div className="flex space-x-2">
                 {quickBetAmounts.map((amount) => (
