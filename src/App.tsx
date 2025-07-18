@@ -30,7 +30,7 @@ function App() {
   };
 
   if (!user) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return <LoginScreen onLogin={handleLogin} onDemoMode={handleDemoMode} />;
   }
 
   return (
