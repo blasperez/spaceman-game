@@ -34,15 +34,28 @@ function App() {
     setBalance(newBalance);
   };
 
-  if (!user) {
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
     return <LoginScreen onLogin={handleLogin} onDemoMode={handleDemoMode} />;
   }
 
   return (
     <div className="w-full h-screen">
       <SpacemanGame
-        userId={user.id}
-        userName={user.user_metadata?.display_name || user.email || "Player"}
+        userId={currentUser.id}
+        userName={
+          currentUser.name ||
+          currentUser.user_metadata?.display_name ||
+          currentUser.email ||
+          "Player"
+        }
         balance={balance}
         onBalanceUpdate={handleBalanceUpdate}
       />
