@@ -57,6 +57,20 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
       0%, 100% { box-shadow: 0 0 5px rgba(34, 197, 94, 0.3); }
       50% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.8); }
     }
+    @keyframes flameFloat {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(-5px) scale(0.9); }
+    }
+    @keyframes flameIntensity {
+      0% {
+        transform: scaleX(1) scaleY(1);
+        filter: blur(1px) brightness(1);
+      }
+      100% {
+        transform: scaleX(1.2) scaleY(0.8);
+        filter: blur(2px) brightness(1.5);
+      }
+    }
     .glow-effect {
       animation: glowPulse 2s infinite ease-in-out;
     }
