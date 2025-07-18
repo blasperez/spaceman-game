@@ -4,12 +4,14 @@ import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./hooks/useAuth";
 
 function App() {
-  const { user, login, logout } = useAuth();
+  const { user, login, logout, setUser } = useAuth();
   const [balance, setBalance] = useState(1000); // Starting balance
 
   const handleLogin = (userProfile: any) => {
     // LoginScreen will handle the authentication and pass the user profile
     console.log("User logged in:", userProfile);
+    setUser(userProfile);
+    setBalance(userProfile.balance || 1000);
   };
 
   const handleDemoMode = () => {
@@ -23,6 +25,8 @@ function App() {
       balance: 10000, // Demo balance
     };
     console.log("Demo mode activated:", demoUser);
+    setUser(demoUser);
+    setBalance(10000);
   };
 
   const handleBalanceUpdate = (newBalance: number) => {
