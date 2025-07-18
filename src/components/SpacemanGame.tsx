@@ -626,7 +626,11 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
                     <button
                       onClick={handleCashOut}
                       disabled={!canCashOut()}
-                      className="bg-green-600 hover:bg-green-500 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-bold text-lg transition-colors"
+                      className="relative bg-gradient-to-r from-green-500/80 to-emerald-500/80 hover:from-green-400/90 hover:to-emerald-400/90 disabled:from-gray-600/50 disabled:to-slate-600/50 text-white px-6 py-3 rounded-lg font-bold text-lg transition-all duration-300 border border-green-400/50 hover:border-green-300/70 shadow-xl animate-pulse"
+                      style={{
+                        boxShadow: `0 0 ${gameData.gameState.multiplier * 4}px rgba(34, 197, 94, 0.6), inset 0 0 20px rgba(34, 197, 94, 0.1)`,
+                        animation: `pulse ${Math.max(0.5, 2 - gameData.gameState.multiplier * 0.1)}s infinite`,
+                      }}
                     >
                       CASHOUT
                       <div className="text-sm">
