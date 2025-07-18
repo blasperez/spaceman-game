@@ -896,6 +896,43 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
         </div>
       )}
 
+      {/* Last Results Panel - Fixed at bottom */}
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-30">
+        <div className="bg-black/70 backdrop-blur-sm rounded-full px-4 py-2 border border-gray-600/30">
+          <div className="flex items-center space-x-2">
+            <span className="text-white text-xs font-medium mr-2">
+              LAST RESULTS
+            </span>
+            <div className="flex space-x-1">
+              {lastResults.slice(-15).map((multiplier, index) => {
+                const getMultiplierColor = (mult: number) => {
+                  if (mult >= 10) return "bg-purple-500 text-white";
+                  if (mult >= 5) return "bg-red-500 text-white";
+                  if (mult >= 2) return "bg-yellow-500 text-black";
+                  return "bg-gray-500 text-white";
+                };
+
+                return (
+                  <div
+                    key={`${multiplier}-${index}`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${getMultiplierColor(multiplier)}`}
+                  >
+                    {multiplier >= 100
+                      ? `${Math.floor(multiplier / 100)}k`
+                      : multiplier >= 10
+                        ? Math.floor(multiplier)
+                        : multiplier.toFixed(1)}
+                  </div>
+                );
+              })}
+              {lastResults.length === 0 && (
+                <div className="text-gray-400 text-xs">No games played yet</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Statistics Panel */}
       <StatisticsPanel
         isOpen={showStatistics}
