@@ -481,11 +481,11 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
         </div>
       </div>
 
-      {/* Bottom Control Panel - Transparent with Glowing Effects */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 z-40">
+      {/* Bottom Control Panel - Fixed Layout */}
+      <div className="absolute bottom-0 left-0 right-0 bg-black/20 backdrop-blur-md p-4 z-40">
         <div className="max-w-7xl mx-auto">
           {/* Auto Cashout Controls */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             <div className="flex items-center space-x-6">
               {/* Auto Cashout */}
               <div className="flex items-center space-x-2">
