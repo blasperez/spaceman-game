@@ -586,7 +586,7 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
           </div>
 
           {/* Main Betting Controls */}
-          <div className="flex items-center justify-between">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
             {/* Left side - Betting controls */}
             <div className="flex items-center space-x-4">
               {/* Quick bet buttons */}
