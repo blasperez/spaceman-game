@@ -712,7 +712,7 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
             </div>
 
             {/* Right side - Balance and info */}
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-2 lg:gap-4 justify-end">
               <div className="text-right">
                 <div className="text-white/70 text-sm">Balance</div>
                 <div className="text-white text-xl font-bold">
