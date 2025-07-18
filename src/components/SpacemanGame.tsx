@@ -470,12 +470,12 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
                 </div>
               </div>
 
-              {/* Rotating rays with dynamic speed */}
+              {/* Rotating rays with dynamic speed and incandescent glow */}
               <div
                 className="absolute inset-0 animate-spin"
                 style={{
                   animationDuration: `${Math.max(0.5, 3 - gameData.gameState.multiplier * 0.1)}s`,
-                  filter: `drop-shadow(0 0 ${gameData.gameState.multiplier * 2}px rgba(34, 197, 94, 0.8))`,
+                  filter: `blur(${Math.min(3, gameData.gameState.multiplier * 0.3)}px) drop-shadow(0 0 ${gameData.gameState.multiplier * 3}px rgba(255, 165, 0, 0.8)) drop-shadow(0 0 ${gameData.gameState.multiplier * 2}px rgba(255, 69, 0, 0.6))`,
                 }}
               >
                 {Array.from({ length: 12 }).map((_, i) => (
