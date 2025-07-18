@@ -323,6 +323,28 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
         />
       ))}
 
+      {/* Moving Space Elements */}
+      {spaceElements.map((element) => (
+        <div
+          key={element.id}
+          className={`absolute ${element.type === "comet" ? "rounded-none" : "rounded-full"} ${element.type === "star" ? "animate-pulse" : ""}`}
+          style={{
+            left: `${element.x}%`,
+            top: `${element.y}%`,
+            width: `${element.size}px`,
+            height: `${element.size}px`,
+            background:
+              element.type === "comet"
+                ? `linear-gradient(45deg, ${element.color}, transparent)`
+                : element.color,
+            opacity: element.opacity,
+            boxShadow: `0 0 ${element.size / 2}px ${element.color}30`,
+            transform: element.type === "comet" ? "skew(-20deg, 0)" : "none",
+            zIndex: 1,
+          }}
+        />
+      ))}
+
       {/* Header Bar */}
       <div className="absolute top-0 left-0 right-0 bg-black/40 backdrop-blur-sm p-4 z-40">
         <div className="flex items-center justify-between">
