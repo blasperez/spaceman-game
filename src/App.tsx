@@ -7,12 +7,22 @@ function App() {
   const { user, login, logout } = useAuth();
   const [balance, setBalance] = useState(1000); // Starting balance
 
-  const handleLogin = async (email: string, password: string) => {
-    try {
-      await login(email, password);
-    } catch (error) {
-      console.error("Login failed:", error);
-    }
+  const handleLogin = (userProfile: any) => {
+    // LoginScreen will handle the authentication and pass the user profile
+    console.log("User logged in:", userProfile);
+  };
+
+  const handleDemoMode = () => {
+    // Create a demo user
+    const demoUser = {
+      id: "demo-user",
+      name: "Demo Player",
+      email: "demo@example.com",
+      avatar: "https://ui-avatars.com/api/?name=Demo+Player&background=random",
+      isDemo: true,
+      balance: 10000, // Demo balance
+    };
+    console.log("Demo mode activated:", demoUser);
   };
 
   const handleBalanceUpdate = (newBalance: number) => {
