@@ -100,6 +100,20 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
   // Quick bet amounts
   const quickBetAmounts = [1, 5, 10, 25];
 
+  // Space elements state
+  const [spaceElements, setSpaceElements] = useState<
+    Array<{
+      x: number;
+      y: number;
+      size: number;
+      type: "planet" | "moon" | "comet" | "asteroid" | "star";
+      speed: number;
+      opacity: number;
+      id: number;
+      color: string;
+    }>
+  >([]);
+
   // Generate space background
   useEffect(() => {
     const newStars = Array.from({ length: 200 }, (_, i) => ({
@@ -110,6 +124,48 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
       id: i,
     }));
     setStars(newStars);
+
+    // Generate space elements
+    const newSpaceElements = Array.from({ length: 20 }, (_, i) => {
+      const types = ["planet", "moon", "comet", "asteroid", "star"] as const;
+      const colors = [
+        "#FF6B6B",
+        "#4ECDC4",
+        "#45B7D1",
+        "#96CEB4",
+        "#FFEAA7",
+        "#DDA0DD",
+        "#FFB347",
+      ];
+      return {
+        x: 110 + Math.random() * 20, // Start from right
+        y: Math.random() * 100,
+        size: Math.random() * 40 + 10,
+        type: types[Math.floor(Math.random() * types.length)],
+        speed: Math.random() * 0.2 + 0.05,
+        opacity: Math.random() * 0.6 + 0.3,
+        id: i,
+        color: colors[Math.floor(Math.random() * colors.length)],
+      };
+    });
+    setSpaceElements(newSpaceElements);
+  }, []);
+
+  // Animate space elements
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSpaceElements((prev) =>
+        prev.map((element) => ({
+          ...element,
+          x:
+            element.x <= -20
+              ? 110 + Math.random() * 20
+              : element.x - element.speed,
+        })),
+      );
+    }, 50);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Update player bet status
