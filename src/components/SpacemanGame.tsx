@@ -534,7 +534,7 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
               </div>
 
               {/* 50% Auto Cashout */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 min-w-fit">
                 <div className="relative">
                   <input
                     type="checkbox"
