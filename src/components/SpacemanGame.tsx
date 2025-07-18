@@ -47,6 +47,20 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
   balance,
   onBalanceUpdate,
 }) => {
+  // Dynamic styles for multiplier effects
+  const dynamicStyles = `
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 5px rgba(34, 197, 94, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.8); }
+    }
+    .glow-effect {
+      animation: glowPulse 2s infinite ease-in-out;
+    }
+  `;
   // Game state
   const { gameData, isConnected, placeBet, cashOut } = useGameSocket(
     userId,
