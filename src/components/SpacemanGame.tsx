@@ -7,8 +7,13 @@ import {
   MessageCircle,
   RotateCcw,
   History,
+  Repeat,
+  HelpCircle,
 } from "lucide-react";
 import { useGameSocket } from "../hooks/useGameSocket";
+import StatisticsPanel from "./StatisticsPanel";
+import ChatPanel from "./ChatPanel";
+import SettingsPanel from "./SettingsPanel";
 
 interface GameData {
   gameState: {
@@ -58,9 +63,13 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
   const [showChat, setShowChat] = useState(false);
   const [showStatistics, setShowStatistics] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showAutoplay, setShowAutoplay] = useState(false);
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
+  const [language, setLanguage] = useState("en");
   const [lastResults, setLastResults] = useState<number[]>([]);
   const [gameHistory, setGameHistory] = useState<
-    Array<{ multiplier: number; timestamp: number }>
+    Array<{ multiplier: number; timestamp: number; gameId: string }>
   >([]);
   const [stars, setStars] = useState<
     Array<{ x: number; y: number; opacity: number; size: number; id: number }>
@@ -124,6 +133,7 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
             {
               multiplier: gameData.gameState.crashPoint!,
               timestamp: Date.now(),
+              gameId: gameData.gameState.gameId,
             },
           ]);
         }
@@ -266,24 +276,42 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
               className="p-2 bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-colors"
+              title="Sound"
             >
               {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
             </button>
             <button
               onClick={() => setShowChat(!showChat)}
               className="p-2 bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-colors"
+              title="Chat"
             >
               <MessageCircle size={20} />
             </button>
             <button
               onClick={() => setShowStatistics(!showStatistics)}
               className="p-2 bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-colors"
+              title="Statistics"
             >
               <BarChart3 size={20} />
             </button>
             <button
+              onClick={() => setShowAutoplay(!showAutoplay)}
+              className="p-2 bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-colors"
+              title="Autoplay"
+            >
+              <Repeat size={20} />
+            </button>
+            <button
+              onClick={() => setShowHelp(!showHelp)}
+              className="p-2 bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-colors"
+              title="Help"
+            >
+              <HelpCircle size={20} />
+            </button>
+            <button
               onClick={() => setShowSettings(!showSettings)}
               className="p-2 bg-gray-700/50 hover:bg-gray-600/50 text-white rounded-lg transition-colors"
+              title="Settings"
             >
               <Settings size={20} />
             </button>
@@ -669,6 +697,231 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Autoplay Panel */}
+      {showAutoplay && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-gray-900 rounded-xl w-[90%] max-w-md border border-gray-700 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Repeat className="text-purple-400" size={24} />
+                <h2 className="text-xl font-bold text-white">Autoplay</h2>
+              </div>
+              <button
+                onClick={() => setShowAutoplay(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-white text-sm mb-2">
+                  Number of rounds
+                </label>
+                <select
+                  value={autoplayRounds}
+                  onChange={(e) => setAutoplayRounds(parseInt(e.target.value))}
+                  className="w-full bg-gray-800 text-white px-3 py-2 rounded border border-gray-600"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={250}>250</option>
+                  <option value={500}>500</option>
+                </select>
+              </div>
+
+              <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3">
+                <div className="text-yellow-300 text-sm font-medium mb-1">
+                  ⚠️ Important
+                </div>
+                <div className="text-yellow-200 text-xs">
+                  Please set Auto Cashout before starting Autoplay. While
+                  Autoplay is running, you cannot change bet amounts or auto
+                  cashout settings.
+                </div>
+              </div>
+
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    setAutoplayActive(true);
+                    setShowAutoplay(false);
+                  }}
+                  disabled={!autoCashoutEnabled}
+                  className="flex-1 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 text-white py-2 rounded-lg font-medium transition-colors"
+                >
+                  Start Autoplay
+                </button>
+                <button
+                  onClick={() => setShowAutoplay(false)}
+                  className="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Help Panel */}
+      {showHelp && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-gray-900 rounded-xl w-[90%] max-w-2xl h-[80%] border border-gray-700 overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <div className="flex items-center space-x-2">
+                <HelpCircle className="text-purple-400" size={24} />
+                <h2 className="text-xl font-bold text-white">
+                  Spaceman Game Help
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowHelp(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6 h-[calc(100%-80px)] overflow-y-auto">
+              <div className="space-y-6 text-gray-300">
+                <div>
+                  <h3 className="text-white font-bold text-lg mb-2">
+                    🚀 How to Play
+                  </h3>
+                  <p className="mb-2">
+                    Spaceman is a multiplayer crash game where you bet on how
+                    high the multiplier will go before it crashes.
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                    <li>Place your bet during the betting phase</li>
+                    <li>Watch the multiplier grow from 1.00x upwards</li>
+                    <li>
+                      Cash out before the crash to win your bet × multiplier
+                    </li>
+                    <li>
+                      If you don't cash out before the crash, you lose your bet
+                    </li>
+                  </ol>
+                </div>
+
+                <div>
+                  <h3 className="text-white font-bold text-lg mb-2">
+                    💰 Betting
+                  </h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>
+                      <strong>Minimum bet:</strong> €1.00
+                    </li>
+                    <li>
+                      <strong>Maximum bet:</strong> €100.00
+                    </li>
+                    <li>
+                      <strong>Quick bets:</strong> Use +€1, +€5, +€10, +€25
+                      buttons
+                    </li>
+                    <li>
+                      <strong>Double (2x):</strong> Doubles your current bet
+                      amount
+                    </li>
+                    <li>
+                      <strong>Undo:</strong> Reverts to your previous bet amount
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-white font-bold text-lg mb-2">
+                    🎯 Cashing Out
+                  </h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>
+                      <strong>CASHOUT:</strong> Cash out your full bet at
+                      current multiplier
+                    </li>
+                    <li>
+                      <strong>CASHOUT 50%:</strong> Cash out half your bet,
+                      continue with the rest
+                    </li>
+                    <li>
+                      <strong>Auto Cashout:</strong> Automatically cash out at a
+                      set multiplier
+                    </li>
+                    <li>
+                      <strong>50% Auto Cashout:</strong> Automatically cash out
+                      50% at a set multiplier
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-white font-bold text-lg mb-2">
+                    ⚡ Special Rules
+                  </h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>If crash occurs at 1.00x, all bets are lost</li>
+                    <li>Maximum multiplier is 5000x (auto payout)</li>
+                    <li>Game has 95.50% RTP (Return to Player)</li>
+                    <li>This is a game of chance, not skill</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-white font-bold text-lg mb-2">
+                    🔄 Autoplay
+                  </h3>
+                  <p className="text-sm">
+                    Automatically repeat your bets for a selected number of
+                    rounds. Auto Cashout must be enabled to use Autoplay.
+                  </p>
+                </div>
+
+                <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4">
+                  <h4 className="text-blue-300 font-bold mb-2">
+                    🛡️ Responsible Gaming
+                  </h4>
+                  <p className="text-blue-200 text-sm">
+                    Remember to play responsibly. Set limits for yourself and
+                    never bet more than you can afford to lose. If you need help
+                    with gambling issues, please contact our support team.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Statistics Panel */}
+      <StatisticsPanel
+        isOpen={showStatistics}
+        onClose={() => setShowStatistics(false)}
+        gameHistory={gameHistory}
+      />
+
+      {/* Chat Panel */}
+      <ChatPanel
+        isOpen={showChat}
+        onClose={() => setShowChat(false)}
+        currentUserId={userId}
+        currentUserName={userName}
+      />
+
+      {/* Settings Panel */}
+      <SettingsPanel
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        soundEnabled={soundEnabled}
+        onSoundToggle={() => setSoundEnabled(!soundEnabled)}
+        animationsEnabled={animationsEnabled}
+        onAnimationsToggle={() => setAnimationsEnabled(!animationsEnabled)}
+        language={language}
+        onLanguageChange={setLanguage}
+      />
     </div>
   );
 };
