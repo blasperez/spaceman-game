@@ -248,6 +248,9 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
 
   return (
     <div className="relative w-full h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black overflow-hidden">
+      {/* Dynamic Styles */}
+      <style dangerouslySetInnerHTML={{ __html: dynamicStyles }} />
+
       {/* Stars Background */}
       {stars.map((star) => (
         <div
