@@ -490,7 +490,7 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
           )}
         </div>
 
-        {/* Spaceman Character */}
+        {/* Spaceman Character with Flame Trail */}
         <div
           className={`absolute transition-all duration-300 ease-in-out z-30 ${
             gameData.gameState.phase === "flying" ? "animate-pulse" : ""
@@ -501,7 +501,59 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
             transform: "translate(-50%, -50%)",
           }}
         >
-          <div className="w-20 h-20 flex items-center justify-center">
+          {/* Flame Trail Effect */}
+          {gameData.gameState.phase === "flying" && (
+            <div className="absolute right-full top-1/2 transform -translate-y-1/2 mr-2">
+              {/* Multiple flame particles */}
+              <div className="relative">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute animate-pulse"
+                    style={{
+                      right: `${i * 8}px`,
+                      top: `${Math.sin(i) * 10}px`,
+                      animation: `flameFloat ${0.5 + i * 0.1}s infinite ease-in-out alternate`,
+                      animationDelay: `${i * 0.1}s`,
+                    }}
+                  >
+                    <div
+                      className="w-3 h-6 rounded-full"
+                      style={{
+                        background:
+                          i < 3
+                            ? "linear-gradient(to top, #ff6b35, #f7931e, #ffcd3c)"
+                            : i < 6
+                              ? "linear-gradient(to top, #f7931e, #ffcd3c, transparent)"
+                              : "linear-gradient(to top, #ffcd3c, transparent, transparent)",
+                        filter: `blur(${i * 0.5}px)`,
+                        opacity: Math.max(0.3, 1 - i * 0.15),
+                        transform: `scale(${Math.max(0.3, 1 - i * 0.1)})`,
+                      }}
+                    />
+                  </div>
+                ))}
+
+                {/* Main flame jet */}
+                <div
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2"
+                  style={{
+                    width: `${20 + gameData.gameState.multiplier * 5}px`,
+                    height: "12px",
+                    background:
+                      "linear-gradient(to left, #ff4444, #ff8800, #ffaa00, transparent)",
+                    borderRadius: "0 50% 50% 0",
+                    filter: `blur(1px) brightness(${1 + gameData.gameState.multiplier * 0.1})`,
+                    boxShadow: "0 0 10px #ff6600, 0 0 20px #ff4400",
+                    animation:
+                      "flameIntensity 0.3s infinite ease-in-out alternate",
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="w-20 h-20 flex items-center justify-center relative">
             <img
               src="/png-png-urbanbrush-13297 copy.png"
               alt="Spaceman"
