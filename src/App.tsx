@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import SpacemanGame from "./components/SpacemanGame";
-import LoginScreen from "./components/LoginScreen";
+import { LoginScreen } from "./components/LoginScreen";
 import { useAuth } from "./hooks/useAuth";
 
 function App() {
