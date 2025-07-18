@@ -361,10 +361,13 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
                 </div>
               </div>
 
-              {/* Rotating rays */}
+              {/* Rotating rays with dynamic speed */}
               <div
                 className="absolute inset-0 animate-spin"
-                style={{ animationDuration: "3s" }}
+                style={{
+                  animationDuration: `${Math.max(0.5, 3 - gameData.gameState.multiplier * 0.1)}s`,
+                  filter: `drop-shadow(0 0 ${gameData.gameState.multiplier * 2}px rgba(34, 197, 94, 0.8))`,
+                }}
               >
                 {Array.from({ length: 12 }).map((_, i) => (
                   <div
