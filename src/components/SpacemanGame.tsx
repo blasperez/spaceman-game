@@ -372,7 +372,15 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
                 {Array.from({ length: 12 }).map((_, i) => (
                   <div
                     key={i}
-                    className="absolute w-1 bg-gradient-to-t from-transparent via-cyan-400 to-transparent opacity-60"
+                    className="absolute w-1 bg-gradient-to-t from-transparent via-cyan-400 to-transparent"
+                    style={{
+                      opacity: Math.min(
+                        1,
+                        0.6 + gameData.gameState.multiplier * 0.05,
+                      ),
+                      filter: `drop-shadow(0 0 ${gameData.gameState.multiplier}px rgba(6, 182, 212, 0.8))`,
+                      background: `linear-gradient(to top, transparent, rgba(6, 182, 212, ${Math.min(1, 0.8 + gameData.gameState.multiplier * 0.02)}), transparent)`,
+                    }}
                     style={{
                       height: "150px",
                       left: "50%",
