@@ -336,9 +336,21 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
           {gameData.gameState.phase === "flying" && (
             <div className="relative">
-              {/* Planet/Multiplier Background */}
-              <div className="relative w-64 h-64 rounded-full bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 shadow-2xl">
-                <div className="absolute inset-4 rounded-full bg-gradient-to-br from-cyan-300/50 to-purple-500/50 backdrop-blur-sm">
+              {/* Planet/Multiplier Background with Dynamic Effects */}
+              <div
+                className="relative w-64 h-64 rounded-full bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 shadow-2xl animate-pulse"
+                style={{
+                  boxShadow: `0 0 ${gameData.gameState.multiplier * 10}px rgba(6, 182, 212, 0.8), 0 0 ${gameData.gameState.multiplier * 20}px rgba(147, 51, 234, 0.6), 0 0 ${gameData.gameState.multiplier * 30}px rgba(59, 130, 246, 0.4)`,
+                  animation: `pulse ${Math.max(0.3, 1.5 - gameData.gameState.multiplier * 0.05)}s infinite, rotate 360deg ${Math.max(1, 5 - gameData.gameState.multiplier * 0.2)}s linear infinite`,
+                  transform: `scale(${Math.min(1.3, 1 + gameData.gameState.multiplier * 0.02)})`,
+                }}
+              >
+                <div
+                  className="absolute inset-4 rounded-full bg-gradient-to-br from-cyan-300/50 to-purple-500/50 backdrop-blur-sm"
+                  style={{
+                    boxShadow: `inset 0 0 ${gameData.gameState.multiplier * 5}px rgba(34, 197, 94, 0.4)`,
+                  }}
+                >
                   <div className="flex items-center justify-center h-full">
                     <span
                       className={`text-6xl font-extrabold drop-shadow-lg ${getMultiplierColor()}`}
