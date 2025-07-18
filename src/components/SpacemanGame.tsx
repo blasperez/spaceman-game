@@ -569,7 +569,10 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
               <div className="flex items-center space-x-2">
                 <button
                   onClick={doubleBet}
-                  className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-bold transition-colors"
+                  className="relative bg-gradient-to-r from-yellow-500/20 to-orange-500/20 hover:from-yellow-400/40 hover:to-orange-400/40 text-white px-4 py-2 rounded-lg font-bold transition-all duration-300 border border-yellow-400/30 hover:border-yellow-300/50 shadow-lg hover:shadow-yellow-500/25 backdrop-blur-sm"
+                  style={{
+                    boxShadow: `0 0 ${gameData.gameState.phase === "flying" ? gameData.gameState.multiplier * 2 : 5}px rgba(234, 179, 8, 0.3)`,
+                  }}
                 >
                   2x
                 </button>
