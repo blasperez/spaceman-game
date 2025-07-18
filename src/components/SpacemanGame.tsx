@@ -486,9 +486,9 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
         <div className="max-w-7xl mx-auto">
           {/* Auto Cashout Controls */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-            <div className="flex items-center space-x-6">
+            <div className="flex flex-wrap items-center gap-4">
               {/* Auto Cashout */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 min-w-fit">
                 <div className="relative">
                   <input
                     type="checkbox"
