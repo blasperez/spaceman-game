@@ -592,7 +592,12 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
               </div>
 
               {/* Bet amount display */}
-              <div className="bg-gray-700 px-4 py-2 rounded-lg">
+              <div
+                className="relative bg-gradient-to-r from-slate-700/30 to-gray-700/30 px-4 py-2 rounded-lg border border-slate-500/30 backdrop-blur-sm shadow-lg"
+                style={{
+                  boxShadow: `0 0 ${gameData.gameState.phase === "flying" ? gameData.gameState.multiplier * 3 : 8}px rgba(148, 163, 184, 0.2)`,
+                }}
+              >
                 <input
                   type="number"
                   value={betAmount}
