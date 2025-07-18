@@ -659,7 +659,11 @@ const SpacemanGame: React.FC<SpacemanGameProps> = ({
                 <button
                   onClick={handlePlaceBet}
                   disabled={!canPlaceBet()}
-                  className="bg-green-600 hover:bg-green-500 disabled:bg-gray-600 text-white px-8 py-4 rounded-lg font-bold text-xl transition-colors"
+                  className="relative bg-gradient-to-r from-green-500/90 to-emerald-600/90 hover:from-green-400 hover:to-emerald-500 disabled:from-gray-600/50 disabled:to-slate-600/50 text-white px-8 py-4 rounded-lg font-bold text-xl transition-all duration-300 border-2 border-green-400/60 hover:border-green-300/80 shadow-2xl transform hover:scale-105"
+                  style={{
+                    boxShadow:
+                      "0 0 25px rgba(34, 197, 94, 0.5), inset 0 0 25px rgba(34, 197, 94, 0.1)",
+                  }}
                 >
                   CONFIRM BET
                   <div className="text-sm">€{betAmount.toFixed(2)}</div>
