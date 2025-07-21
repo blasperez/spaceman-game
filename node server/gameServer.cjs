@@ -423,7 +423,6 @@ server.listen(PORT, () => {
   // Start the first round
   startNewRound();
 });
-
 // Error handling
 server.on('error', (error) => {
   console.error('Server error:', error);
