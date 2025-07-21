@@ -146,17 +146,6 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
         </button>
       )}
 
-      {/* Floating Show Button - Only show when collapsed */}
-      {!isExpanded && (
-        <button
-          className="fixed bottom-6 left-1/2 z-50 bg-black/70 text-white rounded-full p-4 shadow-lg flex items-center justify-center"
-          style={{ transform: 'translateX(-50%)' }}
-          onClick={() => setIsExpanded(true)}
-        >
-          <ChevronLeft style={{ transform: 'rotate(-90deg)' }} size={32} />
-        </button>
-      )}
-
       {/* Main Sliding Panel */}
       <div
         ref={panelRef}
@@ -182,17 +171,6 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
             <ChevronLeft size={28} />
           </div>
         </div>
-
-        {/* Botón para ocultar el panel (solo cuando está expandido) */}
-        {isExpanded && (
-          <button
-            className="absolute bottom-4 left-1/2 z-50 bg-black/70 text-white rounded-full p-4 shadow-lg flex items-center justify-center"
-            style={{ transform: 'translateX(-50%)' }}
-            onClick={() => setIsExpanded(false)}
-          >
-            <ChevronLeft style={{ transform: 'rotate(90deg)' }} size={32} />
-          </button>
-        )}
 
         {/* Panel Content */}
         <div className="p-4 h-full overflow-y-auto">
