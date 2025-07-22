@@ -124,6 +124,12 @@ export const useGameSocket = (userId: string, userName: string) => {
         } else {
           console.log('❌ Max reconnection attempts reached');
           setConnectionStatus('error');
+
+          // Development fallback: switch to local simulation when server is unreachable
+          if (import.meta.env.DEV) {
+            console.log('🔧 Falling back to local simulation after failed reconnect attempts');
+            startLocalSimulation();
+          }
         }
       };
       
