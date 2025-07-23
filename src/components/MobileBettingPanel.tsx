@@ -126,9 +126,10 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
     }
   };
 
+
   return (
     <>
-      {/* Backdrop when expanded */}
+      {/* Backdrop when expanded */}  
       {!isCollapsed && (
         <div 
           className="fixed inset-0 bg-black/20 z-30"
@@ -333,6 +334,19 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Toggle Button Below Panel */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="fixed bottom-0 left-1/2 transform -translate-x-1/2 mb-2 z-50 bg-black/60 backdrop-blur-md rounded-full p-2 shadow-lg hover:bg-black/80 transition-colors"
+        aria-label={isCollapsed ? 'Show betting panel' : 'Hide betting panel'}
+      >
+        {isCollapsed ? (
+          <ChevronUp size={24} className="text-white" />
+        ) : (
+          <ChevronDown size={24} className="text-white" />
+        )}
+      </button>
     </>
   );
 };
