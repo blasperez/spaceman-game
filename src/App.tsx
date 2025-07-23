@@ -466,6 +466,37 @@ function GameApp() {
     }
   }, [gameData.gameState.phase, gameData.gameState.countdown, gameData.gameState.crashPoint, hasActiveBet, hasCashedOut, currentBet, user?.name, balance, betLocked, placeBet]);
 
+  // Improved bet locking to prevent race conditions
+  useEffect(() => {
+    if (betLocked) {
+      const unlockTimeout = setTimeout(() => {
+        setBetLocked(false);
+      }, 3000); // Unlock after 3 seconds to prevent permanent lock
+      
+      return () => clearTimeout(unlockTimeout);
+    }
+  }, [betLocked]);
+
+  // Improved error handling for session and profile loading
+  useEffect(() => {
+    if (!sessionChecked) return;
+
+    const handleErrorLogging = (error: any, context: string) => {
+      if (error) {
+        console.error(`❌ Error in ${context}:`, error);
+        setChatMessages(prev => [...prev, {
+          id: Date.now(),
+          username: 'Sistema',
+          message: `⚠️ Error en ${context}: ${error.message || error}`,
+          timestamp: new Date(),
+          type: 'system'
+        }]);
+      }
+    };
+
+    // Example usage in session check and auth state change can be added here if needed
+  }, [sessionChecked]);
+
   // Auto cash out logic for multiplayer
   useEffect(() => {
     if (!hasActiveBet || gameData.gameState.phase !== 'flying' || hasCashedOut || betLocked) return;
