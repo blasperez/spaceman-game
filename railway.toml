@@ -1,0 +1,12 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm run build"
+node_version = "20.19.0"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+
+[deploy.lifecycle]
+postDeploy = "npm run migrate"
