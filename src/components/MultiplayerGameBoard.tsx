@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Wifi, WifiOff } from 'lucide-react';
+import { Users, Wifi, WifiOff, X } from 'lucide-react';
 
 interface GameState {
   gameId: string;
@@ -35,6 +35,27 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
 }) => {
   const [stars, setStars] = useState<Array<{ x: number; y: number; size: number }>>([]);
   const [fireParticles, setFireParticles] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; type: 'flame' | 'spark' | 'ember' }>>([]);
+  const [showPlayersModal, setShowPlayersModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsMobile(isMobileDevice);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkMobile, 100);
+    });
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('orientationchange', checkMobile);
+    };
+  }, []);
 
   // Generate stars background
   useEffect(() => {
@@ -374,61 +395,144 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       )}
 
-      {/* Active Players Panel */}
-      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-40">
-        <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl p-4 w-80 max-h-96 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-semibold flex items-center">
-              <Users size={20} className="mr-2 text-purple-400" />
-              Jugadores Activos
-            </h3>
-            <div className="text-white/70 text-sm">
-              {totalPlayers} online
+      {/* Mobile Players Button */}
+      {isMobile && (
+        <button
+          onClick={() => setShowPlayersModal(true)}
+          className="absolute top-20 right-4 z-40 bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl p-3 flex items-center space-x-2 hover:bg-black/40 transition-colors"
+        >
+          <Users size={20} className="text-purple-400" />
+          <span className="text-white text-sm font-medium">
+            {totalPlayers} online
+          </span>
+        </button>
+      )}
+
+      {/* Desktop Active Players Panel */}
+      {!isMobile && (
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-40">
+          <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl p-4 w-80 max-h-96 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-semibold flex items-center">
+                <Users size={20} className="mr-2 text-purple-400" />
+                Jugadores Activos
+              </h3>
+              <div className="text-white/70 text-sm">
+                {totalPlayers} online
+              </div>
             </div>
-          </div>
-          
-          {/* Table Header */}
-          <div className="grid grid-cols-4 gap-2 text-white/70 text-xs mb-2 border-b border-white/20 pb-2">
-            <div>Jugador</div>
-            <div className="text-right">Apuesta</div>
-            <div className="text-right">Multi.</div>
-            <div className="text-right">Ganancia</div>
-          </div>
-          
-          {/* Players List */}
-          <div className="space-y-1">
-            {activeBets.map((bet) => (
-              <div
-                key={bet.playerId}
-                className={`grid grid-cols-4 gap-2 text-xs py-2 px-2 rounded ${
-                  bet.playerId === currentUserId 
-                    ? 'bg-blue-500/20 border border-blue-400/30' 
-                    : 'bg-white/5'
-                } ${bet.cashedOut ? 'text-green-300' : 'text-white'}`}
-              >
-                <div className="truncate">
-                  {bet.playerId === currentUserId ? '👤 ' : ''}{bet.playerName}
+            
+            {/* Table Header */}
+            <div className="grid grid-cols-4 gap-2 text-white/70 text-xs mb-2 border-b border-white/20 pb-2">
+              <div>Jugador</div>
+              <div className="text-right">Apuesta</div>
+              <div className="text-right">Multi.</div>
+              <div className="text-right">Ganancia</div>
+            </div>
+            
+            {/* Players List */}
+            <div className="space-y-1">
+              {activeBets.map((bet) => (
+                <div
+                  key={bet.playerId}
+                  className={`grid grid-cols-4 gap-2 text-xs py-2 px-2 rounded ${
+                    bet.playerId === currentUserId 
+                      ? 'bg-blue-500/20 border border-blue-400/30' 
+                      : 'bg-white/5'
+                  } ${bet.cashedOut ? 'text-green-300' : 'text-white'}`}
+                >
+                  <div className="truncate">
+                    {bet.playerId === currentUserId ? '👤 ' : ''}{bet.playerName}
+                  </div>
+                  <div className="text-right">€{bet.betAmount}</div>
+                  <div className="text-right">
+                    {bet.cashedOut ? `${bet.cashOutMultiplier?.toFixed(2)}x` : 
+                     gameState.phase === 'flying' ? `${gameState.multiplier.toFixed(2)}x` : '-'}
+                  </div>
+                  <div className="text-right">
+                    {bet.cashedOut ? `€${bet.winAmount?.toFixed(2)}` : 
+                     gameState.phase === 'flying' ? `€${(bet.betAmount * gameState.multiplier).toFixed(2)}` : '-'}
+                  </div>
                 </div>
-                <div className="text-right">€{bet.betAmount}</div>
-                <div className="text-right">
-                  {bet.cashedOut ? `${bet.cashOutMultiplier?.toFixed(2)}x` : 
-                   gameState.phase === 'flying' ? `${gameState.multiplier.toFixed(2)}x` : '-'}
-                </div>
-                <div className="text-right">
-                  {bet.cashedOut ? `€${bet.winAmount?.toFixed(2)}` : 
-                   gameState.phase === 'flying' ? `€${(bet.betAmount * gameState.multiplier).toFixed(2)}` : '-'}
+              ))}
+            </div>
+            
+            {activeBets.length === 0 && (
+              <div className="text-white/60 text-center py-4 text-sm">
+                Esperando jugadores...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Players Modal */}
+      {isMobile && showPlayersModal && (
+        <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm">
+          <div className="h-full overflow-y-auto p-4">
+            <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-2xl p-4 h-full">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white font-bold text-lg flex items-center">
+                  <Users size={24} className="mr-2 text-purple-400" />
+                  Jugadores Activos
+                </h3>
+                <div className="flex items-center space-x-3">
+                  <div className="text-white/70 text-sm">
+                    {totalPlayers} online
+                  </div>
+                  <button
+                    onClick={() => setShowPlayersModal(false)}
+                    className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <X size={20} className="text-white" />
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-          
-          {activeBets.length === 0 && (
-            <div className="text-white/60 text-center py-4 text-sm">
-              Esperando jugadores...
+              
+              {/* Table Header */}
+              <div className="grid grid-cols-4 gap-2 text-white/70 text-sm mb-3 border-b border-white/20 pb-2">
+                <div>Jugador</div>
+                <div className="text-right">Apuesta</div>
+                <div className="text-right">Multi.</div>
+                <div className="text-right">Ganancia</div>
+              </div>
+              
+              {/* Players List */}
+              <div className="space-y-2">
+                {activeBets.map((bet) => (
+                  <div
+                    key={bet.playerId}
+                    className={`grid grid-cols-4 gap-2 text-sm py-3 px-3 rounded-lg ${
+                      bet.playerId === currentUserId 
+                        ? 'bg-blue-500/20 border border-blue-400/30' 
+                        : 'bg-white/5'
+                    } ${bet.cashedOut ? 'text-green-300' : 'text-white'}`}
+                  >
+                    <div className="truncate">
+                      {bet.playerId === currentUserId ? '👤 ' : ''}{bet.playerName}
+                    </div>
+                    <div className="text-right">€{bet.betAmount}</div>
+                    <div className="text-right">
+                      {bet.cashedOut ? `${bet.cashOutMultiplier?.toFixed(2)}x` : 
+                       gameState.phase === 'flying' ? `${gameState.multiplier.toFixed(2)}x` : '-'}
+                    </div>
+                    <div className="text-right">
+                      {bet.cashedOut ? `€${bet.winAmount?.toFixed(2)}` : 
+                       gameState.phase === 'flying' ? `€${(bet.betAmount * gameState.multiplier).toFixed(2)}` : '-'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {activeBets.length === 0 && (
+                <div className="text-white/60 text-center py-8 text-lg">
+                  Esperando jugadores...
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
