@@ -16,6 +16,7 @@ import { useGameSocket } from './hooks/useGameSocket';
 import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, X, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
 import { BettingPanel } from './components/BettingPanel';
+import { MobileBettingPanel } from './components/MobileBettingPanel';
 
 interface GameHistory {
   id: number;
@@ -725,27 +726,14 @@ function GameApp() {
         <div className="nebula"></div>
         <div className="nebula"></div>
 
-        {/* Enhanced Game Board - Mobile Full Screen */}
+        {/* Mobile Game Board - Now using MultiplayerGameBoard for consistent visuals */}
         <div className="absolute inset-0">
-          <EnhancedGameBoard
-            multiplier={gameData.gameState.multiplier}
-            gamePhase={gameData.gameState.phase}
-            countdown={gameData.gameState.countdown}
-            soundEnabled={soundEnabled}
-            onSoundToggle={() => setSoundEnabled(!soundEnabled)}
-            balance={balance}
-            betAmount={betAmount}
-            setBetAmount={setBetAmount}
-            onPlaceBet={handlePlaceBet}
-            onCashOut={handleCashOut}
-            canBet={canBet}
-            canCashOut={canCashOut}
-            hasActiveBet={hasActiveBet}
-            currentWin={currentWin}
-            autoCashOutEnabled={autoCashOutEnabled}
-            setAutoCashOutEnabled={setAutoCashOutEnabled}
-            autoCashOut={autoCashOut}
-            setAutoCashOut={setAutoCashOut}
+          <MultiplayerGameBoard
+            gameState={gameData.gameState}
+            activeBets={gameData.activeBets}
+            totalPlayers={gameData.totalPlayers}
+            isConnected={isConnected}
+            currentUserId={user.id}
           />
         </div>
 
@@ -867,8 +855,8 @@ function GameApp() {
 
         {/* Removed Next Round Bet Indicator */}
 
-        {/* NEW Mobile Betting Panel */}
-        <BettingPanel
+        {/* Mobile Betting Panel - Enhanced for mobile experience */}
+        <MobileBettingPanel
           balance={balance}
           betAmount={betAmount}
           setBetAmount={setBetAmount}
@@ -879,19 +867,12 @@ function GameApp() {
           currentWin={currentWin}
           autoCashOut={autoCashOut}
           setAutoCashOut={setAutoCashOut}
-          autoPlay={false}
-          setAutoPlay={() => {}}
           hasActiveBet={hasActiveBet}
           gamePhase={gameData.gameState.phase}
           currentBet={currentBet}
-          lastBetAmount={betAmount}
           autoBotConfig={autoBotConfig}
           autoCashOutEnabled={autoCashOutEnabled}
           setAutoCashOutEnabled={setAutoCashOutEnabled}
-          autoBetEnabled={autoBetEnabled}
-          setAutoBetEnabled={setAutoBetEnabled}
-          autoBetAmount={autoBetAmount}
-          setAutoBetAmount={() => {}}
           multiplier={gameData.gameState.multiplier}
           onShowAutoBotPanel={() => setShowAutoBotPanel(true)}
         />
