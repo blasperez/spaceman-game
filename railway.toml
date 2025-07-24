@@ -1,10 +1,3 @@
-startCommand = "npm run start"
-healthcheckPath = "/"
-healthcheckTimeout = 100
-
-[deploy.lifecycle]
-postDeploy = "npm run migrate"
-=======
 [deploy]
 startCommand = "npm run start"
 healthcheckPath = "/health"
