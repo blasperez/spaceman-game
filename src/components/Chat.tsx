@@ -87,7 +87,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username })
       
       if (Math.random() > 0.7) { // 30% chance every interval
         const newMessage: ChatMessage = {
-          id: Date.now() + Math.random(),
+          id: Date.now() + Math.floor(Math.random() * 10000),
           username: randomUsernames[Math.floor(Math.random() * randomUsernames.length)],
           message: randomMessages[Math.floor(Math.random() * randomMessages.length)],
           timestamp: new Date(),
