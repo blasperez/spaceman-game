@@ -177,20 +177,10 @@ function GameApp() {
           console.log('⏰ Session check timeout, proceeding without session');
           setIsLoading(false);
           setSessionChecked(true);
-        }, 5000);
+        }, 3000); // Reduced timeout to 3 seconds
 
-        // Try to get session with retry logic
-        let session = null;
-        let error = null;
-        
-        for (let i = 0; i < 3; i++) {
-          const result = await supabase.auth.getSession();
-          session = result.data.session;
-          error = result.error;
-          
-          if (!error || i === 2) break;
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+        // Try to get session with single attempt
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         clearTimeout(timeoutId);
 
