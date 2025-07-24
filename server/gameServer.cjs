@@ -8,6 +8,8 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
+const paymentRoutes = require('./paymentRoutes.cjs');
+
 // CORS configuration for production
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
@@ -20,6 +22,8 @@ app.use(express.json());
 
 // Servir archivos estáticos desde la carpeta dist (donde Vite genera el build)
 app.use(express.static(path.join(__dirname, '..', 'dist')));
+
+app.use('/api/payments', paymentRoutes);
 
 // Health check endpoint for Railway y readiness probe
 app.get('/ready', (req, res) => {
