@@ -3,56 +3,59 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { pool } from './database.js';
 import jwt from 'jsonwebtoken';
 
-// Configurar Passport con Google
-passport.use(new GoogleStrategy({
-  clientID: process.env.VITE_GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET, // Asegúrate de que esta variable esté en tu .env
-  callbackURL: "/auth/google/callback"
-},
-async (accessToken, refreshToken, profile, done) => {
-  try {
-    // Buscar si el usuario ya existe
-    let user = await pool.query(
-      'SELECT * FROM users WHERE google_id = $1',
-      [profile.id]
-    );
+const googleClientID = process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET;
 
-    if (user.rows.length === 0) {
-      // Crear nuevo usuario con balances iniciales correctos
-      const result = await pool.query(
-        `INSERT INTO users (email, username, google_id, avatar_url, balance_deposited, balance_winnings, balance_demo) 
-         VALUES ($1, $2, $3, $4, 0.00, 0.00, 1000.00) 
-         RETURNING *`,
-        [
-          profile.emails[0].value,
-          profile.displayName,
-          profile.id,
-          profile.photos[0]?.value
-        ]
+if (googleClientID && googleClientSecret) {
+  passport.use(new GoogleStrategy({
+    clientID: googleClientID,
+    clientSecret: googleClientSecret,
+    callbackURL: "/auth/google/callback"
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      let user = await pool.query(
+        'SELECT * FROM users WHERE google_id = $1',
+        [profile.id]
       );
-      user = result;
+
+      if (user.rows.length === 0) {
+        const result = await pool.query(
+          `INSERT INTO users (email, username, google_id, avatar_url, balance_deposited, balance_winnings, balance_demo) 
+           VALUES ($1, $2, $3, $4, 0.00, 0.00, 1000.00) 
+           RETURNING *`,
+          [
+            profile.emails[0].value,
+            profile.displayName,
+            profile.id,
+            profile.photos[0]?.value
+          ]
+        );
+        user = result;
+      }
+
+      return done(null, user.rows[0]);
+    } catch (error) {
+      return done(error, null);
     }
+  }));
 
-    return done(null, user.rows[0]);
-  } catch (error) {
-    return done(error, null);
-  }
-}));
+  passport.serializeUser((user, done) => {
+    done(null, user.id);
+  });
 
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+      done(null, user.rows[0]);
+    } catch (error) {
+      done(error, null);
+    }
+  });
+} else {
+  console.warn('⚠️ Google OAuth not configured - missing clientID or clientSecret environment variables');
+}
 
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-    done(null, user.rows[0]);
-  } catch (error) {
-    done(error, null);
-  }
-});
-
-// Función para generar JWT
 function generateJWT(user) {
   return jwt.sign(
     { 
@@ -69,7 +72,6 @@ function generateJWT(user) {
   );
 }
 
-// Middleware para verificar JWT
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   
