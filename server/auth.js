@@ -1,7 +1,7 @@
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { pool } = require('./database');
-const jwt = require('jsonwebtoken');
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { pool } from './database.js';
+import jwt from 'jsonwebtoken';
 
 // Configurar Passport con Google
 passport.use(new GoogleStrategy({
@@ -86,4 +86,4 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-module.exports = { passport, generateJWT, verifyToken };
+export { passport, generateJWT, verifyToken };

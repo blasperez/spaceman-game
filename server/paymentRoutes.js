@@ -1,8 +1,9 @@
-const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { pool } = require('./database');
-const { verifyToken } = require('./auth');
+import express from 'express';
+import Stripe from 'stripe';
+import { pool } from './database.js';
+import { verifyToken } from './auth.js';
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const router = express.Router();
 
 // 1. Endpoint para crear una sesión de pago en Stripe
@@ -148,6 +149,6 @@ router.get('/balance', verifyToken, async (req, res) => {
         res.status(500).json({ error: 'Error interno al obtener el balance.' });
     }
 });
+ 
 
-
-module.exports = router;
+export default router;
