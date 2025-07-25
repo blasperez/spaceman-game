@@ -5,8 +5,8 @@ const jwt = require('jsonwebtoken');
 
 // Configurar Passport con Google
 passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  clientID: process.env.VITE_GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET, // Asegúrate de que esta variable esté en tu .env
   callbackURL: "/auth/google/callback"
 },
 async (accessToken, refreshToken, profile, done) => {
@@ -18,17 +18,16 @@ async (accessToken, refreshToken, profile, done) => {
     );
 
     if (user.rows.length === 0) {
-      // Crear nuevo usuario
+      // Crear nuevo usuario con balances iniciales correctos
       const result = await pool.query(
-        `INSERT INTO users (email, username, google_id, avatar_url, balance) 
-         VALUES ($1, $2, $3, $4, $5) 
+        `INSERT INTO users (email, username, google_id, avatar_url, balance_deposited, balance_winnings, balance_demo) 
+         VALUES ($1, $2, $3, $4, 0.00, 0.00, 1000.00) 
          RETURNING *`,
         [
           profile.emails[0].value,
           profile.displayName,
           profile.id,
-          profile.photos[0]?.value,
-          1000.00 // Balance inicial
+          profile.photos[0]?.value
         ]
       );
       user = result;
@@ -60,7 +59,9 @@ function generateJWT(user) {
       id: user.id, 
       email: user.email, 
       username: user.username,
-      balance: user.balance 
+      balance_deposited: user.balance_deposited,
+      balance_winnings: user.balance_winnings,
+      balance_demo: user.balance_demo
     },
     process.env.JWT_SECRET || 'your-secret-key',
     { expiresIn: '24h' }
