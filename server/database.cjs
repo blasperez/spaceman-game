@@ -1,6 +1,9 @@
-// server/database.js - Convertido a ES modules
-import pkg from 'pg';
+// server/database.cjs - CommonJS version
+const pkg = require('pg');
 const { Pool } = pkg;
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
