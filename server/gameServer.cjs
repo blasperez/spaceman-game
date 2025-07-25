@@ -30,7 +30,7 @@ app.use(express.json());
 
 // Configurar sesiones
 app.use(session.default({
-  secret: process.env.SESSION_SECRET || process.env.VITE_JWT_SECRET || 'your-secret-key',
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -52,13 +52,10 @@ app.get('/auth/google',
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
-    // Generar JWT
     const token = generateJWT(req.user);
-    // Redirigir al frontend con el token
     res.redirect(`/?token=${token}`);
   }
 );
-
 app.get('/api/user', (req, res) => {
   if (req.user) {
     res.json(req.user);
@@ -78,7 +75,9 @@ app.post('/api/logout', (req, res) => {
 // Registrar las rutas de pago
 app.use('/api/payments', paymentRoutes);
 
-
+// Import dinámico de auth y session
+const { passport, generateJWT } = await import('./auth.js');
+const session = await import('express-session');
 
 // Servir archivos estáticos desde la carpeta dist (donde Vite genera el build)
 app.use(express.static(path.join(__dirname, '..', 'dist')));
@@ -335,6 +334,7 @@ wss.on('connection', (ws, req) => {
 
 // Enhanced message handling with validation
 async function handlePlayerMessage(ws, message) {
+  
   try {
     const userId = message.data?.userId;
     if (!userId) {
@@ -372,16 +372,14 @@ async function handlePlayerMessage(ws, message) {
             await pool.query('BEGIN');
             const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
             const user = userRes.rows[0];
-
-            let balanceField = isDemo ? 'balance_demo' : 'balance_deposited';
             
-            if (!user || user[balanceField] < betAmount) {
+            if (!user || user.balance < betAmount) {
               await pool.query('ROLLBACK');
               return ws.send(JSON.stringify({ type: 'error', data: { message: 'Fondos insuficientes.' }}));
             }
 
             // Restar del balance
-            await pool.query(`UPDATE users SET ${balanceField} = ${balanceField} - $1 WHERE id = $2`, [betAmount, userId]);
+            await pool.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [betAmount, userId]);
 
             currentGame.activeBets.set(userId, {
               playerId: userId,
@@ -419,17 +417,64 @@ async function handlePlayerMessage(ws, message) {
           bet.cashOutMultiplier = currentGame.multiplier;
           bet.winAmount = bet.betAmount * currentGame.multiplier;
 
-          // Actualizar balance de ganancias si no es demo
+          // Actualizar balance
           if (!bet.isDemo) {
             try {
               await pool.query(
-                'UPDATE users SET balance_winnings = balance_winnings + $1, balance_deposited = balance_deposited + $2 WHERE id = $3',
-                [bet.winAmount, bet.betAmount, userId] // Devolver la apuesta original a depositado
+                'UPDATE users SET balance = balance + $1, total_won = total_won + $2 WHERE id = $3',
+                [bet.winAmount, bet.winAmount, userId]
               );
             } catch (error) {
               console.error('Error actualizando ganancias:', error);
             }
           }
+          
+          console.log(`💸 ${bet.playerName} cashed out at ${currentGame.multiplier.toFixed(2)}x for ${bet.winAmount.toFixed(2)} (isDemo: ${bet.isDemo})`);
+          
+          ws.send(JSON.stringify({
+            type: 'cash_out_success',
+            data: { multiplier: currentGame.multiplier, winAmount: bet.winAmount }
+          }));
+          
+          sendGameStateUpdate();
+        } else {
+          ws.send(JSON.stringify({ type: 'error', data: { message: 'Cannot cash out during this phase' }}));
+        }
+        break;
+        
+      default:
+        console.log('Unknown message type:', message.type);
+    }
+  } catch (error) {
+    console.error('Error handling player message:', error);
+    ws.send(JSON.stringify({ type: 'error', data: { message: 'Server error processing message' }}));
+  }
+}
+        
+      case 'cash_out':
+        if (currentGame.phase === 'flying') {
+          const { userId } = message.data;
+          const bet = currentGame.activeBets.get(userId);
+          
+          if (!bet || bet.cashedOut) {
+            return ws.send(JSON.stringify({ type: 'error', data: { message: 'No active bet found or already cashed out' }}));
+          }
+          
+          bet.cashedOut = true;
+          bet.cashOutMultiplier = currentGame.multiplier;
+          bet.winAmount = bet.betAmount * currentGame.multiplier;
+
+          // Actualizar balance de ganancias si no es demo
+          if (!bet.isDemo) {
+            try {
+              await pool.query(
+                'UPDATE users SET balance = balance + $1, total_won = total_won + $1 WHERE id = $2',
+      [bet.winAmount, userId]
+    );
+        } catch (error) {
+        console.error('Error actualizando ganancias:', error);
+  }
+}
           
           console.log(`💸 ${bet.playerName} cashed out at ${currentGame.multiplier.toFixed(2)}x for ${bet.winAmount.toFixed(2)} (isDemo: ${bet.isDemo})`);
           

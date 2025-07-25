@@ -10,13 +10,6 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET;
 const JWT_SECRET = process.env.JWT_SECRET || process.env.VITE_JWT_SECRET || 'your-secret-key';
 
-// Verificar que las variables existan
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-  console.error('❌ Google OAuth credentials not found!');
-  console.error('GOOGLE_CLIENT_ID:', GOOGLE_CLIENT_ID);
-  console.error('GOOGLE_CLIENT_SECRET:', GOOGLE_CLIENT_SECRET ? 'Found' : 'Missing');
-}
-
 // Configurar Passport con Google
 passport.use(new GoogleStrategy({
   clientID: GOOGLE_CLIENT_ID,
@@ -25,27 +18,23 @@ passport.use(new GoogleStrategy({
 },
 async (accessToken, refreshToken, profile, done) => {
   try {
-    // Buscar si el usuario ya existe
+    // Buscar si el usuario ya existe por email
     let user = await pool.query(
-      'SELECT * FROM users WHERE google_id = $1',
-      [profile.id]
+      'SELECT * FROM users WHERE email = $1',
+      [profile.emails[0].value]
     );
 
     if (user.rows.length === 0) {
       // Crear nuevo usuario
       const result = await pool.query(
-        `INSERT INTO users (email, username, google_id, avatar_url, balance, balance_demo, balance_deposited, balance_winnings) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+        `INSERT INTO users (email, username, full_name, balance) 
+         VALUES ($1, $2, $3, $4) 
          RETURNING *`,
         [
           profile.emails[0].value,
+          profile.displayName || profile.emails[0].value.split('@')[0], // username desde displayName o email
           profile.displayName,
-          profile.id,
-          profile.photos[0]?.value,
-          0,          // balance (deprecated)
-          10000.00,   // balance_demo
-          0,          // balance_deposited
-          0           // balance_winnings
+          1000.00 // Balance inicial
         ]
       );
       user = result;
@@ -53,6 +42,7 @@ async (accessToken, refreshToken, profile, done) => {
 
     return done(null, user.rows[0]);
   } catch (error) {
+    console.error('Error en Google OAuth:', error);
     return done(error, null);
   }
 }));
@@ -77,10 +67,7 @@ export function generateJWT(user) {
       id: user.id, 
       email: user.email, 
       username: user.username,
-      balance: user.balance,
-      balance_demo: user.balance_demo,
-      balance_deposited: user.balance_deposited,
-      balance_winnings: user.balance_winnings
+      balance: user.balance
     },
     JWT_SECRET,
     { expiresIn: '24h' }
