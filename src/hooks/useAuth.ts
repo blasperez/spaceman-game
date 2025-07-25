@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+cimport { useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -23,7 +23,7 @@ export const useAuth = () => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user);
       } else {
         setLoading(false);
       }
@@ -38,7 +38,7 @@ export const useAuth = () => {
         if (session?.user) {
           // Defer Supabase calls with setTimeout to prevent deadlock
           setTimeout(() => {
-            fetchProfile(session.user.id);
+            fetchProfile(session.user);
           }, 0);
         } else {
           setProfile(null);
@@ -50,22 +50,41 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (user: User) => {
     try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', user.id)
         .single();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return;
-      }
+      if (error && error.code === 'PGRST116') {
+        // Profile not found, create it
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+            avatar_url: user.user_metadata?.avatar_url
+          })
+          .select()
+          .single();
 
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          throw insertError;
+        }
+        data = newProfile;
+      } else if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+      
       setProfile(data);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error during profile fetch/create:', error);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -141,7 +160,7 @@ export const useAuth = () => {
       if (error) throw error;
       
       // Refresh profile
-      await fetchProfile(user.id);
+      await fetchProfile(user);
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;

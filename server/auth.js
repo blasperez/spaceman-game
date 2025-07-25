@@ -89,3 +89,4 @@ const verifyToken = (req, res, next) => {
 };
 
 export { passport, generateJWT, verifyToken };
+const router, express.use('use strict';
