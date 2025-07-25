@@ -35,71 +35,100 @@ async (accessToken, refreshToken, profile, done) => {
       return done(new Error('No email found'), null);
     }
 
-    // Buscar si el usuario ya existe por email
+    // Buscar si el usuario ya existe
     let user = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
+      'SELECT * FROM public.users WHERE email = $1 OR google_id = $2',
+      [email, profile.id]
     );
 
     if (user.rows.length === 0) {
       console.log('👤 Creating new user...');
       
-      // Generar username único basado en el email
-      const baseUsername = email.split('@')[0].replace(/[^a-z0-9_]/g, '_').toLowerCase();
-      let username = baseUsername;
-      let attempt = 0;
+      // Generar username único
+      const baseUsername = profile.displayName 
+        ? profile.displayName.replace(/\s+/g, '_').toLowerCase().replace(/[^a-z0-9_]/g, '')
+        : email.split('@')[0].replace(/[^a-z0-9_]/g, '_').toLowerCase();
       
-      // Verificar si el username ya existe
-      while (true) {
-        const existingUser = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
+      let username = baseUsername || `user_${Date.now()}`;
+      
+      // Asegurar que el username es único
+      let attempts = 0;
+      while (attempts < 10) {
+        const existingUser = await pool.query(
+          'SELECT id FROM public.users WHERE username = $1', 
+          [username]
+        );
         if (existingUser.rows.length === 0) break;
-        attempt++;
+        attempts++;
         username = `${baseUsername}_${Date.now()}`;
       }
       
       try {
-        // Primero, intentar insertar solo email y username (las columnas requeridas)
         const result = await pool.query(
-          `INSERT INTO users (email, username) 
-           VALUES ($1, $2) 
-           RETURNING *`,
-          [email, username]
+          `INSERT INTO public.users (
+            email, 
+            username, 
+            google_id,
+            full_name,
+            avatar_url,
+            balance,
+            balance_demo,
+            balance_deposited,
+            balance_winnings
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+          RETURNING id, email, username, balance, google_id`,
+          [
+            email,
+            username,
+            profile.id,
+            profile.displayName || username,
+            profile.photos?.[0]?.value || null,
+            1000.00,      // balance inicial
+            10000.00,     // balance_demo
+            0,            // balance_deposited
+            0             // balance_winnings
+          ]
         );
         
         user = result;
-        console.log('✅ User created successfully with minimal data');
-        
-        // Luego, intentar actualizar con más información si las columnas existen
-        try {
-          await pool.query(
-            `UPDATE users 
-             SET full_name = COALESCE(full_name, $1),
-                 google_id = COALESCE(google_id, $2),
-                 balance = COALESCE(balance, 1000.00)
-             WHERE id = $3`,
-            [profile.displayName || username, profile.id, user.rows[0].id]
-          );
-          
-          // Recargar el usuario con los datos actualizados
-          user = await pool.query('SELECT * FROM users WHERE id = $1', [user.rows[0].id]);
-          console.log('✅ User data updated successfully');
-        } catch (updateError) {
-          console.log('⚠️ Could not update additional user data:', updateError.message);
-          // No es crítico, continuamos con el usuario básico
-        }
+        console.log('✅ User created successfully:', user.rows[0]);
         
       } catch (dbError) {
-        console.error('❌ Database error:', {
+        console.error('❌ Database insert error:', {
           message: dbError.message,
           code: dbError.code,
           detail: dbError.detail,
-          constraint: dbError.constraint,
-          query: dbError.query
+          constraint: dbError.constraint
         });
-        throw dbError;
+        
+        // Si falla por alguna columna, intentar con inserción mínima
+        if (dbError.code === '42703') { // undefined_column
+          console.log('🔄 Retrying with minimal columns...');
+          
+          const minimalResult = await pool.query(
+            `INSERT INTO public.users (email, username) 
+             VALUES ($1, $2) 
+             RETURNING *`,
+            [email, username]
+          );
+          
+          user = minimalResult;
+          console.log('✅ User created with minimal data');
+        } else {
+          throw dbError;
+        }
       }
     } else {
       console.log('✅ Existing user found:', user.rows[0].id);
+      
+      // Si existe pero no tiene google_id, actualizarlo
+      if (!user.rows[0].google_id) {
+        await pool.query(
+          'UPDATE public.users SET google_id = $1 WHERE id = $2',
+          [profile.id, user.rows[0].id]
+        );
+        console.log('✅ Updated google_id for existing user');
+      }
     }
 
     return done(null, user.rows[0]);
@@ -115,7 +144,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
-    const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    const user = await pool.query('SELECT * FROM public.users WHERE id = $1', [id]);
     done(null, user.rows[0]);
   } catch (error) {
     done(error, null);
@@ -129,7 +158,10 @@ export function generateJWT(user) {
       id: user.id, 
       email: user.email, 
       username: user.username,
-      balance: user.balance || 0
+      balance: user.balance || 0,
+      balance_demo: user.balance_demo || 10000,
+      balance_deposited: user.balance_deposited || 0,
+      balance_winnings: user.balance_winnings || 0
     },
     JWT_SECRET,
     { expiresIn: '24h' }
