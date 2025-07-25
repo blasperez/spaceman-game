@@ -9,6 +9,10 @@ const path = require('path');
 // Import dinámico de database y paymentRoutes
 const { pool } = await import('./database.js');
 const paymentRoutes = (await import('./paymentRoutes.js')).default;
+// Import dinámico de auth y session
+const { passport, generateJWT } = await import('./auth.js');
+const session = await import('express-session');
+
 const app = express();
 const server = http.createServer(app);
 
@@ -27,7 +31,7 @@ app.use(express.json());
 
 // Configurar sesiones
 app.use(session.default({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  secret: process.env.SESSION_SECRET || process.env.VITE_JWT_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -53,6 +57,7 @@ app.get('/auth/google/callback',
     res.redirect(`/?token=${token}`);
   }
 );
+
 app.get('/api/user', (req, res) => {
   if (req.user) {
     res.json(req.user);
@@ -68,13 +73,8 @@ app.post('/api/logout', (req, res) => {
   });
 });
 
-
 // Registrar las rutas de pago
 app.use('/api/payments', paymentRoutes);
-
-// Import dinámico de auth y session
-const { passport, generateJWT } = await import('./auth.js');
-const session = await import('express-session');
 
 // Servir archivos estáticos desde la carpeta dist (donde Vite genera el build)
 app.use(express.static(path.join(__dirname, '..', 'dist')));
@@ -89,7 +89,6 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-
 // Ruta principal para servir index.html desde dist
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
@@ -99,7 +98,6 @@ app.get('/', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
-
 // Game state
 let currentGame = {
   gameId: generateGameId(),
@@ -251,11 +249,11 @@ async function crashGame() {
       console.log(`❌ ${bet.playerName} lost ${bet.betAmount} (isDemo: ${bet.isDemo})`);
     }
 
-    // Guardar historial de juego
+    // Guardar historial de juego - CORREGIDO: quitado is_demo que no existe
     try {
       await pool.query(
-        'INSERT INTO game_history (user_id, game_id, bet_amount, multiplier, win_amount, is_demo) VALUES ($1, $2, $3, $4, $5, $6)',
-        [playerId, currentGame.gameId, bet.betAmount, bet.cashOutMultiplier || null, bet.winAmount, bet.isDemo]
+        'INSERT INTO game_history (user_id, game_id, bet_amount, multiplier, win_amount) VALUES ($1, $2, $3, $4, $5)',
+        [playerId, currentGame.gameId, bet.betAmount, bet.cashOutMultiplier || 0, bet.winAmount]
       );
     } catch (error) {
       console.error('Error guardando historial de juego:', error);
@@ -280,7 +278,6 @@ async function crashGame() {
     startNewRound();
   }, 4000);
 }
-
 // Enhanced WebSocket connection handling
 wss.on('connection', (ws, req) => {
   const clientIP = req.socket.remoteAddress;
@@ -477,4 +474,4 @@ server.listen(PORT, () => {
 // Error handling
 server.on('error', (error) => console.error('Server error:', error));
 wss.on('error', (error) => console.error('WebSocket server error:', error));
-})();
+})(); // Cierre del async IIFE
