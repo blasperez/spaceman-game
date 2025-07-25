@@ -9,9 +9,6 @@ const path = require('path');
 // Import dinámico de database y paymentRoutes
 const { pool } = await import('./database.js');
 const paymentRoutes = (await import('./paymentRoutes.js')).default;
-// Import dinámico de auth y session
-const { passport, generateJWT } = await import('./auth.js');
-const session = await import('express-session');
 const app = express();
 const server = http.createServer(app);
 
@@ -334,7 +331,6 @@ wss.on('connection', (ws, req) => {
 
 // Enhanced message handling with validation
 async function handlePlayerMessage(ws, message) {
-  
   try {
     const userId = message.data?.userId;
     if (!userId) {
@@ -421,60 +417,13 @@ async function handlePlayerMessage(ws, message) {
           if (!bet.isDemo) {
             try {
               await pool.query(
-                'UPDATE users SET balance = balance + $1, total_won = total_won + $2 WHERE id = $3',
+                'UPDATE users SET balance = balance + $1, total_won = total_won + $1 WHERE id = $2',
                 [bet.winAmount, bet.winAmount, userId]
               );
             } catch (error) {
               console.error('Error actualizando ganancias:', error);
             }
           }
-          
-          console.log(`💸 ${bet.playerName} cashed out at ${currentGame.multiplier.toFixed(2)}x for ${bet.winAmount.toFixed(2)} (isDemo: ${bet.isDemo})`);
-          
-          ws.send(JSON.stringify({
-            type: 'cash_out_success',
-            data: { multiplier: currentGame.multiplier, winAmount: bet.winAmount }
-          }));
-          
-          sendGameStateUpdate();
-        } else {
-          ws.send(JSON.stringify({ type: 'error', data: { message: 'Cannot cash out during this phase' }}));
-        }
-        break;
-        
-      default:
-        console.log('Unknown message type:', message.type);
-    }
-  } catch (error) {
-    console.error('Error handling player message:', error);
-    ws.send(JSON.stringify({ type: 'error', data: { message: 'Server error processing message' }}));
-  }
-}
-        
-      case 'cash_out':
-        if (currentGame.phase === 'flying') {
-          const { userId } = message.data;
-          const bet = currentGame.activeBets.get(userId);
-          
-          if (!bet || bet.cashedOut) {
-            return ws.send(JSON.stringify({ type: 'error', data: { message: 'No active bet found or already cashed out' }}));
-          }
-          
-          bet.cashedOut = true;
-          bet.cashOutMultiplier = currentGame.multiplier;
-          bet.winAmount = bet.betAmount * currentGame.multiplier;
-
-          // Actualizar balance de ganancias si no es demo
-          if (!bet.isDemo) {
-            try {
-              await pool.query(
-                'UPDATE users SET balance = balance + $1, total_won = total_won + $1 WHERE id = $2',
-      [bet.winAmount, userId]
-    );
-        } catch (error) {
-        console.error('Error actualizando ganancias:', error);
-  }
-}
           
           console.log(`💸 ${bet.playerName} cashed out at ${currentGame.multiplier.toFixed(2)}x for ${bet.winAmount.toFixed(2)} (isDemo: ${bet.isDemo})`);
           
