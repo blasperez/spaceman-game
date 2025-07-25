@@ -116,6 +116,24 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
     }
   }, [particles.length]);
 
+  // Animate stars during flight
+  useEffect(() => {
+    if (gamePhase === 'flying') {
+      const interval = setInterval(() => {
+        setStars(prevStars => prevStars.map(star => {
+          let newX = star.x + star.vx;
+          // If star goes off-screen to the left, reset it to the right
+          if (newX < -5) {
+            newX = 105; // Reset to slightly off-screen right
+          }
+          return { ...star, x: newX };
+        }));
+      }, 50);
+
+      return () => clearInterval(interval);
+    }
+  }, [gamePhase]);
+
   const quickBetAmounts = [1, 5, 10, 25];
 
   // Siempre amarillo para coincidir con el diseño de referencia
