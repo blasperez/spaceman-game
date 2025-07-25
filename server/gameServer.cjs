@@ -4,10 +4,11 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const path = require('path');
-const { pool } = require('./database');
 
 (async () => {
-const paymentRoutes = (await import('./paymentRoutes.js')).default; // Importar las rutas de pago dinámicamente
+// Import dinámico de database y paymentRoutes
+const { pool } = await import('./database.js');
+const paymentRoutes = (await import('./paymentRoutes.js')).default;
 
 const app = express();
 const server = http.createServer(app);
@@ -15,7 +16,7 @@ const server = http.createServer(app);
 // CORS configuration for production
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-spaceman-game.vercel.app', 'https://spaceman-crash.vercel.app']
+    ? ['https://spaceman-game-production.up.railway.app']
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
