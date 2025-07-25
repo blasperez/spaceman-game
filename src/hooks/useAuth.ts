@@ -95,13 +95,14 @@ export const useAuth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'email profile'
         }
       });
       if (error) throw error;
     } catch (error) {
       console.error('Error signing in with Google:', error);
-      throw error;
+      throw new Error('Error al conectar con Google. Por favor, intenta de nuevo.');
     }
   };
 
@@ -110,13 +111,14 @@ export const useAuth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'email public_profile'
         }
       });
       if (error) throw error;
     } catch (error) {
       console.error('Error signing in with Facebook:', error);
-      throw error;
+      throw new Error('Error al conectar con Facebook. Por favor, intenta de nuevo.');
     }
   };
 
@@ -131,7 +133,7 @@ export const useAuth = () => {
       if (error) throw error;
     } catch (error) {
       console.error('Error signing in with Twitter:', error);
-      throw error;
+      throw new Error('Error al conectar con Twitter. Por favor, intenta de nuevo.');
     }
   };
 
