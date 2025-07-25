@@ -1,4 +1,6 @@
-const { Pool } = require('pg');
+// server/database.js - Convertido a ES modules
+import pkg from 'pg';
+const { Pool } = pkg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -25,7 +27,6 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-
     // Tabla de historial de juegos
     await pool.query(`
       CREATE TABLE IF NOT EXISTS game_history (
@@ -39,7 +40,6 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-
     // Tabla de transacciones (para depósitos y otros movimientos)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS transactions (
@@ -52,7 +52,6 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-
     // Tabla de retiros
     await pool.query(`
         CREATE TABLE IF NOT EXISTS withdrawals (
@@ -66,11 +65,11 @@ async function initDB() {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     `);
-
     console.log('✅ Database tables updated or created successfully');
   } catch (error) {
     console.error('Error creating/updating tables:', error);
   }
 }
 
-module.exports = { pool, initDB };
+// Exportar usando ES modules
+export { pool, initDB };
