@@ -1,7 +1,9 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { pool } from './database.cjs';
+import database from './database.cjs';
 import jwt from 'jsonwebtoken';
+
+const { pool } = database;
 
 // Configurar Passport con Google
 passport.use(new GoogleStrategy({

@@ -71,5 +71,5 @@ async function initDB() {
   }
 }
 
-// Exportar usando ES modules
-export { pool, initDB };
+// Exportar usando CommonJS
+module.exports = { pool, initDB };
