@@ -9,7 +9,9 @@ const path = require('path');
 // Import dinámico de database y paymentRoutes
 const { pool } = await import('./database.js');
 const paymentRoutes = (await import('./paymentRoutes.js')).default;
-
+// Import dinámico de auth y session
+const { passport, generateJWT } = await import('./auth.js');
+const session = await import('express-session');
 const app = express();
 const server = http.createServer(app);
 
@@ -25,6 +27,53 @@ app.use(cors({
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json());
+
+// Configurar sesiones
+app.use(session.default({
+  secret: process.env.SESSION_SECRET || process.env.VITE_JWT_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 horas
+  }
+}));
+
+// Inicializar Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Rutas de autenticación
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/' }),
+  (req, res) => {
+    // Generar JWT
+    const token = generateJWT(req.user);
+    // Redirigir al frontend con el token
+    res.redirect(`/?token=${token}`);
+  }
+);
+
+app.get('/api/user', (req, res) => {
+  if (req.user) {
+    res.json(req.user);
+  } else {
+    res.status(401).json({ error: 'Not authenticated' });
+  }
+});
+
+app.post('/api/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) { return res.status(500).json({ error: 'Error logging out' }); }
+    res.json({ message: 'Logged out successfully' });
+  });
+});
+
 
 // Registrar las rutas de pago
 app.use('/api/payments', paymentRoutes);
