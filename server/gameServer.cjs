@@ -29,6 +29,8 @@ app.use(express.json());
 // Registrar las rutas de pago
 app.use('/api/payments', paymentRoutes);
 
+
+
 // Servir archivos estáticos desde la carpeta dist (donde Vite genera el build)
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
