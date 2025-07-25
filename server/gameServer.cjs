@@ -4,8 +4,10 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const path = require('path');
-const paymentRoutes = require('./paymentRoutes'); // Importar las rutas de pago
 const { pool } = require('./database');
+
+(async () => {
+const paymentRoutes = (await import('./paymentRoutes.js')).default; // Importar las rutas de pago dinámicamente
 
 const app = express();
 const server = http.createServer(app);
@@ -433,3 +435,4 @@ server.listen(PORT, () => {
 // Error handling
 server.on('error', (error) => console.error('Server error:', error));
 wss.on('error', (error) => console.error('WebSocket server error:', error));
+})();
