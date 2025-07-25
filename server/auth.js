@@ -59,6 +59,7 @@ function generateJWT(user) {
       id: user.id, 
       email: user.email, 
       username: user.username,
+      avatar_url: user.avatar_url,
       balance_deposited: user.balance_deposited,
       balance_winnings: user.balance_winnings,
       balance_demo: user.balance_demo

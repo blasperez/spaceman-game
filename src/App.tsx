@@ -17,6 +17,7 @@ import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, X, Chevro
 import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
 import { BettingPanel } from './components/BettingPanel';
 import { MobileBettingPanel } from './components/MobileBettingPanel';
+import { ProfileModal } from './components/ProfileModal';
 
 interface GameHistory {
   id: number;
@@ -97,6 +98,7 @@ function GameApp() {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
   
@@ -1028,10 +1030,11 @@ function GameApp() {
               <Maximize size={16} className="text-white" />
             </button>
             <button 
-              onClick={() => setShowAccountPanel(true)}
-              className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg transition-colors"
+              onClick={() => setShowProfileModal(true)}
+              className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full pl-1 pr-3 py-1 transition-colors"
             >
-              <Settings size={16} className="text-white" />
+              <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full" />
+              <span className="text-white text-sm font-medium">Perfil</span>
             </button>
           </div>
         </div>
@@ -1213,6 +1216,15 @@ function GameApp() {
       {/* Stripe Checkout */}
       {showStripeCheckout && (
         <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
+      )}
+
+      {/* Profile Modal */}
+      {showProfileModal && user && (
+        <ProfileModal
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          user={user}
+        />
       )}
     </div>
   );
