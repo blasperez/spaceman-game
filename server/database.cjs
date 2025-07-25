@@ -10,7 +10,7 @@ const pool = new Pool({
 // Crear tablas
 async function initDB() {
   try {
-    // Tabla de usuarios
+    // Tabla de usuarios actualizada
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -19,16 +19,9 @@ async function initDB() {
         username VARCHAR(100) NOT NULL,
         google_id VARCHAR(255) UNIQUE,
         avatar_url TEXT,
-        balance DECIMAL(10,2) DEFAULT 1000.00,
-        phone_number VARCHAR(50),
-        date_of_birth DATE,
-        country VARCHAR(100),
-        city VARCHAR(100),
-        address TEXT,
-        document_type VARCHAR(50),
-        document_number VARCHAR(100),
-        kyc_status VARCHAR(20) DEFAULT 'pending' CHECK (kyc_status IN ('pending', 'verified', 'rejected')),
-        account_status VARCHAR(20) DEFAULT 'active' CHECK (account_status IN ('active', 'suspended', 'banned')),
+        balance_deposited DECIMAL(10, 2) DEFAULT 0.00,
+        balance_winnings DECIMAL(10, 2) DEFAULT 0.00,
+        balance_demo DECIMAL(10, 2) DEFAULT 1000.00,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -42,25 +35,41 @@ async function initDB() {
         bet_amount DECIMAL(10,2),
         multiplier DECIMAL(10,2),
         win_amount DECIMAL(10,2),
+        is_demo BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // Tabla de transacciones
+    // Tabla de transacciones (para depósitos y otros movimientos)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS transactions (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
-        type VARCHAR(50),
-        amount DECIMAL(10,2),
-        status VARCHAR(50) DEFAULT 'pending',
+        type VARCHAR(50) NOT NULL, -- 'deposit', 'withdrawal_fee', etc.
+        amount DECIMAL(10,2) NOT NULL,
+        status VARCHAR(50) DEFAULT 'completed',
+        stripe_charge_id VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    console.log('✅ Database tables created successfully');
+    // Tabla de retiros
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS withdrawals (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) NOT NULL,
+            amount DECIMAL(10, 2) NOT NULL,
+            status VARCHAR(50) DEFAULT 'pending', -- pending, approved, rejected
+            withdrawal_method VARCHAR(100), -- e.g., 'Bank Transfer'
+            withdrawal_details TEXT, -- e.g., JSON with bank info
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
+    console.log('✅ Database tables updated or created successfully');
   } catch (error) {
-    console.error('Error creating tables:', error);
+    console.error('Error creating/updating tables:', error);
   }
 }
 
