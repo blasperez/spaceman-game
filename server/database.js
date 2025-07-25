@@ -2,12 +2,24 @@
 import pkg from 'pg';
 const { Pool } = pkg;
 
-const pool = new Pool({
+if (!process.env.DATABASE_URL) {
+  console.error('FATAL: DATABASE_URL environment variable is not set.');
+  process.exit(1);
+}
+
+const connectionOptions = {
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+};
+
+// In production environments (like Railway), cloud databases often require SSL.
+// The `rejectUnauthorized: false` is a common setting for these platforms.
+if (process.env.NODE_ENV === 'production') {
+  connectionOptions.ssl = {
+    rejectUnauthorized: false,
+  };
+}
+
+const pool = new Pool(connectionOptions);
 
 // Crear tablas
 async function initDB() {

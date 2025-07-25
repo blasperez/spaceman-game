@@ -41,13 +41,9 @@ app.get('/ready', (req, res) => {
 
 // Health check endpoint for Railway
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    players: currentGame.players.size,
-    gamePhase: currentGame.phase
-  });
+  res.status(200).json({ status: 'ok' });
 });
+
 
 // Ruta principal para servir index.html desde dist
 app.get('/', (req, res) => {
