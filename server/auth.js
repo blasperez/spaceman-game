@@ -10,6 +10,11 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET;
 const JWT_SECRET = process.env.JWT_SECRET || process.env.VITE_JWT_SECRET || 'your-secret-key';
 
+// Verificar que las variables existan
+console.log('🔐 Google OAuth Config:');
+console.log('Client ID:', GOOGLE_CLIENT_ID ? '✅ Found' : '❌ Missing');
+console.log('Client Secret:', GOOGLE_CLIENT_SECRET ? '✅ Found' : '❌ Missing');
+
 // Configurar Passport con Google
 passport.use(new GoogleStrategy({
   clientID: GOOGLE_CLIENT_ID,
@@ -18,31 +23,76 @@ passport.use(new GoogleStrategy({
 },
 async (accessToken, refreshToken, profile, done) => {
   try {
+    console.log('📧 Google profile received:', {
+      id: profile.id,
+      email: profile.emails?.[0]?.value,
+      displayName: profile.displayName
+    });
+
+    const email = profile.emails?.[0]?.value;
+    if (!email) {
+      console.error('❌ No email found in Google profile');
+      return done(new Error('No email found'), null);
+    }
+
     // Buscar si el usuario ya existe por email
     let user = await pool.query(
       'SELECT * FROM users WHERE email = $1',
-      [profile.emails[0].value]
+      [email]
     );
 
     if (user.rows.length === 0) {
-      // Crear nuevo usuario
-      const result = await pool.query(
-        `INSERT INTO users (email, username, full_name, balance) 
-         VALUES ($1, $2, $3, $4) 
-         RETURNING *`,
-        [
-          profile.emails[0].value,
-          profile.displayName || profile.emails[0].value.split('@')[0], // username desde displayName o email
-          profile.displayName,
-          1000.00 // Balance inicial
-        ]
-      );
-      user = result;
+      console.log('👤 Creating new user...');
+      
+      // Generar username único si no hay displayName
+      const username = profile.displayName || `user_${profile.id.substring(0, 8)}`;
+      
+      try {
+        const result = await pool.query(
+          `INSERT INTO users (email, username, full_name, balance) 
+           VALUES ($1, $2, $3, $4) 
+           RETURNING *`,
+          [
+            email,
+            username,
+            profile.displayName || username,
+            1000.00
+          ]
+        );
+        user = result;
+        console.log('✅ User created successfully:', user.rows[0].id);
+      } catch (dbError) {
+        console.error('❌ Database error details:', dbError);
+        
+        // Si el error es por username duplicado, intentar con uno diferente
+        if (dbError.code === '23505' && dbError.constraint === 'users_username_key') {
+          const uniqueUsername = `${username}_${Date.now()}`;
+          console.log('🔄 Retrying with unique username:', uniqueUsername);
+          
+          const result = await pool.query(
+            `INSERT INTO users (email, username, full_name, balance) 
+             VALUES ($1, $2, $3, $4) 
+             RETURNING *`,
+            [
+              email,
+              uniqueUsername,
+              profile.displayName || uniqueUsername,
+              1000.00
+            ]
+          );
+          user = result;
+          console.log('✅ User created with unique username');
+        } else {
+          throw dbError;
+        }
+      }
+    } else {
+      console.log('✅ Existing user found:', user.rows[0].id);
     }
 
     return done(null, user.rows[0]);
   } catch (error) {
-    console.error('Error en Google OAuth:', error);
+    console.error('❌ Google OAuth error:', error);
     return done(error, null);
   }
 }));
