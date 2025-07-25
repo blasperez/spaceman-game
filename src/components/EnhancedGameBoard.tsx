@@ -331,20 +331,20 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
                       : 'bg-gray-600 hover:bg-gray-500 text-white'
                   }`}
                 >
-                  €{amount}
+                  ${amount}
                 </button>
               ))}
             </div>
 
             <div className="flex items-center space-x-4">
               <div className="text-white">
-                Balance: €{balance.toFixed(2)}
+                Balance: ${balance.toFixed(2)}
               </div>
               
               {hasActiveBet ? (
                 <div className="flex items-center space-x-2">
                   <span className="text-white">
-                    Win: €{currentWin.toFixed(2)}
+                    Win: ${currentWin.toFixed(2)}
                   </span>
                   <button
                     onClick={onCashOut}

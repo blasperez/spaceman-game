@@ -444,14 +444,14 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   <div className="truncate">
                     {bet.playerId === currentUserId ? '👤 ' : ''}{bet.playerName}
                   </div>
-                  <div className="text-right">€{bet.betAmount}</div>
+                  <div className="text-right">${bet.betAmount}</div>
                   <div className="text-right">
                     {bet.cashedOut ? `${bet.cashOutMultiplier?.toFixed(2)}x` : 
                      gameState.phase === 'flying' ? `${gameState.multiplier.toFixed(2)}x` : '-'}
                   </div>
                   <div className="text-right">
-                    {bet.cashedOut ? `€${bet.winAmount?.toFixed(2)}` : 
-                     gameState.phase === 'flying' ? `€${(bet.betAmount * gameState.multiplier).toFixed(2)}` : '-'}
+                    {bet.cashedOut ? `$${bet.winAmount?.toFixed(2)}` :
+                     gameState.phase === 'flying' ? `$${(bet.betAmount * gameState.multiplier).toFixed(2)}` : '-'}
                   </div>
                 </div>
               ))}
@@ -511,14 +511,14 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                     <div className="truncate">
                       {bet.playerId === currentUserId ? '👤 ' : ''}{bet.playerName}
                     </div>
-                    <div className="text-right">€{bet.betAmount}</div>
+                    <div className="text-right">${bet.betAmount}</div>
                     <div className="text-right">
                       {bet.cashedOut ? `${bet.cashOutMultiplier?.toFixed(2)}x` : 
                        gameState.phase === 'flying' ? `${gameState.multiplier.toFixed(2)}x` : '-'}
                     </div>
                     <div className="text-right">
-                      {bet.cashedOut ? `€${bet.winAmount?.toFixed(2)}` : 
-                       gameState.phase === 'flying' ? `€${(bet.betAmount * gameState.multiplier).toFixed(2)}` : '-'}
+                      {bet.cashedOut ? `$${bet.winAmount?.toFixed(2)}` :
+                       gameState.phase === 'flying' ? `$${(bet.betAmount * gameState.multiplier).toFixed(2)}` : '-'}
                     </div>
                   </div>
                 ))}

@@ -62,7 +62,7 @@ export const Statistics: React.FC<StatisticsProps> = ({ gameHistory, recentMulti
           
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-lg">
             <div className="text-white/70 text-xs">Total Won</div>
-            <div className="text-green-400 font-semibold">€{totalWon.toFixed(2)}</div>
+            <div className="text-green-400 font-semibold">${totalWon.toFixed(2)}</div>
           </div>
           
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-lg">
@@ -117,7 +117,7 @@ export const Statistics: React.FC<StatisticsProps> = ({ gameHistory, recentMulti
                       {game.winAmount > game.betAmount ? '+' : ''}{(game.winAmount - game.betAmount).toFixed(2)}
                     </div>
                     <div className="text-white/60 text-xs">
-                      €{game.betAmount.toFixed(2)} bet
+                      ${game.betAmount.toFixed(2)} bet
                     </div>
                   </div>
                 </div>
@@ -157,12 +157,12 @@ export const Statistics: React.FC<StatisticsProps> = ({ gameHistory, recentMulti
                   className="grid grid-cols-4 gap-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 text-sm shadow-lg"
                 >
                   <div className="text-white font-medium truncate">{player.user}</div>
-                  <div className="text-right text-white/80">€{player.bet}</div>
+                  <div className="text-right text-white/80">${player.bet}</div>
                   <div className="text-right text-white/80">
                     {player.mult > 0 ? `${player.mult.toFixed(2)}x` : '-'}
                   </div>
                   <div className="text-right text-white/80">
-                    {player.win > 0 ? `€${player.win.toFixed(2)}` : '-'}
+                    {player.win > 0 ? `$${player.win.toFixed(2)}` : '-'}
                   </div>
                 </div>
               ))

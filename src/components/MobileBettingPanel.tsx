@@ -167,7 +167,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
             <div className="flex items-center space-x-2">
               <div className="text-center">
                 <div className="text-white/70 text-xs">Apuesta</div>
-                <div className="text-white font-bold text-sm">€{hasActiveBet ? currentBet.toFixed(2) : betAmount.toFixed(2)}</div>
+                <div className="text-white font-bold text-sm">${hasActiveBet ? currentBet.toFixed(2) : betAmount.toFixed(2)}</div>
               </div>
             </div>
 
@@ -190,7 +190,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
             <div className="text-center">
               <div className="text-white/70 text-xs">Ganancia</div>
               <div className="text-white font-bold text-sm">
-                {canCashOut ? `€${currentWin.toFixed(2)}` : `${multiplier.toFixed(2)}x`}
+                {canCashOut ? `$${currentWin.toFixed(2)}` : `${multiplier.toFixed(2)}x`}
               </div>
             </div>
           </div>
@@ -213,7 +213,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
                   disabled={hasActiveBet || autoBotConfig.isActive || gamePhase !== 'waiting'}
                   className="w-12 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-lg text-white font-bold text-xs flex items-center justify-center transition-all"
                 >
-                  €{amount}
+                  ${amount}
                 </button>
               ))}
             </div>
@@ -230,7 +230,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
               
               <div className="bg-purple-500/80 px-6 py-3 rounded-xl min-w-[120px] text-center">
                 <div className="text-white/80 text-xs">Apuesta Actual</div>
-                <div className="text-white font-bold text-lg">€{betAmount}</div>
+                <div className="text-white font-bold text-lg">${betAmount}</div>
               </div>
               
               <button 
@@ -319,7 +319,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
                     <div className="text-green-300 text-sm font-medium mb-1">🤖 Auto Bot Activo</div>
                     <div className="text-white/80 text-xs">
                       Rondas: {autoBotConfig.currentRounds}/{autoBotConfig.maxRounds} | 
-                      Ganancia: €{autoBotConfig.totalProfit.toFixed(2)}
+                      Ganancia: ${autoBotConfig.totalProfit.toFixed(2)}
                     </div>
                   </div>
                 )}
@@ -330,7 +330,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
           {/* Balance Info */}
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center">
             <div className="text-white/70 text-xs">Saldo Disponible</div>
-            <div className="text-white font-bold text-lg">€{balance.toFixed(2)}</div>
+            <div className="text-white font-bold text-lg">${balance.toFixed(2)}</div>
           </div>
         </div>
       </div>

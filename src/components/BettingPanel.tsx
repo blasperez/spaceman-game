@@ -99,7 +99,7 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
           </button>
           
           <div className="text-center min-w-[140px]">
-            <div className="text-yellow-400 text-2xl font-bold drop-shadow-lg">{betAmount} monedas</div>
+            <div className="text-yellow-400 text-2xl font-bold drop-shadow-lg">{betAmount} pesos</div>
           </div>
           
           <button
@@ -191,8 +191,8 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
           </div>
           <div className="text-white text-2xl font-bold drop-shadow-lg">
             {canCashOut 
-              ? `${currentWin.toFixed(2)} monedas` 
-              : `${betAmount} monedas`
+              ? `${currentWin.toFixed(2)} pesos`
+              : `${betAmount} pesos`
             }
           </div>
         </button>

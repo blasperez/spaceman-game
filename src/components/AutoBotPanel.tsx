@@ -76,7 +76,7 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
             <div>
               <h2 className="text-xl font-bold text-white">Auto Betting Bot</h2>
               <p className="text-white/70 text-sm">
-                {config.isActive ? '🟢 Active' : '🔴 Inactive'} • Balance: €{balance.toFixed(2)}
+                {config.isActive ? '🟢 Active' : '🔴 Inactive'} • Balance: ${balance.toFixed(2)}
               </p>
             </div>
           </div>
@@ -145,7 +145,7 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                   <div>
                     <label className="block text-sm text-white/80 mb-2">Bet Amount per Round</label>
                     <div className="flex items-center space-x-2">
-                      <span className="text-white/60">€</span>
+                      <span className="text-white/60">$</span>
                       <input
                         type="number"
                         value={config.betAmount}
@@ -187,7 +187,7 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm text-white/80 mb-2">Maximum Loss (€)</label>
+                    <label className="block text-sm text-white/80 mb-2">Maximum Loss ($)</label>
                     <div className="flex items-center space-x-2">
                       <input
                         type="number"
@@ -211,7 +211,7 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm text-white/80 mb-2">Maximum Win (€)</label>
+                    <label className="block text-sm text-white/80 mb-2">Maximum Win ($)</label>
                     <div className="flex items-center space-x-2">
                       <input
                         type="number"
@@ -365,7 +365,7 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                     <div className={`text-2xl font-bold ${
                       config.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'
                     }`}>
-                      {config.totalProfit >= 0 ? '+' : ''}€{config.totalProfit.toFixed(2)}
+                      {config.totalProfit >= 0 ? '+' : ''}${config.totalProfit.toFixed(2)}
                     </div>
                   </div>
                   
@@ -406,7 +406,7 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                   <div>
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-white/80">Loss Limit</span>
-                      <span className="text-white/60">€{Math.abs(Math.min(config.totalProfit, 0)).toFixed(2)} / €{config.maxLoss}</span>
+                      <span className="text-white/60">${Math.abs(Math.min(config.totalProfit, 0)).toFixed(2)} / ${config.maxLoss}</span>
                     </div>
                     <div className="w-full bg-white/10 backdrop-blur-md rounded-full h-2 shadow-lg">
                       <div 
@@ -421,7 +421,7 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                   <div>
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-white/80">Win Target</span>
-                      <span className="text-white/60">€{Math.max(config.totalProfit, 0).toFixed(2)} / €{config.maxWin}</span>
+                      <span className="text-white/60">${Math.max(config.totalProfit, 0).toFixed(2)} / ${config.maxWin}</span>
                     </div>
                     <div className="w-full bg-white/10 backdrop-blur-md rounded-full h-2 shadow-lg">
                       <div 
@@ -438,13 +438,13 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                 <h4 className="text-white font-medium mb-3">Current Strategy: {config.strategy.charAt(0).toUpperCase() + config.strategy.slice(1)}</h4>
                 <div className="text-white/80 text-sm">
                   {config.strategy === 'fixed' && (
-                    <p>Betting €{config.betAmount} every round regardless of wins or losses.</p>
+                    <p>Betting ${config.betAmount} every round regardless of wins or losses.</p>
                   )}
                   {config.strategy === 'martingale' && (
-                    <p>Starting with €{config.betAmount}, doubling bet after each loss, resetting after wins.</p>
+                    <p>Starting with ${config.betAmount}, doubling bet after each loss, resetting after wins.</p>
                   )}
                   {config.strategy === 'fibonacci' && (
-                    <p>Following Fibonacci sequence: €{config.betAmount}, advancing on loss, retreating on win.</p>
+                    <p>Following Fibonacci sequence: ${config.betAmount}, advancing on loss, retreating on win.</p>
                   )}
                 </div>
               </div>
@@ -465,8 +465,8 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                       The safest approach - bet the same amount every round regardless of previous results.
                     </p>
                     <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 text-xs shadow-lg">
-                      <div className="text-white/60 mb-1">Example with €5 base bet:</div>
-                      <div className="text-white font-mono">Round 1: €5 → Round 2: €5 → Round 3: €5</div>
+                      <div className="text-white/60 mb-1">Example with $5 base bet:</div>
+                      <div className="text-white font-mono">Round 1: $5 → Round 2: $5 → Round 3: $5</div>
                     </div>
                     <div className="mt-2 text-xs">
                       <span className="text-green-400">✓ Pros:</span> <span className="text-white/70">Low risk, predictable losses</span><br/>
@@ -481,8 +481,8 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                       Double your bet after each loss, reset to base amount after a win. High risk, high reward.
                     </p>
                     <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 text-xs shadow-lg">
-                      <div className="text-white/60 mb-1">Example with €5 base bet:</div>
-                      <div className="text-white font-mono">Loss: €5 → Loss: €10 → Win: €20 → Reset: €5</div>
+                      <div className="text-white/60 mb-1">Example with $5 base bet:</div>
+                      <div className="text-white font-mono">Loss: $5 → Loss: $10 → Win: $20 → Reset: $5</div>
                     </div>
                     <div className="mt-2 text-xs">
                       <span className="text-green-400">✓ Pros:</span> <span className="text-white/70">Quick loss recovery</span><br/>
@@ -497,8 +497,8 @@ export const AutoBotPanel: React.FC<AutoBotPanelProps> = ({
                       Follow the Fibonacci sequence (1,1,2,3,5,8...). Move forward on loss, back two steps on win.
                     </p>
                     <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 text-xs shadow-lg">
-                      <div className="text-white/60 mb-1">Example with €5 base bet:</div>
-                      <div className="text-white font-mono">€5 → €5 → €10 → €15 → Win: back to €5</div>
+                      <div className="text-white/60 mb-1">Example with $5 base bet:</div>
+                      <div className="text-white font-mono">$5 → $5 → $10 → $15 → Win: back to $5</div>
                     </div>
                     <div className="mt-2 text-xs">
                       <span className="text-green-400">✓ Pros:</span> <span className="text-white/70">Moderate risk, mathematical progression</span><br/>

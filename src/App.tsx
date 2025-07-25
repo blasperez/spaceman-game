@@ -441,7 +441,7 @@ function GameApp() {
         setChatMessages(prev => [...prev, {
           id: Date.now(),
           username: user?.name || 'Jugador',
-          message: `💥 Perdido en ${(gameData.gameState.crashPoint || gameData.gameState.multiplier).toFixed(2)}x - ${currentBet.toFixed(0)} monedas`,
+          message: `💥 Perdido en ${(gameData.gameState.crashPoint || gameData.gameState.multiplier).toFixed(2)}x - ${currentBet.toFixed(0)} pesos`,
           timestamp: new Date(),
           type: 'user'
         }]);
@@ -517,7 +517,7 @@ function GameApp() {
       setChatMessages(prev => [...prev, {
         id: Date.now(),
         username: user?.name || 'Jugador',
-        message: `💰 50% Auto Cashout en ${currentMultiplier.toFixed(2)}x por ${halfWinnings.toFixed(0)} monedas!`,
+        message: `💰 50% Auto Cashout en ${currentMultiplier.toFixed(2)}x por ${halfWinnings.toFixed(0)} pesos!`,
         timestamp: new Date(),
         type: 'user'
       }]);
@@ -604,7 +604,7 @@ function GameApp() {
         {
           id: Date.now(),
           username: user?.name || 'Jugador',
-          message: `🚀 Apuesta colocada de ${safeBetAmount.toFixed(0)} monedas`,
+          message: `🚀 Apuesta colocada de ${safeBetAmount.toFixed(0)} pesos`,
           timestamp: new Date(),
           type: 'user',
         },
@@ -657,7 +657,7 @@ function GameApp() {
       setChatMessages(prev => [...prev, {
         id: Date.now(),
         username: user?.name || 'Jugador',
-        message: `💰 ¡Retirado en ${gameData.gameState.multiplier.toFixed(2)}x por ${totalWinnings.toFixed(0)} monedas! (Ganancia neta: ${netProfit.toFixed(0)} monedas)`,
+        message: `💰 ¡Retirado en ${gameData.gameState.multiplier.toFixed(2)}x por ${totalWinnings.toFixed(0)} pesos! (Ganancia neta: ${netProfit.toFixed(0)} pesos)`,
         timestamp: new Date(),
         type: 'user'
       }]);
@@ -752,7 +752,7 @@ function GameApp() {
                   className="w-6 h-6 rounded-full"
                 />
                 <div className="text-left">
-                  <div className="text-white text-xs font-medium">{balance.toFixed(0)} monedas</div>
+                  <div className="text-white text-xs font-medium">{balance.toFixed(0)} pesos</div>
                 </div>
               </button>
             </div>
@@ -981,7 +981,7 @@ function GameApp() {
           {/* Left Side - Game Info */}
           <div className="flex items-center space-x-4">
             <div className="text-white text-sm">
-              <div>Spaceman Multijugador 1 - 100 monedas</div>
+              <div>Spaceman Multijugador 1 - 100 pesos</div>
               <div className="text-xs text-white/70">Jugador: {user.name}</div>
             </div>
           </div>
@@ -1041,7 +1041,7 @@ function GameApp() {
       <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-40 space-y-3">
         <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl p-3">
           <div className="text-white/70 text-xs">Balance</div>
-          <div className="text-white font-bold">{balance.toFixed(0)} monedas</div>
+          <div className="text-white font-bold">{balance.toFixed(0)} pesos</div>
           <div className="text-white/60 text-xs">≈ ${balance.toFixed(0)} MXN</div>
         </div>
         
@@ -1104,7 +1104,7 @@ function GameApp() {
               </button>
               <div className="bg-purple-500/80 px-4 py-2 rounded-xl">
                 <div className="text-white/80 text-xs">Bet</div>
-                <div className="text-white font-bold">{betAmount} monedas</div>
+                <div className="text-white font-bold">{betAmount} pesos</div>
               </div>
               <button 
                 onClick={() => handleButtonPress(increaseBet)}
@@ -1151,7 +1151,7 @@ function GameApp() {
             </button>
             
             <div className="text-white text-lg font-bold">
-              {canCashOut ? `${currentWin.toFixed(0)} monedas` : `${gameData.gameState.multiplier.toFixed(2)}x`}
+              {canCashOut ? `${currentWin.toFixed(0)} pesos` : `${gameData.gameState.multiplier.toFixed(2)}x`}
             </div>
           </div>
 
@@ -1159,7 +1159,7 @@ function GameApp() {
           <div className="text-right">
             <div className="text-white/70 text-sm">Total Bet</div>
             <div className="text-white font-bold">
-              {hasActiveBet ? `${currentBet.toFixed(0)} monedas` : `${betAmount.toFixed(0)} monedas`}
+              {hasActiveBet ? `${currentBet.toFixed(0)} pesos` : `${betAmount.toFixed(0)} pesos`}
             </div>
           </div>
         </div>

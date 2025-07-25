@@ -199,7 +199,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
                           </button>
                         </div>
                         <div className="text-3xl font-bold text-green-400">
-                          {showBalance ? `${userProfile?.balance?.toFixed(2) || '0.00'} monedas` : '••••••'}
+                          {showBalance ? `${userProfile?.balance?.toFixed(2) || '0.00'} pesos` : '••••••'}
                         </div>
                         <div className="text-green-300 text-sm mt-1">
                           ≈ ${userProfile?.balance?.toFixed(2) || '0.00'} MXN
@@ -236,7 +236,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
                             </button>
                           </div>
                           <div className="text-xs text-white/50 mt-2">
-                            Límite de retiro: {userProfile?.withdrawal_limit || 1000} monedas/día
+                            Límite de retiro: {userProfile?.withdrawal_limit || 1000} pesos/día
                           </div>
                         </div>
                       </div>
@@ -313,7 +313,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
                         <div key={game.id} className="bg-white/10 p-4 rounded-lg flex justify-between items-center">
                           <div>
                             <div className="text-white font-medium">
-                              Apuesta: {game.bet_amount} monedas
+                              Apuesta: {game.bet_amount} pesos
                             </div>
                             <div className="text-white/60 text-sm">
                               {new Date(game.created_at).toLocaleDateString('es-ES')}
@@ -401,7 +401,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
                             Límite de Depósito Diario
                           </label>
                           <div className="bg-white/10 p-3 rounded-lg text-white">
-                            {userProfile?.deposit_limit || 1000} monedas
+                            {userProfile?.deposit_limit || 1000} pesos
                           </div>
                         </div>
                         <div>
@@ -409,7 +409,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
                             Límite de Retiro Diario
                           </label>
                           <div className="bg-white/10 p-3 rounded-lg text-white">
-                            {userProfile?.withdrawal_limit || 1000} monedas
+                            {userProfile?.withdrawal_limit || 1000} pesos
                           </div>
                         </div>
                       </div>

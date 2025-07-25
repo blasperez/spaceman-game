@@ -96,7 +96,7 @@ const CheckoutForm: React.FC<{ amount: number; onPaymentSuccess: () => void }> =
         disabled={!stripe || processing || succeeded}
         className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
       >
-        {processing ? 'Processing...' : `Pay €${amount.toFixed(2)}`}
+        {processing ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
       </button>
     </form>
   );
