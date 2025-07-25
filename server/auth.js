@@ -35,59 +35,63 @@ async (accessToken, refreshToken, profile, done) => {
       return done(new Error('No email found'), null);
     }
 
-    // Buscar si el usuario ya existe por email
+    // Buscar si el usuario ya existe por google_id o email
     let user = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
+      'SELECT * FROM users WHERE google_id = $1 OR email = $2',
+      [profile.id, email]
     );
 
     if (user.rows.length === 0) {
       console.log('👤 Creating new user...');
       
-      // Generar username único si no hay displayName
-      const username = profile.displayName || `user_${profile.id.substring(0, 8)}`;
+      // Generar username único
+      const baseUsername = profile.displayName?.replace(/\s+/g, '_').toLowerCase() || `user_${profile.id.substring(0, 8)}`;
+      let username = baseUsername;
+      let attempt = 0;
+      
+      // Verificar si el username ya existe
+      while (true) {
+        const existingUser = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
+        if (existingUser.rows.length === 0) break;
+        attempt++;
+        username = `${baseUsername}_${attempt}`;
+      }
       
       try {
         const result = await pool.query(
-          `INSERT INTO users (email, username, full_name, balance) 
-           VALUES ($1, $2, $3, $4) 
+          `INSERT INTO users (email, username, full_name, google_id, balance) 
+           VALUES ($1, $2, $3, $4, $5) 
            RETURNING *`,
           [
             email,
             username,
             profile.displayName || username,
+            profile.id, // Agregar google_id
             1000.00
           ]
         );
         user = result;
         console.log('✅ User created successfully:', user.rows[0].id);
       } catch (dbError) {
-        console.error('❌ Database error details:', dbError);
-        
-        // Si el error es por username duplicado, intentar con uno diferente
-        if (dbError.code === '23505' && dbError.constraint === 'users_username_key') {
-          const uniqueUsername = `${username}_${Date.now()}`;
-          console.log('🔄 Retrying with unique username:', uniqueUsername);
-          
-          const result = await pool.query(
-            `INSERT INTO users (email, username, full_name, balance) 
-             VALUES ($1, $2, $3, $4) 
-             RETURNING *`,
-            [
-              email,
-              uniqueUsername,
-              profile.displayName || uniqueUsername,
-              1000.00
-            ]
-          );
-          user = result;
-          console.log('✅ User created with unique username');
-        } else {
-          throw dbError;
-        }
+        console.error('❌ Database error details:', {
+          code: dbError.code,
+          detail: dbError.detail,
+          constraint: dbError.constraint,
+          message: dbError.message
+        });
+        throw dbError;
       }
     } else {
       console.log('✅ Existing user found:', user.rows[0].id);
+      
+      // Actualizar google_id si no existe
+      if (!user.rows[0].google_id && user.rows[0].email === email) {
+        await pool.query(
+          'UPDATE users SET google_id = $1 WHERE id = $2',
+          [profile.id, user.rows[0].id]
+        );
+        console.log('✅ Updated google_id for existing user');
+      }
     }
 
     return done(null, user.rows[0]);
