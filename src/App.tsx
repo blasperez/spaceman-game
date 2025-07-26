@@ -18,6 +18,7 @@ import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
 import { BettingPanel } from './components/BettingPanel';
 import { MobileBettingPanel } from './components/MobileBettingPanel';
 import { ProfileModal } from './components/ProfileModal';
+import { AuthCallback } from './components/AuthCallback';
 
 interface GameHistory {
   id: number;
@@ -169,189 +170,75 @@ function GameApp() {
   const [, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [, setTransactions] = useState<Transaction[]>([]);
 
-  // FIXED: Improved session checking with timeout
+  const fetchUserProfileWithRetry = useCallback(async (supabaseUser: any): Promise<UserProfile | null> => {
+    for (let i = 0; i < 5; i++) {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+
+      if (profile) {
+        console.log('✅ Profile loaded from database');
+        return {
+          id: profile.id,
+          name: profile.full_name || supabaseUser.user_metadata?.full_name || 'Usuario',
+          email: profile.email || supabaseUser.email || '',
+          avatar: profile.avatar_url || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Usuario')}&background=random`,
+          provider: profile.provider || 'google',
+          balance: profile.balance || 1000,
+          isDemo: false,
+          age: profile.age,
+          country: profile.country,
+          phone: profile.phone,
+          kyc_verified: profile.kyc_verified || false,
+          withdrawal_methods: profile.withdrawal_methods || [],
+          deposit_limit: profile.deposit_limit || 1000,
+          withdrawal_limit: profile.withdrawal_limit || 1000,
+          total_deposits: profile.total_deposits || 0,
+          total_withdrawals: profile.total_withdrawals || 0,
+          games_played: profile.games_played || 0,
+          total_wagered: profile.total_wagered || 0,
+          total_won: profile.total_won || 0
+        };
+      }
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+        break; // Don't retry on critical errors
+      }
+      if (i < 4) {
+        console.log(`Profile not found, attempt ${i + 1}. Retrying...`);
+        await new Promise(res => setTimeout(res, 500));
+      }
+    }
+    console.warn('Could not fetch profile after multiple attempts.');
+    return null;
+  }, []);
+
   useEffect(() => {
-    const checkExistingSession = async () => {
-      try {
-        console.log('🔍 Checking existing session...');
-        
-        // Set a timeout to prevent infinite loading
-        const timeoutId = setTimeout(() => {
-          console.log('⏰ Session check timeout, proceeding without session');
-          setIsLoading(false);
-          setSessionChecked(true);
-        }, 3000); // Reduced timeout to 3 seconds
-
-        // Enhanced session checking with retry logic
-        let session = null;
-        let attempts = 0;
-        const maxAttempts = 3;
-        
-        while (!session && attempts < maxAttempts) {
-          attempts++;
-          console.log(`🔍 Session check attempt ${attempts}/${maxAttempts}`);
-          
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error(`❌ Session check ${attempts} failed:`, error);
-            if (attempts === maxAttempts) {
-              clearTimeout(timeoutId);
-              setIsLoading(false);
-              setSessionChecked(true);
-              return;
-            }
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            continue;
-          }
-          
-          if (data.session) {
-            session = data.session;
-            break;
-          }
-          
-          if (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        }
-        
-        clearTimeout(timeoutId);
-
-        if (session?.user) {
-          console.log('✅ Found existing session for:', session.user.email);
-          
-          // Load or create profile
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error('❌ Profile fetch error:', profileError);
-          }
-
-          let userProfile: UserProfile;
-
-          if (profile) {
-            console.log('✅ Profile loaded from database');
-            userProfile = {
-              id: profile.id,
-              name: profile.full_name || session.user.user_metadata?.full_name || 'Usuario',
-              email: profile.email || session.user.email || '',
-              avatar: profile.avatar_url || session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Usuario')}&background=random`,
-              provider: profile.provider || 'google',
-              balance: profile.balance || 1000,
-              isDemo: false,
-              age: profile.age,
-              country: profile.country,
-              phone: profile.phone,
-              kyc_verified: profile.kyc_verified || false,
-              withdrawal_methods: profile.withdrawal_methods || [],
-              deposit_limit: profile.deposit_limit || 1000,
-              withdrawal_limit: profile.withdrawal_limit || 1000,
-              total_deposits: profile.total_deposits || 0,
-              total_withdrawals: profile.total_withdrawals || 0,
-              games_played: profile.games_played || 0,
-              total_wagered: profile.total_wagered || 0,
-              total_won: profile.total_won || 0
-            };
-          } else {
-            console.log('📝 Creating new profile for user');
-            userProfile = {
-              id: session.user.id,
-              name: session.user.user_metadata?.full_name || 'Usuario',
-              email: session.user.email || '',
-              avatar: session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || 'Usuario')}&background=random`,
-              provider: 'google',
-              balance: 1000,
-              isDemo: false
-            };
-            
-            // Create profile in database
-            try {
-              const { error: insertError } = await supabase.from('profiles').insert([{
-                id: userProfile.id,
-                email: userProfile.email,
-                full_name: userProfile.name,
-                avatar_url: userProfile.avatar,
-                provider: userProfile.provider,
-                balance: userProfile.balance
-              }]);
-              
-              if (insertError) {
-                console.warn('⚠️ Profile creation failed:', insertError);
-                // Continue anyway, trigger should handle it
-              } else {
-                console.log('✅ Profile created successfully');
-              }
-            } catch (insertError) {
-              console.warn('⚠️ Could not create profile:', insertError);
-            }
-          }
-
+    const checkInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const userProfile = await fetchUserProfileWithRetry(session.user);
+        if (userProfile) {
           setUser(userProfile);
           setBalance(userProfile.balance);
-          console.log('✅ User profile loaded successfully');
-        } else {
-          console.log('ℹ️ No existing session found');
         }
-      } catch (error) {
-        console.error('💥 Session check failed:', error);
-      } finally {
-        setIsLoading(false);
-        setSessionChecked(true);
       }
+      setSessionChecked(true);
+      setIsLoading(false);
     };
-    
-    if (!sessionChecked) {
-      checkExistingSession();
-    }
-  }, [sessionChecked]);
+    checkInitialSession();
+  }, [fetchUserProfileWithRetry]);
 
-  // FIXED: Improved auth state listener
   useEffect(() => {
-    if (!sessionChecked) return;
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
-      console.log('🔄 Auth state changed:', event, session?.user?.email);
-      
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state changed:', event);
       if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profile) {
-            const userProfile: UserProfile = {
-              id: profile.id,
-              name: profile.full_name || session.user.user_metadata?.full_name || 'Usuario',
-              email: profile.email || session.user.email || '',
-              avatar: profile.avatar_url || session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Usuario')}&background=random`,
-              provider: profile.provider || 'google',
-              balance: profile.balance || 1000.00,
-              isDemo: false,
-              age: profile.age,
-              country: profile.country,
-              phone: profile.phone,
-              kyc_verified: profile.kyc_verified || false,
-              withdrawal_methods: profile.withdrawal_methods || [],
-              deposit_limit: profile.deposit_limit || 1000,
-              withdrawal_limit: profile.withdrawal_limit || 1000,
-              total_deposits: profile.total_deposits || 0,
-              total_withdrawals: profile.total_withdrawals || 0,
-              games_played: profile.games_played || 0,
-              total_wagered: profile.total_wagered || 0,
-              total_won: profile.total_won || 0
-            };
-            
-            setUser(userProfile);
-            setBalance(userProfile.balance);
-          }
-        } catch (error) {
-          console.error('❌ Error loading profile after sign in:', error);
+        const userProfile = await fetchUserProfileWithRetry(session.user);
+        if (userProfile) {
+          setUser(userProfile);
+          setBalance(userProfile.balance);
         }
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 User signed out');
@@ -370,7 +257,7 @@ function GameApp() {
     });
 
     return () => subscription.unsubscribe();
-  }, [sessionChecked]);
+  }, [fetchUserProfileWithRetry]);
 
   // Save user data to database when balance changes
   useEffect(() => {
@@ -1274,98 +1161,6 @@ function App() {
       </Routes>
     </Router>
   );
-}
-
-// Componente para manejar el callback de autenticación
-function AuthCallback() {
-  const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const handleAuthCallback = async () => {
-      try {
-        console.log('🔄 Processing auth callback...');
-        
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('❌ Auth callback error:', error);
-          setError('Error al procesar la autenticación');
-          setIsProcessing(false);
-          return;
-        }
-
-        if (session?.user) {
-          console.log('✅ Auth callback successful for:', session.user.email);
-          
-          // Crear o cargar perfil del usuario
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (!profile) {
-            // Crear perfil si no existe
-            const userProfile = {
-              id: session.user.id,
-              email: session.user.email,
-              full_name: session.user.user_metadata?.full_name || 'Usuario',
-              avatar_url: session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.full_name || 'Usuario')}&background=random`,
-              balance: 1000,
-              provider: 'google'
-            };
-
-            await supabase.from('profiles').insert([userProfile]);
-            console.log('✅ User profile created');
-          }
-
-          // Redirigir al juego
-          navigate('/', { replace: true });
-        } else {
-          console.log('❌ No session found in callback');
-          setError('No se pudo completar la autenticación');
-          setIsProcessing(false);
-        }
-      } catch (error) {
-        console.error('💥 Auth callback exception:', error);
-        setError('Error inesperado durante la autenticación');
-        setIsProcessing(false);
-      }
-    };
-
-    handleAuthCallback();
-  }, [navigate]);
-
-  if (isProcessing) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white text-lg">Completando autenticación...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-400 text-lg mb-4">{error}</p>
-          <button 
-            onClick={() => navigate('/', { replace: true })}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-          >
-            Volver al inicio
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
 }
 
 export default App;
