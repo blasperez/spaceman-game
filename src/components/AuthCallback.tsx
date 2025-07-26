@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 export const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,44 +70,10 @@ export const AuthCallback: React.FC = () => {
         }
         
         if (sessionData) {
-          console.log('✅ Auth callback successful, redirecting to app');
-          
-          // Ensure profile exists
-          try {
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', sessionData.user.id)
-              .single();
-            
-            if (profileError && profileError.code === 'PGRST116') {
-              // Profile doesn't exist, create it
-              console.log('📝 Creating user profile...');
-              const { error: insertError } = await supabase
-                .from('profiles')
-                .insert({
-                  id: sessionData.user.id,
-                  email: sessionData.user.email,
-                  full_name: sessionData.user.user_metadata?.full_name || 'Usuario',
-                  avatar_url: sessionData.user.user_metadata?.avatar_url,
-                  provider: 'google',
-                  balance: 1000.00
-                });
-              
-              if (insertError) {
-                console.error('❌ Profile creation failed:', insertError);
-                // Continue anyway, profile will be created by trigger
-              } else {
-                console.log('✅ Profile created successfully');
-              }
-            }
-          } catch (profileError) {
-            console.warn('⚠️ Profile check/creation failed:', profileError);
-            // Continue anyway
-          }
-          
-          // Navigate to app
-          setTimeout(() => navigate('/'), 500);
+          console.log('✅ Auth callback successful, redirecting to app...');
+          // The database trigger handles profile creation. We just need to redirect.
+          // The LoginScreen component will then fetch the user profile.
+          navigate('/');
         } else {
           console.log('❌ No session found after all attempts');
           setError('Authentication could not be completed. Please try again.');
@@ -123,27 +88,6 @@ export const AuthCallback: React.FC = () => {
 
     handleAuthCallback();
   }, [navigate]);
-
-  // Remove the old useEffect that was using searchParams
-  /*
-  useEffect(() => {
-    const handleAuthCallback = async () => {
-      try {
-        } else {
-          console.log('❌ No session found in callback');
-          setError('No active session found');
-          setTimeout(() => navigate('/login'), 3000);
-        }
-      } catch (error) {
-        console.error('Auth callback error:', error);
-        setError('Authentication failed');
-        setTimeout(() => navigate('/login?error=auth_failed'), 3000);
-      }
-    };
-
-    handleAuthCallback();
-  }, [navigate, searchParams]);
-  */
 
   if (error) {
     return (
