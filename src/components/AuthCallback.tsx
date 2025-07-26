@@ -12,55 +12,125 @@ export const AuthCallback: React.FC = () => {
       try {
         console.log('🔄 Processing auth callback...');
         
-        // Check for error in URL
-        const errorParam = searchParams.get('error');
-        const errorDescription = searchParams.get('error_description');
+        // Enhanced URL parameter checking
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        const errorDescription = urlParams.get('error_description');
         
-        if (errorParam) {
-          console.error('OAuth error:', errorParam, errorDescription);
+        console.log('🔍 URL Parameters:', {
+          hasCode: !!code,
+          error: error,
+          errorDescription: errorDescription,
+          fullUrl: window.location.href
+        });
+        
+        // Check for error in URL
+        if (error) {
+          console.error('OAuth error from provider:', error, errorDescription);
           setError(errorDescription || 'Authentication failed');
           setTimeout(() => navigate('/login?error=auth_failed'), 3000);
           return;
         }
 
-        // Handle the OAuth callback
-        const code = searchParams.get('code');
-        if (code) {
-          console.log('🔑 Processing OAuth code...');
+        // Wait a moment for Supabase to process the callback
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Check for session multiple times with retry logic
+        let sessionData = null;
+        let attempts = 0;
+        const maxAttempts = 5;
+        
+        while (!sessionData && attempts < maxAttempts) {
+          attempts++;
+          console.log(`🔍 Session check attempt ${attempts}/${maxAttempts}`);
           
-          // Use the recommended method for handling OAuth callbacks
-          const { data, error } = await supabase.auth.getSession();
+          const { data, error: sessionError } = await supabase.auth.getSession();
           
-          if (error) {
-            console.error('Session retrieval error:', error);
-            setError('Failed to retrieve session');
-            setTimeout(() => navigate('/login?error=auth_failed'), 3000);
-            return;
+          if (sessionError) {
+            console.error(`Session check ${attempts} failed:`, sessionError);
+            if (attempts === maxAttempts) {
+              setError('Failed to retrieve session after multiple attempts');
+              setTimeout(() => navigate('/login?error=auth_failed'), 3000);
+              return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
           }
 
           if (data.session) {
-            console.log('✅ Auth successful, session found');
-            // Small delay to ensure state is properly set
-            setTimeout(() => navigate('/'), 1000);
-            return;
+            sessionData = data.session;
+            console.log('✅ Session found on attempt', attempts);
+            break;
+          }
+          
+          if (attempts < maxAttempts) {
+            console.log('⏳ No session yet, retrying...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
         }
-
-        // Check for existing session
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
-        if (sessionError) {
-          console.error('Session check error:', sessionError);
-          setError('Failed to check session');
-          setTimeout(() => navigate('/login?error=auth_failed'), 3000);
-          return;
-        }
-
-        if (sessionData.session) {
-          console.log('✅ Existing session found');
-          setTimeout(() => navigate('/'), 1000);
+        if (sessionData) {
+          console.log('✅ Auth callback successful, redirecting to app');
+          
+          // Ensure profile exists
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', sessionData.user.id)
+              .single();
+            
+            if (profileError && profileError.code === 'PGRST116') {
+              // Profile doesn't exist, create it
+              console.log('📝 Creating user profile...');
+              const { error: insertError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: sessionData.user.id,
+                  email: sessionData.user.email,
+                  full_name: sessionData.user.user_metadata?.full_name || 'Usuario',
+                  avatar_url: sessionData.user.user_metadata?.avatar_url,
+                  provider: 'google',
+                  balance: 1000.00
+                });
+              
+              if (insertError) {
+                console.error('❌ Profile creation failed:', insertError);
+                // Continue anyway, profile will be created by trigger
+              } else {
+                console.log('✅ Profile created successfully');
+              }
+            }
+          } catch (profileError) {
+            console.warn('⚠️ Profile check/creation failed:', profileError);
+            // Continue anyway
+          }
+          
+          // Navigate to app
+          setTimeout(() => navigate('/'), 500);
         } else {
-          console.log('❌ No session found');
+          console.log('❌ No session found after all attempts');
+          setError('Authentication could not be completed. Please try again.');
+          setTimeout(() => navigate('/login?error=no_session'), 3000);
+        }
+      } catch (error) {
+        console.error('💥 Auth callback exception:', error);
+        setError(`Authentication failed: ${(error as Error).message}`);
+        setTimeout(() => navigate('/login?error=auth_failed'), 3000);
+      }
+    };
+
+    handleAuthCallback();
+  }, [navigate]);
+
+  // Remove the old useEffect that was using searchParams
+  /*
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      try {
+        } else {
+          console.log('❌ No session found in callback');
           setError('No active session found');
           setTimeout(() => navigate('/login'), 3000);
         }
@@ -73,6 +143,7 @@ export const AuthCallback: React.FC = () => {
 
     handleAuthCallback();
   }, [navigate, searchParams]);
+  */
 
   if (error) {
     return (

@@ -259,27 +259,51 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
     
     try {
       console.log('🔍 Iniciando login de Google...');
-      console.log('🔍 Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-      console.log('🔍 Current origin:', window.location.origin);
+      
+      // Enhanced debugging
+      const currentUrl = window.location.origin;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      console.log('🔍 Environment check:', {
+        supabaseUrl: supabaseUrl ? 'Present' : 'Missing',
+        currentOrigin: currentUrl,
+        isDev: import.meta.env.DEV
+      });
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${currentUrl}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          },
+          scopes: 'email profile'
         }
       });
       
       if (error) {
-        console.error('❌ Error con Google:', error);
-        setMessage('Error con Google OAuth. Intenta de nuevo.');
+        console.error('❌ Google OAuth Error:', {
+          message: error.message,
+          code: error.code,
+          status: error.status
+        });
+        
+        // Provide more specific error messages
+        if (error.message.includes('redirect_uri_mismatch')) {
+          setMessage('Error de configuración OAuth. Contacta al administrador.');
+        } else if (error.message.includes('invalid_client')) {
+          setMessage('Credenciales OAuth inválidas. Contacta al administrador.');
+        } else {
+          setMessage(`Error con Google OAuth: ${error.message}`);
+        }
         setAuthLoading(false);
       } else {
         console.log('✅ Redirección iniciada correctamente');
         // La redirección ocurre automáticamente
       }
     } catch (error) {
-      console.error('❌ Error al conectar con Google:', error);
-      setMessage('Error de conexión. Verifica tu internet e intenta de nuevo.');
+      console.error('❌ Google OAuth Exception:', error);
+      setMessage(`Error de conexión: ${(error as Error).message}`);
       setAuthLoading(false);
     }
   };

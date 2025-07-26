@@ -182,17 +182,40 @@ function GameApp() {
           setSessionChecked(true);
         }, 3000); // Reduced timeout to 3 seconds
 
-        // Try to get session with single attempt
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Enhanced session checking with retry logic
+        let session = null;
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (!session && attempts < maxAttempts) {
+          attempts++;
+          console.log(`🔍 Session check attempt ${attempts}/${maxAttempts}`);
+          
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error(`❌ Session check ${attempts} failed:`, error);
+            if (attempts === maxAttempts) {
+              clearTimeout(timeoutId);
+              setIsLoading(false);
+              setSessionChecked(true);
+              return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          
+          if (data.session) {
+            session = data.session;
+            break;
+          }
+          
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
         
         clearTimeout(timeoutId);
-
-        if (error) {
-          console.error('❌ Session check error:', error);
-          setIsLoading(false);
-          setSessionChecked(true);
-          return;
-        }
 
         if (session?.user) {
           console.log('✅ Found existing session for:', session.user.email);
@@ -211,6 +234,7 @@ function GameApp() {
           let userProfile: UserProfile;
 
           if (profile) {
+            console.log('✅ Profile loaded from database');
             userProfile = {
               id: profile.id,
               name: profile.full_name || session.user.user_metadata?.full_name || 'Usuario',
@@ -233,7 +257,7 @@ function GameApp() {
               total_won: profile.total_won || 0
             };
           } else {
-            // Create basic profile if doesn't exist
+            console.log('📝 Creating new profile for user');
             userProfile = {
               id: session.user.id,
               name: session.user.user_metadata?.full_name || 'Usuario',
@@ -244,15 +268,23 @@ function GameApp() {
               isDemo: false
             };
             
-            // Try to create profile in background
+            // Create profile in database
             try {
-              await supabase.from('profiles').insert([{
+              const { error: insertError } = await supabase.from('profiles').insert([{
                 id: userProfile.id,
                 email: userProfile.email,
                 full_name: userProfile.name,
                 avatar_url: userProfile.avatar,
+                provider: userProfile.provider,
                 balance: userProfile.balance
               }]);
+              
+              if (insertError) {
+                console.warn('⚠️ Profile creation failed:', insertError);
+                // Continue anyway, trigger should handle it
+              } else {
+                console.log('✅ Profile created successfully');
+              }
             } catch (insertError) {
               console.warn('⚠️ Could not create profile:', insertError);
             }
