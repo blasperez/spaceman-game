@@ -37,7 +37,7 @@ async (accessToken, refreshToken, profile, done) => {
 
     // Buscar si el usuario ya existe
     let user = await pool.query(
-      'SELECT * FROM public.users WHERE email = $1 OR google_id = $2',
+      'SELECT * FROM users WHERE email = $1 OR google_id = $2',
       [email, profile.id]
     );
 
@@ -55,7 +55,7 @@ async (accessToken, refreshToken, profile, done) => {
       let attempts = 0;
       while (attempts < 10) {
         const existingUser = await pool.query(
-          'SELECT id FROM public.users WHERE username = $1', 
+          'SELECT id FROM users WHERE username = $1', 
           [username]
         );
         if (existingUser.rows.length === 0) break;
@@ -65,7 +65,7 @@ async (accessToken, refreshToken, profile, done) => {
       
       try {
         const result = await pool.query(
-          `INSERT INTO public.users (
+          `INSERT INTO users (
             email, 
             username, 
             google_id,
@@ -76,7 +76,7 @@ async (accessToken, refreshToken, profile, done) => {
             balance_deposited,
             balance_winnings
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-          RETURNING id, email, username, balance, google_id`,
+          RETURNING *`,
           [
             email,
             username,
@@ -84,14 +84,18 @@ async (accessToken, refreshToken, profile, done) => {
             profile.displayName || username,
             profile.photos?.[0]?.value || null,
             1000.00,      // balance inicial
-            10000.00,     // balance_demo
+            10000.00,     // balance_demo (ya tiene default pero lo ponemos explícito)
             0,            // balance_deposited
             0             // balance_winnings
           ]
         );
         
         user = result;
-        console.log('✅ User created successfully:', user.rows[0]);
+        console.log('✅ User created successfully:', {
+          id: user.rows[0].id,
+          email: user.rows[0].email,
+          username: user.rows[0].username
+        });
         
       } catch (dbError) {
         console.error('❌ Database insert error:', {
@@ -100,33 +104,20 @@ async (accessToken, refreshToken, profile, done) => {
           detail: dbError.detail,
           constraint: dbError.constraint
         });
-        
-        // Si falla por alguna columna, intentar con inserción mínima
-        if (dbError.code === '42703') { // undefined_column
-          console.log('🔄 Retrying with minimal columns...');
-          
-          const minimalResult = await pool.query(
-            `INSERT INTO public.users (email, username) 
-             VALUES ($1, $2) 
-             RETURNING *`,
-            [email, username]
-          );
-          
-          user = minimalResult;
-          console.log('✅ User created with minimal data');
-        } else {
-          throw dbError;
-        }
+        throw dbError;
       }
     } else {
       console.log('✅ Existing user found:', user.rows[0].id);
       
       // Si existe pero no tiene google_id, actualizarlo
-      if (!user.rows[0].google_id) {
+      if (!user.rows[0].google_id && user.rows[0].email === email) {
         await pool.query(
-          'UPDATE public.users SET google_id = $1 WHERE id = $2',
-          [profile.id, user.rows[0].id]
+          'UPDATE users SET google_id = $1, avatar_url = COALESCE(avatar_url, $2) WHERE id = $3',
+          [profile.id, profile.photos?.[0]?.value, user.rows[0].id]
         );
+        
+        // Recargar el usuario actualizado
+        user = await pool.query('SELECT * FROM users WHERE id = $1', [user.rows[0].id]);
         console.log('✅ Updated google_id for existing user');
       }
     }
@@ -144,7 +135,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
-    const user = await pool.query('SELECT * FROM public.users WHERE id = $1', [id]);
+    const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
     done(null, user.rows[0]);
   } catch (error) {
     done(error, null);
@@ -158,10 +149,10 @@ export function generateJWT(user) {
       id: user.id, 
       email: user.email, 
       username: user.username,
-      balance: user.balance || 0,
-      balance_demo: user.balance_demo || 10000,
-      balance_deposited: user.balance_deposited || 0,
-      balance_winnings: user.balance_winnings || 0
+      balance: parseFloat(user.balance) || 0,
+      balance_demo: parseFloat(user.balance_demo) || 10000,
+      balance_deposited: parseFloat(user.balance_deposited) || 0,
+      balance_winnings: parseFloat(user.balance_winnings) || 0
     },
     JWT_SECRET,
     { expiresIn: '24h' }
