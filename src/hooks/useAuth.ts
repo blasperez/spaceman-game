@@ -36,7 +36,6 @@ export const useAuth = () => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer Supabase calls with setTimeout to prevent deadlock
           setTimeout(() => {
             fetchProfile(session.user);
           }, 0);
@@ -93,7 +92,6 @@ export const useAuth = () => {
   const signInWithGoogle = async () => {
     try {
       console.log('🚀 Starting Google sign in...');
-      console.log('Redirect URL:', `${window.location.origin}/auth/callback`);
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -115,37 +113,6 @@ export const useAuth = () => {
     }
   };
 
-  const signInWithFacebook = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          scopes: 'email public_profile'
-        }
-      });
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing in with Facebook:', error);
-      throw new Error('Error al conectar con Facebook. Por favor, intenta de nuevo.');
-    }
-  };
-
-  const signInWithTwitter = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'twitter',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing in with Twitter:', error);
-      throw new Error('Error al conectar con Twitter. Por favor, intenta de nuevo.');
-    }
-  };
-
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -156,62 +123,12 @@ export const useAuth = () => {
     }
   };
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-      
-      // Refresh profile
-      await fetchProfile(user);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      throw error;
-    }
-  };
-
-  const updateBalance = async (newBalance: number) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          balance: newBalance,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-      
-      // Update local state
-      if (profile) {
-        setProfile({ ...profile, balance: newBalance });
-      }
-    } catch (error) {
-      console.error('Error updating balance:', error);
-      throw error;
-    }
-  };
-
   return {
     user,
     profile,
     session,
     loading,
     signInWithGoogle,
-    signInWithFacebook,
-    signInWithTwitter,
-    signOut,
-    updateProfile,
-    updateBalance
+    signOut
   };
 };
