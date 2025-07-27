@@ -7,13 +7,77 @@ export const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState('Procesando autenticación...');
 
+  const handleUserSession = async (user: any) => {
+    try {
+      console.log('✅ User authenticated:', user.email);
+      setStatus('Configurando perfil...');
+
+      // Create or update user profile in profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || 'Usuario',
+          avatar_url: user.user_metadata?.avatar_url,
+          provider: 'google',
+          balance: 1000.00, // Default balance for new users
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        })
+        .select()
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('❌ Profile error:', profileError);
+        // Continue anyway, user can still login
+      }
+
+      setStatus('¡Autenticación exitosa! Redirigiendo...');
+      
+      // Redirect to main app
+      setTimeout(() => {
+        navigate('/?auth=success');
+      }, 1000);
+    } catch (error) {
+      console.error('❌ Error handling user session:', error);
+      setStatus('Error inesperado. Redirigiendo...');
+      setTimeout(() => navigate('/?error=session_error'), 2000);
+    }
+  };
+
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
         console.log('🔍 Processing Supabase auth callback...');
         setStatus('Verificando sesión...');
 
-        // Get the session from the URL hash or query params
+        // First try to handle the OAuth callback from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        
+        if (code) {
+          console.log('🔄 Processing OAuth code...');
+          setStatus('Procesando código de autenticación...');
+          
+          // Exchange the code for session
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (error) {
+            console.error('❌ Code exchange error:', error);
+            setStatus('Error en el intercambio de código. Redirigiendo...');
+            setTimeout(() => navigate('/?error=code_exchange_failed'), 2000);
+            return;
+          }
+          
+          if (data.session?.user) {
+            await handleUserSession(data.session.user);
+            return;
+          }
+        }
+
+        // Fallback: try to get existing session
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -24,37 +88,7 @@ export const AuthCallback: React.FC = () => {
         }
 
         if (data.session?.user) {
-          console.log('✅ User authenticated:', data.user.email);
-          setStatus('Configurando perfil...');
-
-          // Create or update user profile in profiles table
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: data.session.user.id,
-              email: data.session.user.email,
-              full_name: data.session.user.user_metadata?.full_name || 'Usuario',
-              avatar_url: data.session.user.user_metadata?.avatar_url,
-              provider: 'google',
-              balance: 1000.00, // Default balance for new users
-              updated_at: new Date().toISOString()
-            }, {
-              onConflict: 'id'
-            })
-            .select()
-            .single();
-
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error('❌ Profile error:', profileError);
-            // Continue anyway, user can still login
-          }
-
-          setStatus('¡Autenticación exitosa! Redirigiendo...');
-          
-          // Redirect to main app
-          setTimeout(() => {
-            navigate('/?auth=success');
-          }, 1000);
+          await handleUserSession(data.session.user);
         } else {
           console.error('❌ No session found');
           setStatus('No se pudo obtener la sesión. Redirigiendo...');
