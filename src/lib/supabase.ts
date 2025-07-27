@@ -17,7 +17,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
-    debug: import.meta.env.DEV
+    storage: window.localStorage,
+    storageKey: 'spaceman-auth-token',
+    debug: import.meta.env.DEV,
   },
   global: {
     headers: {

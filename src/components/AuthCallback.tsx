@@ -13,6 +13,35 @@ export const AuthCallback = () => {
         console.log('🔄 Processing auth callback...');
         setDebugInfo('Iniciando proceso de autenticación...');
 
+        // Primero intentamos obtener el hash de la URL
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          // Si tenemos tokens en la URL, establecerlos en Supabase
+          const { data: { session }, error: setSessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+
+          if (setSessionError) {
+            console.error('Error setting session:', setSessionError);
+            setError(setSessionError.message);
+            setDebugInfo(`Error configurando sesión: ${setSessionError.message}`);
+            setTimeout(() => navigate('/login'), 3000);
+            return;
+          }
+
+          if (session) {
+            console.log('✅ Session set successfully');
+            setDebugInfo('Sesión establecida correctamente');
+            navigate('/');
+            return;
+          }
+        }
+
+        // Si no hay tokens en la URL, intentar obtener la sesión actual
         const { data: authData, error: authError } = await supabase.auth.getSession();
         
         if (authError) {
