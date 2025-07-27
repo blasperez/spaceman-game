@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
-
-import { User, Shield, CreditCard, X, Crown } from 'lucide-react';
+import { User, Shield, CreditCard, X, Crown, LogOut } from 'lucide-react';
 
 // Mock data for demonstration purposes
 const mockGameHistory = [
@@ -38,6 +38,22 @@ interface ProfileModalProps {
 export function ProfileModal({ isOpen, onClose, user }: ProfileModalProps) {
   const [activeTab, setActiveTab] = useState('profile');
   const [gameHistoryFilter, setGameHistoryFilter] = useState('all');
+
+  const handleLogout = async () => {
+    try {
+      console.log('🚪 Logging out...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('❌ Logout error:', error);
+      } else {
+        console.log('✅ Logout successful');
+        onClose(); // Close the modal
+        // The auth state change will be handled by the parent component
+      }
+    } catch (error) {
+      console.error('❌ Logout exception:', error);
+    }
+  };
 
   const filteredGameHistory = mockGameHistory.filter(game => {
     if (gameHistoryFilter === 'wins') return game.type === 'win';
@@ -121,6 +137,17 @@ export function ProfileModal({ isOpen, onClose, user }: ProfileModalProps) {
                 <CreditCard size={20} />
                 <span>Historial de Recargas</span>
               </button>
+              
+              {/* Logout Button */}
+              <div className="border-t border-gray-700 pt-4 mt-4">
+                <button 
+                  onClick={handleLogout} 
+                  className="flex items-center space-x-3 p-3 rounded-lg w-full text-left transition-colors hover:bg-red-600/20 text-red-400 hover:text-red-300"
+                >
+                  <LogOut size={20} />
+                  <span>Cerrar Sesión</span>
+                </button>
+              </div>
             </motion.div>
 
             {/* Right Content */}

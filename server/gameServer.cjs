@@ -487,23 +487,17 @@ process.on('SIGTERM', () => {
   });
 });
 
+// Error handling
+server.on('error', (error) => console.error('Server error:', error));
+wss.on('error', (error) => console.error('WebSocket server error:', error));
+
 // Start the server
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log('🎮 Spaceman Game Server Starting...');
   console.log(`🚀 WebSocket server running on port ${PORT}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log('🎯 Ready for multiplayer connections!');
   console.log('✅ /ready endpoint is available for health checks');
-  startNewRound();
-});
-
-// Error handling
-server.on('error', (error) => console.error('Server error:', error));
-wss.on('error', (error) => console.error('WebSocket server error:', error));
-
-// Start server
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Spaceman Game Server running on port ${PORT}`);
-  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📡 WebSocket server ready for connections`);
+  startNewRound();
 });
