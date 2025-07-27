@@ -18,6 +18,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
     debug: import.meta.env.DEV
+  },
+  global: {
+    headers: {
+      'x-my-custom-header': 'spaceman-game'
+    }
   }
 });
 

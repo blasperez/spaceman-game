@@ -92,6 +92,9 @@ export const useAuth = () => {
 
   const signInWithGoogle = async () => {
     try {
+      console.log('🚀 Starting Google sign in...');
+      console.log('Redirect URL:', `${window.location.origin}/auth/callback`);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -99,10 +102,16 @@ export const useAuth = () => {
           scopes: 'email profile'
         }
       });
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      throw new Error('Error al conectar con Google. Por favor, intenta de nuevo.');
+      
+      if (error) {
+        console.error('❌ Google sign in error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Google sign in initiated successfully');
+    } catch (error: any) {
+      console.error('💥 Google sign in exception:', error);
+      throw new Error(`Error al conectar con Google: ${error.message || 'Por favor, intenta de nuevo.'}`);
     }
   };
 
