@@ -1,87 +1,114 @@
 // PRODUCTION MULTIPLAYER GAME SERVER
-const WebSocket = require('ws');
 const express = require('express');
-const cors = require('cors');
 const http = require('http');
+const WebSocket = require('ws');
+const cors = require('cors');
+const session = require('express-session');
 const path = require('path');
+const { fileURLToPath } = require('url');
 
-(async () => {
-// Import dinámico de database y paymentRoutes
-const { pool } = await import('./database.js');
-const paymentRoutes = (await import('./paymentRoutes.js')).default;
-// Import dinámico de auth y session
-const { passport, generateJWT } = await import('./auth.js');
-const session = await import('express-session');
+// Import database
+const database = require('./database.cjs');
+const { pool } = database;
 
 const app = express();
 const server = http.createServer(app);
 
-// CORS configuration for production
+// CORS Configuration
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://spaceman-game-production.up.railway.app']
-    : ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://spaceman-game-production.up.railway.app', 'https://lcpsoyorsaevkabvanrw.supabase.co']
+    : ['http://localhost:8081', 'http://127.0.0.1:8081', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with']
 }));
 
-// Webhook debe ir antes de express.json()
-app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
-
-app.use(express.json());
-
-// Configurar sesiones
-app.use(session.default({
+// Session configuration (simplified, only for basic session management)
+app.use(session({
   secret: process.env.SESSION_SECRET || process.env.VITE_JWT_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 // 24 horas
   }
 }));
 
-// Inicializar Passport
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(express.json());
 
-// Rutas de autenticación
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+// Remove Passport.js authentication (using Supabase Auth instead)
+// All authentication is now handled by Supabase on the frontend
 
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/' }),
-  (req, res) => {
-    const token = generateJWT(req.user);
-    res.redirect(`/?token=${token}`);
-  }
-);
-
-app.get('/api/user', (req, res) => {
-  if (req.user) {
-    res.json(req.user);
-  } else {
-    res.status(401).json({ error: 'Not authenticated' });
-  }
-});
-
-app.post('/api/logout', (req, res) => {
-  req.logout((err) => {
-    if (err) { return res.status(500).json({ error: 'Error logging out' }); }
-    res.json({ message: 'Logged out successfully' });
+// Import routes
+import('./paymentRoutes.js')
+  .then(module => {
+    app.use('/api', module.default);
+  })
+  .catch(err => {
+    console.error('Error loading payment routes:', err);
   });
+
+// Serve static files
+const staticPath = path.join(process.cwd(), 'dist');
+app.use(express.static(staticPath));
+
+// API Routes for game functionality (no auth needed, handled by frontend)
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Registrar las rutas de pago
-app.use('/api/payments', paymentRoutes);
+// Get user balance (for authenticated users via Supabase)
+app.get('/api/user/balance/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // In production, verify the user token here if needed
+    // For now, we'll trust the frontend authentication
+    
+    const result = await pool.query(
+      'SELECT balance, balance_demo, balance_deposited, balance_winnings FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching balance:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
-// Servir archivos estáticos desde la carpeta dist (donde Vite genera el build)
-app.use(express.static(path.join(__dirname, '..', 'dist')));
-
-// Health check endpoint for Railway y readiness probe
-app.get('/ready', (req, res) => {
-  res.status(200).send('OK');
+// Update user balance
+app.post('/api/user/balance/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { balance, balance_demo, balance_deposited, balance_winnings } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE users SET 
+        balance = COALESCE($2, balance),
+        balance_demo = COALESCE($3, balance_demo),
+        balance_deposited = COALESCE($4, balance_deposited),
+        balance_winnings = COALESCE($5, balance_winnings),
+        updated_at = NOW()
+      WHERE id = $1 
+      RETURNING balance, balance_demo, balance_deposited, balance_winnings`,
+      [userId, balance, balance_demo, balance_deposited, balance_winnings]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating balance:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Health check endpoint for Railway
@@ -89,14 +116,13 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Ruta principal para servir index.html desde dist
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+app.get('/ready', (req, res) => {
+  res.status(200).send('OK');
 });
 
-// Manejar rutas de React (SPA)
+// Serve React app
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+  res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
 });
 // Game state
 let currentGame = {
@@ -474,4 +500,10 @@ server.listen(PORT, () => {
 // Error handling
 server.on('error', (error) => console.error('Server error:', error));
 wss.on('error', (error) => console.error('WebSocket server error:', error));
-})(); // Cierre del async IIFE
+
+// Start server
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Spaceman Game Server running on port ${PORT}`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📡 WebSocket server ready for connections`);
+});

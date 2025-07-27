@@ -1,96 +1,93 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { Loader2 } from 'lucide-react';
 
-export const AuthCallback = () => {
+export const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
-  const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string>('');
+  const [status, setStatus] = useState('Procesando autenticación...');
 
   useEffect(() => {
-    const handleAuth = async () => {
+    const handleAuthCallback = async () => {
       try {
-        console.log('🔄 Processing auth callback...');
-        setDebugInfo('Iniciando proceso de autenticación...');
+        console.log('🔍 Processing Supabase auth callback...');
+        setStatus('Verificando sesión...');
 
-        // Primero intentamos obtener el hash de la URL
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-
-        if (accessToken && refreshToken) {
-          // Si tenemos tokens en la URL, establecerlos en Supabase
-          const { data: { session }, error: setSessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
-
-          if (setSessionError) {
-            console.error('Error setting session:', setSessionError);
-            setError(setSessionError.message);
-            setDebugInfo(`Error configurando sesión: ${setSessionError.message}`);
-            setTimeout(() => navigate('/login'), 3000);
-            return;
-          }
-
-          if (session) {
-            console.log('✅ Session set successfully');
-            setDebugInfo('Sesión establecida correctamente');
-            navigate('/');
-            return;
-          }
-        }
-
-        // Si no hay tokens en la URL, intentar obtener la sesión actual
-        const { data: authData, error: authError } = await supabase.auth.getSession();
+        // Get the session from the URL hash or query params
+        const { data, error } = await supabase.auth.getSession();
         
-        if (authError) {
-          console.error('Error getting session:', authError);
-          setError(authError.message);
-          setDebugInfo(`Error de autenticación: ${authError.message}`);
-          setTimeout(() => navigate('/login'), 3000);
+        if (error) {
+          console.error('❌ Auth callback error:', error);
+          setStatus('Error en la autenticación. Redirigiendo...');
+          setTimeout(() => navigate('/?error=auth_failed'), 2000);
           return;
         }
 
-        if (!authData.session) {
-          console.error('No session found');
-          setError('No se encontró sesión');
-          setDebugInfo('Error: No se encontró sesión activa');
-          setTimeout(() => navigate('/login'), 3000);
-          return;
-        }
+        if (data.session?.user) {
+          console.log('✅ User authenticated:', data.user.email);
+          setStatus('Configurando perfil...');
 
-        console.log('✅ Authentication successful');
-        setDebugInfo('Autenticación exitosa, redirigiendo...');
-        navigate('/');
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-        console.error('❌ Error in auth callback:', errorMessage);
-        setError(errorMessage);
-        setDebugInfo(`Error inesperado: ${errorMessage}`);
-        setTimeout(() => navigate('/login'), 3000);
+          // Create or update user profile in profiles table
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: data.session.user.id,
+              email: data.session.user.email,
+              full_name: data.session.user.user_metadata?.full_name || 'Usuario',
+              avatar_url: data.session.user.user_metadata?.avatar_url,
+              provider: 'google',
+              balance: 1000.00, // Default balance for new users
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'id'
+            })
+            .select()
+            .single();
+
+          if (profileError && profileError.code !== 'PGRST116') {
+            console.error('❌ Profile error:', profileError);
+            // Continue anyway, user can still login
+          }
+
+          setStatus('¡Autenticación exitosa! Redirigiendo...');
+          
+          // Redirect to main app
+          setTimeout(() => {
+            navigate('/?auth=success');
+          }, 1000);
+        } else {
+          console.error('❌ No session found');
+          setStatus('No se pudo obtener la sesión. Redirigiendo...');
+          setTimeout(() => navigate('/?error=no_session'), 2000);
+        }
+      } catch (error) {
+        console.error('❌ Auth callback exception:', error);
+        setStatus('Error inesperado. Redirigiendo...');
+        setTimeout(() => navigate('/?error=callback_error'), 2000);
       }
     };
 
-    handleAuth();
+    handleAuthCallback();
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-        {error ? (
-          <>
-            <h2 className="text-2xl font-bold text-red-600 mb-4">Error de Autenticación</h2>
-            <p className="text-gray-700 mb-4">{error}</p>
-            <p className="text-sm text-gray-500">{debugInfo}</p>
-            <p className="text-sm text-gray-500 mt-4">Redirigiendo al inicio de sesión...</p>
-          </>
-        ) : (
-          <>
-            <h2 className="text-2xl font-bold text-blue-600 mb-4">Procesando Autenticación</h2>
-            <p className="text-gray-700">{debugInfo}</p>
-          </>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center p-4">
+      <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 text-center max-w-md">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+          <Loader2 size={32} className="text-white animate-spin" />
+        </div>
+        
+        <h2 className="text-xl font-semibold text-white mb-4">
+          Autenticando...
+        </h2>
+        
+        <p className="text-gray-300 text-sm">
+          {status}
+        </p>
+        
+        <div className="mt-6 w-full bg-gray-700 rounded-full h-2">
+          <div className="bg-gradient-to-r from-blue-400 to-purple-600 h-2 rounded-full animate-pulse"></div>
+        </div>
       </div>
     </div>
   );
