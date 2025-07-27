@@ -4,15 +4,12 @@ import { StripePaymentForm } from './StripePaymentForm';
 
 interface StripeCheckoutProps {
   onClose: () => void;
+  amount: number;
 }
 
-export const StripeCheckout: React.FC<StripeCheckoutProps> = ({ onClose }: StripeCheckoutProps) => {
+export const StripeCheckout: React.FC<StripeCheckoutProps> = ({ onClose, amount }) => {
   const handlePaymentSuccess = () => {
-    // Close the modal
     onClose();
-
-    // Exit the game - for example, redirect to a success page or close UI
-    // Here we redirect to a success page
     window.location.href = '/success';
   };
 
@@ -29,7 +26,7 @@ export const StripeCheckout: React.FC<StripeCheckoutProps> = ({ onClose }: Strip
             &times;
           </button>
         </div>
-        <StripePaymentForm amount={10} onPaymentSuccess={handlePaymentSuccess} />
+        <StripePaymentForm amount={amount} onPaymentSuccess={handlePaymentSuccess} />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronUp, ChevronDown, Plus, Minus, Settings, Zap, ZapOff } from 'lucide-react';
+import { MobileProfilePanel } from './MobileProfilePanel';
 
 interface AutoBotConfig {
   isActive: boolean;
@@ -61,6 +62,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
   const [startY, setStartY] = useState(0);
   const [currentY, setCurrentY] = useState(0);
   const [showAutoControls, setShowAutoControls] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Auto-collapse when betting
@@ -136,6 +138,15 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
           onClick={() => setIsCollapsed(true)}
         />
       )}
+
+      {/* Botón de usuario para abrir el panel de perfil móvil */}
+      <button
+        onClick={() => setShowProfile(true)}
+        className="fixed bottom-24 right-4 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg"
+        aria-label="Abrir perfil"
+      >
+        <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
 
       {/* Main Panel */}
       <div
@@ -347,6 +358,11 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
           <ChevronDown size={24} className="text-white" />
         )}
       </button>
+
+      {/* Panel de perfil móvil */}
+      {showProfile && (
+        <MobileProfilePanel isOpen={showProfile} onClose={() => setShowProfile(false)} />
+      )}
     </>
   );
 };

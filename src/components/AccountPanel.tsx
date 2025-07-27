@@ -36,6 +36,17 @@ interface GameHistory {
   created_at: string;
 }
 
+function calculateAge(birthdate: string): number {
+  const birth = new Date(birthdate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onShowStripeCheckout }) => {
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('balance');
@@ -45,12 +56,65 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
   const [showBalance, setShowBalance] = useState(true);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [showBirthdateModal, setShowBirthdateModal] = useState(false);
+  const [birthdateInput, setBirthdateInput] = useState('');
+  const [savingBirthdate, setSavingBirthdate] = useState(false);
+  const [rechargeHistory, setRechargeHistory] = useState<any[]>([]);
+  const [withdrawalHistory, setWithdrawalHistory] = useState<any[]>([]);
 
   useEffect(() => {
     if (isOpen && user) {
       fetchUserData();
+      // Intentar obtener birthdate de Google
+      const googleBirthdate = user.user_metadata?.birthdate;
+      if (googleBirthdate) {
+        saveBirthdateIfNeeded(googleBirthdate);
+      } else {
+        checkBirthdate();
+      }
     }
   }, [isOpen, user]);
+
+  const checkBirthdate = async () => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('birthdate')
+      .eq('id', user.id)
+      .single();
+    if (!profile || !profile.birthdate) {
+      setShowBirthdateModal(true);
+    }
+  };
+
+  const saveBirthdateIfNeeded = async (birthdate: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('birthdate')
+      .eq('id', user.id)
+      .single();
+    if (!profile || !profile.birthdate) {
+      setSavingBirthdate(true);
+      await supabase
+        .from('profiles')
+        .update({ birthdate, age: calculateAge(birthdate) })
+        .eq('id', user.id);
+      setSavingBirthdate(false);
+      setShowBirthdateModal(false);
+      fetchUserData();
+    }
+  };
+
+  const handleSaveBirthdate = async () => {
+    if (!birthdateInput) return;
+    setSavingBirthdate(true);
+    await supabase
+      .from('profiles')
+      .update({ birthdate: birthdateInput, age: calculateAge(birthdateInput) })
+      .eq('id', user.id);
+    setSavingBirthdate(false);
+    setShowBirthdateModal(false);
+    fetchUserData();
+  };
 
   const fetchUserData = async () => {
     if (!user) return;
@@ -85,6 +149,23 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
       } else {
         setGameHistory(history || []);
       }
+      // Fetch recharge history
+      const { data: recharges } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('type', 'deposit')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      setRechargeHistory(recharges || []);
+      // Fetch withdrawal history
+      const { data: withdrawals } = await supabase
+        .from('withdrawal_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      setWithdrawalHistory(withdrawals || []);
     } catch (err) {
       console.error('Error:', err);
       setError('Error cargando datos');
@@ -127,6 +208,9 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
       setError('Error procesando retiro');
     }
   };
+
+  // Validar mayoría de edad
+  const canRechargeOrWithdraw = userProfile && userProfile.birthdate && calculateAge(userProfile.birthdate) >= 18;
 
   if (!isOpen) return null;
 
@@ -205,12 +289,17 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
                           ≈ ${userProfile?.balance?.toFixed(2) || '0.00'} MXN
                         </div>
                       </div>
-
+                     {!canRechargeOrWithdraw && (
+                       <div className="bg-red-600/80 text-white text-center rounded-lg p-2 font-bold mt-2">
+                         Debes ser mayor de 18 años para recargar o retirar. Ingresa tu fecha de nacimiento.
+                       </div>
+                     )}
                       {/* Quick Actions */}
                       <div className="space-y-4">
                         <button
                           onClick={onShowStripeCheckout}
                           className="w-full bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 p-4 rounded-xl text-white flex items-center justify-center gap-2 transition-all"
+                          disabled={!canRechargeOrWithdraw}
                         >
                           <Upload size={20} />
                           Depositar Fondos
@@ -225,10 +314,11 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
                               onChange={(e) => setWithdrawAmount(e.target.value)}
                               className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50"
                               max={userProfile?.balance || 0}
+                              disabled={!canRechargeOrWithdraw}
                             />
                             <button
                               onClick={handleWithdraw}
-                              disabled={!withdrawAmount || parseFloat(withdrawAmount) > (userProfile?.balance || 0)}
+                              disabled={!withdrawAmount || parseFloat(withdrawAmount) > (userProfile?.balance || 0) || !canRechargeOrWithdraw}
                               className="bg-orange-500/20 hover:bg-orange-500/30 disabled:bg-white/10 border border-orange-400/30 disabled:border-white/20 px-4 py-2 rounded-lg text-white disabled:text-white/50 flex items-center gap-2 transition-all"
                             >
                               <Download size={16} />
@@ -431,6 +521,29 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ isOpen, onClose, onS
           </div>
         </div>
       </div>
+      {/* Modal para pedir fecha de nacimiento */}
+      {showBirthdateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-white rounded-xl p-6 max-w-xs w-full text-center">
+            <h2 className="text-lg font-bold mb-4">Fecha de nacimiento</h2>
+            <p className="mb-2 text-gray-700">Debes ser mayor de 18 años para usar funciones de dinero real.</p>
+            <input
+              type="date"
+              value={birthdateInput}
+              onChange={e => setBirthdateInput(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4"
+              max={new Date().toISOString().split('T')[0]}
+            />
+            <button
+              onClick={handleSaveBirthdate}
+              disabled={!birthdateInput || savingBirthdate}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg disabled:bg-gray-400"
+            >
+              {savingBirthdate ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
