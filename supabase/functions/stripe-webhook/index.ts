@@ -6,7 +6,7 @@ const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
 const stripe = new Stripe(stripeSecret, {
   appInfo: {
-    name: 'Bolt Integration',
+    name: 'Spaceman Game',
     version: '1.0.0',
   },
 });
@@ -54,138 +54,109 @@ Deno.serve(async (req) => {
 });
 
 async function handleEvent(event: Stripe.Event) {
-  const stripeData = event?.data?.object ?? {};
+  console.log(`Processing event: ${event.type}`);
 
-  if (!stripeData) {
-    return;
-  }
-
-  if (!('customer' in stripeData)) {
-    return;
-  }
-
-  // for one time payments, we only listen for the checkout.session.completed event
-  if (event.type === 'payment_intent.succeeded' && event.data.object.invoice === null) {
-    return;
-  }
-
-  const { customer: customerId } = stripeData;
-
-  if (!customerId || typeof customerId !== 'string') {
-    console.error(`No customer received on event: ${JSON.stringify(event)}`);
-  } else {
-    let isSubscription = true;
-
-    if (event.type === 'checkout.session.completed') {
-      const { mode } = stripeData as Stripe.Checkout.Session;
-
-      isSubscription = mode === 'subscription';
-
-      console.info(`Processing ${isSubscription ? 'subscription' : 'one-time payment'} checkout session`);
-    }
-
-    const { mode, payment_status } = stripeData as Stripe.Checkout.Session;
-
-    if (isSubscription) {
-      console.info(`Starting subscription sync for customer: ${customerId}`);
-      await syncCustomerFromStripe(customerId);
-    } else if (mode === 'payment' && payment_status === 'paid') {
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session;
+    
+    if (session.payment_status === 'paid') {
+      console.log(`Processing successful payment for session: ${session.id}`);
+      
       try {
-        // Extract the necessary information from the session
-        const {
-          id: checkout_session_id,
-          payment_intent,
-          amount_subtotal,
-          amount_total,
-          currency,
-        } = stripeData as Stripe.Checkout.Session;
-
-        // Insert the order into the stripe_orders table
-        const { error: orderError } = await supabase.from('stripe_orders').insert({
-          checkout_session_id,
-          payment_intent_id: payment_intent,
-          customer_id: customerId,
-          amount_subtotal,
-          amount_total,
-          currency,
-          payment_status,
-          status: 'completed', // assuming we want to mark it as completed since payment is successful
-        });
-
-        if (orderError) {
-          console.error('Error inserting order:', orderError);
+        // Extract payment details
+        const amount = session.amount_total ? session.amount_total / 100 : 0; // Convert from cents
+        const currency = session.currency;
+        const paymentIntentId = session.payment_intent as string;
+        
+        // Get user ID from metadata (you need to pass this when creating the checkout session)
+        const userId = session.metadata?.user_id;
+        
+        if (!userId) {
+          console.error('No user_id found in session metadata');
           return;
         }
-        console.info(`Successfully processed one-time payment for session: ${checkout_session_id}`);
+
+        console.log(`Processing payment for user ${userId}, amount: ${amount} ${currency}`);
+
+        // 1. Insert transaction record
+        const { error: transactionError } = await supabase
+          .from('transactions')
+          .insert({
+            user_id: userId,
+            type: 'deposit',
+            amount: amount,
+            status: 'completed',
+            stripe_payment_id: paymentIntentId,
+          });
+
+        if (transactionError) {
+          console.error('Error inserting transaction:', transactionError);
+          return;
+        }
+
+        // 2. Update wallet balance
+        const { error: walletError } = await supabase
+          .from('wallets')
+          .upsert({
+            user_id: userId,
+            balance: amount, // This will add to existing balance
+          }, {
+            onConflict: 'user_id',
+            ignoreDuplicates: false
+          });
+
+        if (walletError) {
+          console.error('Error updating wallet:', walletError);
+          return;
+        }
+
+        // 3. If wallet doesn't exist, create it with the amount
+        const { data: existingWallet } = await supabase
+          .from('wallets')
+          .select('balance')
+          .eq('user_id', userId)
+          .single();
+
+        if (!existingWallet) {
+          // Create new wallet with initial balance
+          const { error: createWalletError } = await supabase
+            .from('wallets')
+            .insert({
+              user_id: userId,
+              balance: amount,
+            });
+
+          if (createWalletError) {
+            console.error('Error creating wallet:', createWalletError);
+            return;
+          }
+        } else {
+          // Add to existing balance
+          const { error: updateBalanceError } = await supabase
+            .from('wallets')
+            .update({ balance: existingWallet.balance + amount })
+            .eq('user_id', userId);
+
+          if (updateBalanceError) {
+            console.error('Error updating balance:', updateBalanceError);
+            return;
+          }
+        }
+
+        console.log(`Successfully processed payment: ${amount} ${currency} for user ${userId}`);
+        
       } catch (error) {
-        console.error('Error processing one-time payment:', error);
+        console.error('Error processing checkout session:', error);
       }
     }
   }
-}
 
-// based on the excellent https://github.com/t3dotgg/stripe-recommendations
-async function syncCustomerFromStripe(customerId: string) {
-  try {
-    // fetch latest subscription data from Stripe
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      limit: 1,
-      status: 'all',
-      expand: ['data.default_payment_method'],
-    });
-
-    // TODO verify if needed
-    if (subscriptions.data.length === 0) {
-      console.info(`No active subscriptions found for customer: ${customerId}`);
-      const { error: noSubError } = await supabase.from('stripe_subscriptions').upsert(
-        {
-          customer_id: customerId,
-          subscription_status: 'not_started',
-        },
-        {
-          onConflict: 'customer_id',
-        },
-      );
-
-      if (noSubError) {
-        console.error('Error updating subscription status:', noSubError);
-        throw new Error('Failed to update subscription status in database');
-      }
-    }
-
-    // assumes that a customer can only have a single subscription
-    const subscription = subscriptions.data[0];
-
-    // store subscription state
-    const { error: subError } = await supabase.from('stripe_subscriptions').upsert(
-      {
-        customer_id: customerId,
-        subscription_id: subscription.id,
-        price_id: subscription.items.data[0].price.id,
-        current_period_start: subscription.current_period_start,
-        current_period_end: subscription.current_period_end,
-        cancel_at_period_end: subscription.cancel_at_period_end,
-        ...(subscription.default_payment_method && typeof subscription.default_payment_method !== 'string'
-          ? {
-              payment_method_brand: subscription.default_payment_method.card?.brand ?? null,
-              payment_method_last4: subscription.default_payment_method.card?.last4 ?? null,
-            }
-          : {}),
-        status: subscription.status,
-      },
-      {
-        onConflict: 'customer_id',
-      },
-    );
-
-    if (subError) {
-      console.error('Error syncing subscription:', subError);
-      throw new Error('Failed to sync subscription in database');
-    }
-    console.info(`Successfully synced subscription for customer: ${customerId}`);
-  } catch (error) {
-    console.error(`Failed to sync subscription for customer ${customerId}:`, error);
-    throw error;
+  // Handle payment failures (optional)
+  if (event.type === 'payment_intent.payment_failed') {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    console.log(`Payment failed for payment intent: ${paymentIntent.id}`);
+    
+    // You can add logic here to handle failed payments
+    // For example, notify the user or update transaction status
   }
 }
