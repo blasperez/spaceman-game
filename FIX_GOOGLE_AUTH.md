@@ -22,20 +22,29 @@ Este es el culpable más común. Tu aplicación necesita dos claves para conecta
 
 4.  **Reinicia tu aplicación**: Después de guardar los cambios en `.env`, detén tu servidor de desarrollo (con `Ctrl + C` en la terminal) y vuelve a iniciarlo (`npm run dev`).
 
-### Paso 2: Configura las URLs de Redirección en Supabase
+### Paso 2: Configura la URL del Sitio y las URLs de Redirección
 
-Supabase necesita saber a qué URL debe redirigir a los usuarios después de que inicien sesión con Google.
+Supabase necesita saber cuál es la URL principal de tu sitio Y a qué URL específica debe redirigir a los usuarios. **Este es un paso crítico para el error de "intercambio de código".**
 
-1.  **Ve a las Opciones de Autenticación de Supabase**:
+1.  **Ve a la Configuración de URLs de Supabase**:
     *   En tu Dashboard de Supabase, ve a **Authentication** (el ícono de usuario).
     *   En la sección **Configuration**, haz clic en **URL Configuration**.
-2.  **Añade la URL de tu entorno local**:
-    *   En el campo **Redirect URLs**, añade la siguiente URL:
+
+2.  **Configura la URL del Sitio (Site URL)**:
+    *   Este campo DEBE estar configurado con la URL base donde se ejecuta tu aplicación.
+    *   Para desarrollo local, usa:
+        ```
+        http://localhost:5173
+        ```
+    *   **Importante**: Asegúrate de que la URL sea exacta (sin `/` al final). `5173` es el puerto por defecto de Vite. Si usas otro puerto, cámbialo.
+
+3.  **Añade la URL de Redirección Adicional**:
+    *   En el campo **Redirect URLs**, añade la siguiente URL específica para el callback:
         ```
         http://localhost:5173/auth/callback
         ```
-    *   **Importante**: Asegúrate de que la URL sea exacta (sin `/` al final). `5173` es el puerto por defecto de Vite. Si usas otro puerto, cámbialo.
     *   Guarda los cambios.
+
 
 ### Paso 3: Revisa la Configuración del Proveedor de Google en Supabase
 
@@ -44,7 +53,9 @@ Supabase necesita saber a qué URL debe redirigir a los usuarios después de que
 2.  **Habilita y configura Google**:
     *   Asegúrate de que **Google** esté habilitado.
     *   Verifica que el **Client ID** y el **Client Secret** estén pegados correctamente. Si tienes dudas, vuelve a generarlos en la Google Cloud Console y pégalos de nuevo.
+    *   **MUY IMPORTANTE**: Abre las opciones de Google y asegúrate de que la opción **"Proof Key for Code Exchange (PKCE)"** esté **HABILITADA**. El código de la aplicación está diseñado para usar este flujo de seguridad.
     *   Guarda los cambios.
+
 
 ### Paso 4: Verifica las URIs de Redirección en Google Cloud Console
 
