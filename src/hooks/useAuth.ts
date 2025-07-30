@@ -1,134 +1,130 @@
 import { useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
-interface UserProfile {
+export type User = {
   id: string;
-  email: string;
-  full_name: string | null;
-  avatar_url: string | null;
-  balance: number;
-  created_at: string;
-}
+  email?: string;
+  user_metadata?: {
+    full_name?: string;
+    avatar_url?: string;
+  };
+};
+
+export type AuthState = {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+};
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    loading: true,
+    error: null,
+  });
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
         
+        if (error) {
+          console.error('Error checking session:', error.message);
+          setAuthState(prev => ({ ...prev, error: error.message, loading: false }));
+          return;
+        }
+
         if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user);
-          }, 0);
+          setAuthState({
+            user: session.user,
+            loading: false,
+            error: null,
+          });
         } else {
-          setProfile(null);
-          setLoading(false);
+          setAuthState({ user: null, loading: false, error: null });
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        setAuthState(prev => ({
+          ...prev,
+          error: err instanceof Error ? err.message : 'Error inesperado',
+          loading: false,
+        }));
+      }
+    };
+
+    getInitialSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          setAuthState({
+            user: session.user,
+            loading: false,
+            error: null,
+          });
+        } else if (event === 'SIGNED_OUT') {
+          setAuthState({
+            user: null,
+            loading: false,
+            error: null,
+          });
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
-
-  const fetchProfile = async (user: User) => {
-    try {
-      let { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error && error.code === 'PGRST116') {
-        // Profile not found, create it
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-            avatar_url: user.user_metadata?.avatar_url
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error('Error creating profile:', insertError);
-          throw insertError;
-        }
-        data = newProfile;
-      } else if (error) {
-        console.error('Error fetching profile:', error);
-        throw error;
-      }
-      
-      setProfile(data);
-    } catch (error) {
-      console.error('Error during profile fetch/create:', error);
-      setProfile(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const signInWithGoogle = async () => {
     try {
-      console.log('🚀 Starting Google sign in...');
-      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          scopes: 'email profile'
-        }
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
       });
-      
+
       if (error) {
-        console.error('❌ Google sign in error:', error);
-        throw error;
+        console.error('Error signing in with Google:', error.message);
+        setAuthState(prev => ({ ...prev, error: error.message }));
       }
-      
-      console.log('✅ Google sign in initiated successfully');
-    } catch (error: any) {
-      console.error('💥 Google sign in exception:', error);
-      throw new Error(`Error al conectar con Google: ${error.message || 'Por favor, intenta de nuevo.'}`);
+    } catch (err) {
+      console.error('Unexpected error during sign in:', err);
+      setAuthState(prev => ({
+        ...prev,
+        error: err instanceof Error ? err.message : 'Error iniciando sesión',
+      }));
     }
   };
 
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing out:', error);
-      throw error;
+      if (error) {
+        console.error('Error signing out:', error.message);
+        setAuthState(prev => ({ ...prev, error: error.message }));
+      }
+    } catch (err) {
+      console.error('Unexpected error during sign out:', err);
+      setAuthState(prev => ({
+        ...prev,
+        error: err instanceof Error ? err.message : 'Error cerrando sesión',
+      }));
     }
   };
 
   return {
-    user,
-    profile,
-    session,
-    loading,
+    ...authState,
     signInWithGoogle,
-    signOut
+    signOut,
   };
 };
