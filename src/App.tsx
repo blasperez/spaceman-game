@@ -18,7 +18,7 @@ import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
 import { BettingPanel } from './components/BettingPanel';
 import { MobileBettingPanel } from './components/MobileBettingPanel';
 import { ProfileModal } from './components/ProfileModal';
-import { AuthCallback } from './components/AuthCallback';
+import AuthCallback from './components/AuthCallback';
 
 interface GameHistory {
   id: number;
@@ -862,7 +862,7 @@ function GameApp() {
 
         {/* Stripe Checkout */}
         {showStripeCheckout && (
-          <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
+          <StripeCheckout onClose={() => setShowStripeCheckout(false)} amount={1000} />
         )}
       </div>
     );
@@ -1134,7 +1134,7 @@ function GameApp() {
 
       {/* Stripe Checkout */}
       {showStripeCheckout && (
-        <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
+        <StripeCheckout onClose={() => setShowStripeCheckout(false)} amount={1000} />
       )}
 
       {/* Profile Modal */}
