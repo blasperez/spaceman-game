@@ -2,9 +2,45 @@ import React, { useState, useEffect } from 'react';
 import { Rocket, Play, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+// Helper to calculate age from a birthdate string (YYYY-MM-DD)
+function calculateAge(birthdate: string): number | null {
+  if (!birthdate) return null;
+  
+  const birthDate = new Date(birthdate);
+  if (isNaN(birthDate.getTime())) return null; // Invalid date
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+}
+
 interface LoginScreenProps {
   onLogin: (user: any) => void;
   onDemoMode: () => void;
+}
+
+function calculateAge(birthdate: string): number | null {
+  if (!birthdate) return null;
+  // Expects YYYY-MM-DD format, which Google should provide.
+  const birthDate = new Date(birthdate);
+  if (isNaN(birthDate.getTime())) {
+    console.error('Invalid birthdate format received from provider:', birthdate);
+    return null;
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode }) => {
@@ -41,7 +77,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
     return () => subscription.unsubscribe();
   }, [onLogin]);
 
-  // Fetches user profile, with retry logic for new users.
+  // Fetches user profile, with retry logic for new users, and updates it with Google data.
   const fetchUserProfile = async (supabaseUser: any) => {
     let profile = null;
     let attempts = 0;
@@ -68,7 +104,77 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
       }
     }
 
+    // If profile exists, check if we can enrich it with Google data
     if (profile) {
+      // Supabase user_metadata may contain 'birthdate' and 'country'/'locale' from Google.
+      const googleBirthdate = supabaseUser.user_metadata?.birthdate; // Assumes YYYY-MM-DD format
+      const googleCountry = supabaseUser.user_metadata?.country || supabaseUser.user_metadata?.locale?.split('-')[1]; // e.g. "en-US" -> "US"
+
+      const updates: { age?: number | null; country?: string | null } = {};
+
+      if (googleBirthdate && !profile.age) {
+        updates.age = calculateAge(googleBirthdate);
+      }
+      if (googleCountry && !profile.country) {
+        updates.country = googleCountry;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        console.log('Updating profile with additional data from Google:', updates);
+        const { data: updatedProfile, error: updateError } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', supabaseUser.id)
+          .select()
+          .single();
+        
+        if (updateError) {
+          console.error('Error updating profile with Google data:', updateError);
+        } else {
+          profile = updatedProfile; // Use the latest profile data
+        }
+      }
+    }
+
+    if (profile) {
+      // If user is from Google, check if we can enrich their profile
+      // with data they consented to (like age and country).
+      const provider = supabaseUser.app_metadata.provider;
+      if (provider === 'google') {
+        const { user_metadata } = supabaseUser;
+        const updates: { age?: number; country?: string } = {};
+
+        // Calculate age from birthday if not present
+        if (!profile.age && user_metadata?.birthday) {
+          const age = calculateAge(user_metadata.birthday);
+          if (age) updates.age = age;
+        }
+
+        // Extract country from locale if not present
+        if (!profile.country && user_metadata?.locale) {
+          const countryCode = user_metadata.locale.split('-')[1];
+          if (countryCode) updates.country = countryCode.toUpperCase();
+        }
+
+        // If there are updates, save them to the database
+        if (Object.keys(updates).length > 0) {
+          console.log('Enriching user profile with:', updates);
+          const { data: updatedProfile, error: updateError } = await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', supabaseUser.id)
+            .select()
+            .single();
+
+          if (updateError) {
+            console.error('Error enriching profile:', updateError);
+          } else if (updatedProfile) {
+            // Merge updated data into our current profile object
+            profile = { ...profile, ...updatedProfile };
+          }
+        }
+      }
+
       return {
         id: profile.id,
         name: profile.full_name || supabaseUser.user_metadata?.full_name || 'Usuario',
@@ -94,6 +200,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
 
     // Fallback if profile is not found after retries
     console.warn('Could not fetch profile after multiple attempts. Using fallback data.');
+    const fallbackAge = supabaseUser.user_metadata?.birthdate ? calculateAge(supabaseUser.user_metadata.birthdate) : null;
+    const fallbackCountry = supabaseUser.user_metadata?.country || supabaseUser.user_metadata?.locale?.split('-')[1] || null;
+
     return {
       id: supabaseUser.id,
       name: supabaseUser.user_metadata?.full_name || 'Usuario',
@@ -102,8 +211,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
       provider: 'google',
       balance: 1000.00,
       isDemo: false,
-      age: null,
-      country: null,
+      age: fallbackAge,
+      country: fallbackCountry,
       phone: null,
       kyc_verified: false,
       withdrawal_methods: [],
@@ -213,13 +322,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
         provider: 'google',
         options: {
           redirectTo: `${currentUrl}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent'
-          },
-          scopes: 'email profile'
+          scopes: 'email profile https://www.googleapis.com/auth/user.birthday.read https://www.googleapis.com/auth/userinfo.profile'
         }
       });
+
       
       if (error) {
         console.error('❌ Google OAuth Error:', {

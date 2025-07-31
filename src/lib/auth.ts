@@ -43,12 +43,16 @@ class AuthService {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          scopes: 'email profile'
+          scopes: 'email profile',
+          queryParams: {
+            prompt: 'consent',
+          }
         }
       });
       
       if (error) throw error;
     } catch (error: any) {
+
       console.error('Google sign in error:', error);
       throw new Error(error.message || 'Error al conectar con Google');
     }
