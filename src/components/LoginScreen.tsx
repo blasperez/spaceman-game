@@ -2,24 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Rocket, Play, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-// Helper to calculate age from a birthdate string (YYYY-MM-DD)
-function calculateAge(birthdate: string): number | null {
-  if (!birthdate) return null;
-  
-  const birthDate = new Date(birthdate);
-  if (isNaN(birthDate.getTime())) return null; // Invalid date
-
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  
-  return age;
-}
-
 interface LoginScreenProps {
   onLogin: (user: any) => void;
   onDemoMode: () => void;
@@ -38,9 +20,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // User is already logged in, fetch user profile
-        const userProfile = await fetchUserProfile(session.user);
-        onLogin(userProfile);
+        onLogin(session.user);
       }
     };
     
@@ -51,145 +31,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        const userProfile = await fetchUserProfile(session.user);
-        onLogin(userProfile);
+        onLogin(session.user);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [onLogin]);
-
-  // Fetches user profile, with retry logic for new users, and updates it with Google data.
-  const fetchUserProfile = async (supabaseUser: any) => {
-    let profile = null;
-    let attempts = 0;
-
-    // Retry fetching, as DB trigger for profile creation might have a small delay
-    while (!profile && attempts < 5) {
-      attempts++;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') { // 'PGRST116' means no rows found
-        console.error('Error fetching profile:', error);
-        break; // Don't retry on critical errors
-      }
-
-      if (data) {
-        profile = data;
-      } else if (attempts < 5) {
-        console.log(`Profile not found, attempt ${attempts}. Retrying in 500ms...`);
-        await new Promise(res => setTimeout(res, 500));
-      }
-    }
-
-    // If profile exists, check if we can enrich it with Google data
-    if (profile) {
-      const provider = supabaseUser.app_metadata.provider;
-      if (provider === 'google') {
-        console.log("Attempting to enrich Google user profile...");
-        const { user_metadata } = supabaseUser;
-        const updates: { age?: number; country?: string } = {};
-
-        // Calculate age from birthdate if not present in profile
-        if (!profile.age && user_metadata?.birthdate) {
-          console.log("Found birthdate in Google metadata:", user_metadata.birthdate);
-          const age = calculateAge(user_metadata.birthdate);
-          if (age) {
-            updates.age = age;
-            console.log("Calculated age:", age);
-          }
-        }
-
-        // Extract country from locale if not present in profile
-        if (!profile.country && user_metadata?.locale) {
-          console.log("Found locale in Google metadata:", user_metadata.locale);
-          const countryCode = user_metadata.locale.split('-')[1];
-          if (countryCode) {
-            updates.country = countryCode.toUpperCase();
-            console.log("Extracted country:", countryCode);
-          }
-        }
-
-        // If there are updates, save them to the database
-        if (Object.keys(updates).length > 0) {
-          console.log('Enriching user profile with:', updates);
-          const { data: updatedProfile, error: updateError } = await supabase
-            .from('profiles')
-            .update(updates)
-            .eq('id', supabaseUser.id)
-            .select()
-            .single();
-
-          if (updateError) {
-            console.error('Error enriching profile:', updateError);
-          } else if (updatedProfile) {
-            // Merge updated data into our current profile object
-            profile = { ...profile, ...updatedProfile };
-            console.log("Profile successfully enriched:", updatedProfile);
-          }
-        } else {
-          console.log("No new data from Google to enrich profile with.");
-        }
-      }
-
-      const userProfile = {
-        id: profile.id,
-        name: profile.full_name || supabaseUser.user_metadata?.full_name || 'Usuario',
-        email: profile.email || supabaseUser.email,
-        avatar: profile.avatar_url || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'Usuario')}&background=random`,
-        provider: profile.provider || 'google',
-        balance: profile.balance || 1000.00,
-        isDemo: false,
-        age: profile.age,
-        country: profile.country,
-        phone: profile.phone,
-        kyc_verified: profile.kyc_verified || false,
-        withdrawal_methods: profile.withdrawal_methods || [],
-        deposit_limit: profile.deposit_limit || 1000,
-        withdrawal_limit: profile.withdrawal_limit || 1000,
-        total_deposits: profile.total_deposits || 0,
-        total_withdrawals: profile.total_withdrawals || 0,
-        games_played: profile.games_played || 0,
-        total_wagered: profile.total_wagered || 0,
-        total_won: profile.total_won || 0
-      };
-      console.log("Returning user profile:", userProfile);
-      return userProfile;
-    }
-
-    // Fallback if profile is not found after retries
-    console.warn('Could not fetch profile after multiple attempts. Using fallback data.');
-    const fallbackAge = supabaseUser.user_metadata?.birthdate ? calculateAge(supabaseUser.user_metadata.birthdate) : null;
-    const fallbackCountry = supabaseUser.user_metadata?.country || supabaseUser.user_metadata?.locale?.split('-')[1] || null;
-
-    const fallbackProfile = {
-      id: supabaseUser.id,
-      name: supabaseUser.user_metadata?.full_name || 'Usuario',
-      email: supabaseUser.email,
-      avatar: supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(supabaseUser.user_metadata?.full_name || 'Usuario')}&background=random`,
-      provider: 'google',
-      balance: 1000.00,
-      isDemo: false,
-      age: fallbackAge,
-      country: fallbackCountry,
-      phone: null,
-      kyc_verified: false,
-      withdrawal_methods: [],
-      deposit_limit: 1000,
-      withdrawal_limit: 1000,
-      total_deposits: 0,
-      total_withdrawals: 0,
-      games_played: 0,
-      total_wagered: 0,
-      total_won: 0
-    };
-    console.log("Returning fallback profile:", fallbackProfile);
-    return fallbackProfile;
-  };
 
   // --- EMAIL / PASSWORD ---
   const handleSignUp = async (e: React.FormEvent) => {
@@ -249,9 +96,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
       
       if (data.user) {
         console.log('Login successful:', data.user);
-        // Fetch user profile and login
-        const userProfile = await fetchUserProfile(data.user);
-        onLogin(userProfile);
+        onLogin(data.user);
         setMessage('¡Bienvenido! Sesión iniciada.');
         setLoading(false);
       } else {

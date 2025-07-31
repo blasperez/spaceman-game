@@ -20,7 +20,25 @@ import { MobileBettingPanel } from './components/MobileBettingPanel';
 import { ProfileModal } from './components/ProfileModal';
 import AuthCallback from './components/AuthCallback';
 
+function calculateAge(birthdate: string): number | null {
+  if (!birthdate) return null;
+  
+  const birthDate = new Date(birthdate);
+  if (isNaN(birthDate.getTime())) return null; // Invalid date
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+}
+
 interface GameHistory {
+
   id: number;
   multiplier: number;
   betAmount: number;
@@ -179,6 +197,38 @@ function GameApp() {
         .single();
 
       if (profile) {
+        // Enrich profile with Google data if available
+        const provider = supabaseUser.app_metadata.provider;
+        if (provider === 'google') {
+          const { user_metadata } = supabaseUser;
+          const updates: { age?: number; country?: string } = {};
+
+          if (!profile.age && user_metadata?.birthdate) {
+            const age = calculateAge(user_metadata.birthdate);
+            if (age) updates.age = age;
+          }
+
+          if (!profile.country && user_metadata?.locale) {
+            const countryCode = user_metadata.locale.split('-')[1];
+            if (countryCode) updates.country = countryCode.toUpperCase();
+          }
+
+          if (Object.keys(updates).length > 0) {
+            const { data: updatedProfile, error: updateError } = await supabase
+              .from('profiles')
+              .update(updates)
+              .eq('id', supabaseUser.id)
+              .select()
+              .single();
+
+            if (updateError) {
+              console.error('Error enriching profile:', updateError);
+            } else if (updatedProfile) {
+              profile = { ...profile, ...updatedProfile };
+            }
+          }
+        }
+        
         console.log('✅ Profile loaded from database');
         return {
           id: profile.id,
@@ -215,31 +265,31 @@ function GameApp() {
     return null;
   }, []);
 
+  const handleLogin = useCallback(async (supabaseUser: any) => {
+    const userProfile = await fetchUserProfileWithRetry(supabaseUser);
+    if (userProfile) {
+      setUser(userProfile);
+      setBalance(userProfile.balance);
+    }
+  }, [fetchUserProfileWithRetry]);
+
   useEffect(() => {
     const checkInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const userProfile = await fetchUserProfileWithRetry(session.user);
-        if (userProfile) {
-          setUser(userProfile);
-          setBalance(userProfile.balance);
-        }
+        await handleLogin(session.user);
       }
       setSessionChecked(true);
       setIsLoading(false);
     };
     checkInitialSession();
-  }, [fetchUserProfileWithRetry]);
+  }, [handleLogin]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔄 Auth state changed:', event);
       if (event === 'SIGNED_IN' && session?.user) {
-        const userProfile = await fetchUserProfileWithRetry(session.user);
-        if (userProfile) {
-          setUser(userProfile);
-          setBalance(userProfile.balance);
-        }
+        await handleLogin(session.user);
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 User signed out');
         setUser(null);
@@ -257,7 +307,8 @@ function GameApp() {
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchUserProfileWithRetry]);
+  }, [handleLogin]);
+
 
   // Save user data to database when balance changes
   useEffect(() => {
@@ -484,11 +535,10 @@ function GameApp() {
   };
 
   // Auth functions
-  const handleLogin = (userProfile: UserProfile) => {
-    console.log("Setting user in App.tsx:", userProfile);
-    setUser(userProfile);
-    setBalance(userProfile.balance);
+  const handleLogin = async (supabaseUser: any) => {
+    await handleLogin(supabaseUser);
   };
+
 
 
   const handleDemoMode = () => {
@@ -628,6 +678,7 @@ function GameApp() {
   if (!user) {
     return <LoginScreen onLogin={handleLogin} onDemoMode={handleDemoMode} />;
   }
+
 
   // MOBILE LAYOUT
   if (isMobile) {
