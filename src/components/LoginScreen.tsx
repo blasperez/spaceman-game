@@ -88,54 +88,30 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
 
     // If profile exists, check if we can enrich it with Google data
     if (profile) {
-      // Supabase user_metadata may contain 'birthdate' and 'country'/'locale' from Google.
-      const googleBirthdate = supabaseUser.user_metadata?.birthdate; // Assumes YYYY-MM-DD format
-      const googleCountry = supabaseUser.user_metadata?.country || supabaseUser.user_metadata?.locale?.split('-')[1]; // e.g. "en-US" -> "US"
-
-      const updates: { age?: number | null; country?: string | null } = {};
-
-      if (googleBirthdate && !profile.age) {
-        updates.age = calculateAge(googleBirthdate);
-      }
-      if (googleCountry && !profile.country) {
-        updates.country = googleCountry;
-      }
-
-      if (Object.keys(updates).length > 0) {
-        console.log('Updating profile with additional data from Google:', updates);
-        const { data: updatedProfile, error: updateError } = await supabase
-          .from('profiles')
-          .update(updates)
-          .eq('id', supabaseUser.id)
-          .select()
-          .single();
-        
-        if (updateError) {
-          console.error('Error updating profile with Google data:', updateError);
-        } else {
-          profile = updatedProfile; // Use the latest profile data
-        }
-      }
-    }
-
-    if (profile) {
-      // If user is from Google, check if we can enrich their profile
-      // with data they consented to (like age and country).
       const provider = supabaseUser.app_metadata.provider;
       if (provider === 'google') {
+        console.log("Attempting to enrich Google user profile...");
         const { user_metadata } = supabaseUser;
         const updates: { age?: number; country?: string } = {};
 
-        // Calculate age from birthday if not present
-        if (!profile.age && user_metadata?.birthday) {
-          const age = calculateAge(user_metadata.birthday);
-          if (age) updates.age = age;
+        // Calculate age from birthdate if not present in profile
+        if (!profile.age && user_metadata?.birthdate) {
+          console.log("Found birthdate in Google metadata:", user_metadata.birthdate);
+          const age = calculateAge(user_metadata.birthdate);
+          if (age) {
+            updates.age = age;
+            console.log("Calculated age:", age);
+          }
         }
 
-        // Extract country from locale if not present
+        // Extract country from locale if not present in profile
         if (!profile.country && user_metadata?.locale) {
+          console.log("Found locale in Google metadata:", user_metadata.locale);
           const countryCode = user_metadata.locale.split('-')[1];
-          if (countryCode) updates.country = countryCode.toUpperCase();
+          if (countryCode) {
+            updates.country = countryCode.toUpperCase();
+            console.log("Extracted country:", countryCode);
+          }
         }
 
         // If there are updates, save them to the database
@@ -153,7 +129,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
           } else if (updatedProfile) {
             // Merge updated data into our current profile object
             profile = { ...profile, ...updatedProfile };
+            console.log("Profile successfully enriched:", updatedProfile);
           }
+        } else {
+          console.log("No new data from Google to enrich profile with.");
         }
       }
 
