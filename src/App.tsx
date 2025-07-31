@@ -485,9 +485,11 @@ function GameApp() {
 
   // Auth functions
   const handleLogin = (userProfile: UserProfile) => {
+    console.log("Setting user in App.tsx:", userProfile);
     setUser(userProfile);
     setBalance(userProfile.balance);
   };
+
 
   const handleDemoMode = () => {
     const demoUser: UserProfile = {
