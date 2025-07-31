@@ -25,24 +25,6 @@ interface LoginScreenProps {
   onDemoMode: () => void;
 }
 
-function calculateAge(birthdate: string): number | null {
-  if (!birthdate) return null;
-  // Expects YYYY-MM-DD format, which Google should provide.
-  const birthDate = new Date(birthdate);
-  if (isNaN(birthDate.getTime())) {
-    console.error('Invalid birthdate format received from provider:', birthdate);
-    return null;
-  }
-
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-}
-
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
