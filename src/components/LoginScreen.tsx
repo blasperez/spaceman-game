@@ -136,7 +136,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
         }
       }
 
-      return {
+      const userProfile = {
         id: profile.id,
         name: profile.full_name || supabaseUser.user_metadata?.full_name || 'Usuario',
         email: profile.email || supabaseUser.email,
@@ -157,6 +157,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
         total_wagered: profile.total_wagered || 0,
         total_won: profile.total_won || 0
       };
+      console.log("Returning user profile:", userProfile);
+      return userProfile;
     }
 
     // Fallback if profile is not found after retries
@@ -164,7 +166,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
     const fallbackAge = supabaseUser.user_metadata?.birthdate ? calculateAge(supabaseUser.user_metadata.birthdate) : null;
     const fallbackCountry = supabaseUser.user_metadata?.country || supabaseUser.user_metadata?.locale?.split('-')[1] || null;
 
-    return {
+    const fallbackProfile = {
       id: supabaseUser.id,
       name: supabaseUser.user_metadata?.full_name || 'Usuario',
       email: supabaseUser.email,
@@ -185,6 +187,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
       total_wagered: 0,
       total_won: 0
     };
+    console.log("Returning fallback profile:", fallbackProfile);
+    return fallbackProfile;
   };
 
   // --- EMAIL / PASSWORD ---
