@@ -534,10 +534,7 @@ function GameApp() {
     action();
   };
 
-  // Auth functions
-  const handleLogin = async (supabaseUser: any) => {
-    await handleLogin(supabaseUser);
-  };
+
 
 
 
