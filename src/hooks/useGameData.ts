@@ -8,6 +8,10 @@ interface GameHistory {
   bet_amount: number;
   multiplier: number;
   win_amount: number;
+  game_type: string;
+  status: string;
+  session_id?: string;
+  metadata?: any;
   created_at: string;
 }
 
@@ -18,12 +22,31 @@ interface Transaction {
   amount: number;
   status: 'pending' | 'completed' | 'failed';
   payment_method: string;
+  stripe_payment_id?: string;
+  stripe_payment_method_id?: string;
+  description?: string;
+  fee_amount: number;
+  net_amount: number;
+  currency: string;
+  metadata?: any;
   created_at: string;
+}
+
+interface GameStats {
+  total_games: number;
+  total_bets: number;
+  total_wins: number;
+  total_losses: number;
+  win_rate: number;
+  highest_multiplier: number;
+  average_bet: number;
+  best_win: number;
 }
 
 export const useGameData = (userId: string | undefined) => {
   const [gameHistory, setGameHistory] = useState<GameHistory[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [gameStats, setGameStats] = useState<GameStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +57,7 @@ export const useGameData = (userId: string | undefined) => {
 
     fetchGameHistory();
     fetchTransactions();
+    fetchGameStats();
   }, [userId]);
 
   const fetchGameHistory = async () => {
@@ -45,7 +69,7 @@ export const useGameData = (userId: string | undefined) => {
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) throw error;
       setGameHistory(data || []);
@@ -63,12 +87,60 @@ export const useGameData = (userId: string | undefined) => {
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
 
       if (error) throw error;
       setTransactions(data || []);
     } catch (error) {
       console.error('Error fetching transactions:', error);
+    }
+  };
+
+  const fetchGameStats = async () => {
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('game_history')
+        .select('bet_amount, win_amount, multiplier')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const totalGames = data.length;
+        const totalBets = data.reduce((sum, game) => sum + game.bet_amount, 0);
+        const totalWins = data.reduce((sum, game) => sum + Math.max(0, game.win_amount - game.bet_amount), 0);
+        const totalLosses = data.reduce((sum, game) => sum + Math.max(0, game.bet_amount - game.win_amount), 0);
+        const winRate = (data.filter(g => g.win_amount > g.bet_amount).length / totalGames) * 100;
+        const highestMultiplier = Math.max(...data.map(g => g.multiplier));
+        const averageBet = totalBets / totalGames;
+        const bestWin = Math.max(...data.map(g => g.win_amount - g.bet_amount));
+
+        setGameStats({
+          total_games: totalGames,
+          total_bets: totalBets,
+          total_wins: totalWins,
+          total_losses: totalLosses,
+          win_rate: winRate,
+          highest_multiplier: highestMultiplier,
+          average_bet: averageBet,
+          best_win: bestWin
+        });
+      } else {
+        setGameStats({
+          total_games: 0,
+          total_bets: 0,
+          total_wins: 0,
+          total_losses: 0,
+          win_rate: 0,
+          highest_multiplier: 0,
+          average_bet: 0,
+          best_win: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching game stats:', error);
     } finally {
       setLoading(false);
     }
@@ -79,6 +151,9 @@ export const useGameData = (userId: string | undefined) => {
     bet_amount: number;
     multiplier: number;
     win_amount: number;
+    game_type?: string;
+    session_id?: string;
+    metadata?: any;
   }) => {
     if (!userId) return;
 
@@ -87,13 +162,20 @@ export const useGameData = (userId: string | undefined) => {
         .from('game_history')
         .insert({
           user_id: userId,
+          game_type: gameResult.game_type || 'spaceman',
+          status: 'completed',
+          session_id: gameResult.session_id,
+          metadata: gameResult.metadata,
           ...gameResult
         });
 
       if (error) throw error;
       
-      // Refresh game history
-      await fetchGameHistory();
+      // Refresh game history and stats
+      await Promise.all([
+        fetchGameHistory(),
+        fetchGameStats()
+      ]);
     } catch (error) {
       console.error('Error adding game result:', error);
       throw error;
@@ -105,6 +187,13 @@ export const useGameData = (userId: string | undefined) => {
     amount: number;
     payment_method: string;
     status?: 'pending' | 'completed' | 'failed';
+    stripe_payment_id?: string;
+    stripe_payment_method_id?: string;
+    description?: string;
+    fee_amount?: number;
+    net_amount?: number;
+    currency?: string;
+    metadata?: any;
   }) => {
     if (!userId) return;
 
@@ -114,6 +203,8 @@ export const useGameData = (userId: string | undefined) => {
         .insert({
           user_id: userId,
           status: 'pending',
+          fee_amount: 0,
+          currency: 'usd',
           ...transaction
         });
 
@@ -127,13 +218,67 @@ export const useGameData = (userId: string | undefined) => {
     }
   };
 
+  const updateUserBalance = async (amount: number, type: 'add' | 'subtract') => {
+    if (!userId) return;
+
+    try {
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('balance, total_deposits, total_withdrawals')
+        .eq('id', userId)
+        .single();
+
+      if (!currentProfile) throw new Error('User profile not found');
+
+      const newBalance = type === 'add' 
+        ? currentProfile.balance + amount 
+        : currentProfile.balance - amount;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating user balance:', error);
+      throw error;
+    }
+  };
+
+  const getRecentGames = (limit: number = 10) => {
+    return gameHistory.slice(0, limit);
+  };
+
+  const getGameStats = () => {
+    return gameStats;
+  };
+
+  const getTransactionHistory = () => {
+    return transactions;
+  };
+
+  const getGameHistory = () => {
+    return gameHistory;
+  };
+
   return {
     gameHistory,
     transactions,
+    gameStats,
     loading,
     addGameResult,
     addTransaction,
+    updateUserBalance,
+    getRecentGames,
+    getGameStats,
+    getTransactionHistory,
+    getGameHistory,
     refreshGameHistory: fetchGameHistory,
-    refreshTransactions: fetchTransactions
+    refreshTransactions: fetchTransactions,
+    refreshGameStats: fetchGameStats
   };
 };
