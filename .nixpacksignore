@@ -1,0 +1,5 @@
+supabase/
+deno.json
+deno.lock
+*.ts
+# Ignore Supabase functions to force Node.js detection
