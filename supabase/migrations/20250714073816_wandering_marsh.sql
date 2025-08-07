@@ -19,6 +19,16 @@
       - Custom enum type for order status
       - Implements soft delete
 
+    - `withdrawals`: Manages withdrawal requests
+      - Tracks withdrawal requests and their status
+      - Links to user accounts and payment methods
+      - Implements approval workflow
+
+    - `payment_methods`: Stores user payment methods
+      - Tracks saved payment methods
+      - Links to Stripe payment methods
+      - Implements soft delete
+
   2. Views
     - `stripe_user_subscriptions`: Secure view for user subscription data
       - Joins customers and subscriptions
@@ -28,10 +38,169 @@
       - Joins customers and orders
       - Filtered by authenticated user
 
+    - `user_transaction_history`: Complete transaction history
+      - Combines deposits, withdrawals, and game transactions
+      - Filtered by authenticated user
+
   3. Security
     - Enables Row Level Security (RLS) on all tables
     - Implements policies for authenticated users to view their own data
 */
+
+-- Enhanced transactions table with more detailed tracking
+ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS stripe_payment_id text;
+ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS stripe_payment_method_id text;
+ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS fee_amount numeric DEFAULT 0;
+ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS net_amount numeric;
+ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS currency text DEFAULT 'usd';
+ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS metadata jsonb;
+
+-- Create withdrawals table
+CREATE TABLE IF NOT EXISTS withdrawals (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  amount numeric NOT NULL CHECK (amount > 0),
+  status text DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'completed', 'failed')),
+  payment_method text NOT NULL,
+  account_details jsonb NOT NULL, -- Bank account, PayPal, etc.
+  fee_amount numeric DEFAULT 0,
+  net_amount numeric,
+  currency text DEFAULT 'usd',
+  stripe_payout_id text,
+  approved_by uuid REFERENCES auth.users(id),
+  approved_at timestamptz,
+  rejection_reason text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Create payment methods table
+CREATE TABLE IF NOT EXISTS payment_methods (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  stripe_payment_method_id text NOT NULL,
+  type text NOT NULL CHECK (type IN ('card', 'bank_account', 'paypal')),
+  brand text, -- visa, mastercard, etc.
+  last4 text,
+  expiry_month integer,
+  expiry_year integer,
+  is_default boolean DEFAULT false,
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  deleted_at timestamptz DEFAULT null
+);
+
+-- Enhanced game_history table with more details
+ALTER TABLE IF EXISTS game_history ADD COLUMN IF NOT EXISTS game_type text DEFAULT 'spaceman';
+ALTER TABLE IF EXISTS game_history ADD COLUMN IF NOT EXISTS status text DEFAULT 'completed';
+ALTER TABLE IF EXISTS game_history ADD COLUMN IF NOT EXISTS session_id text;
+ALTER TABLE IF EXISTS game_history ADD COLUMN IF NOT EXISTS metadata jsonb;
+
+-- Create user transaction history view
+CREATE OR REPLACE VIEW user_transaction_history AS
+SELECT 
+  id,
+  user_id,
+  'deposit' as transaction_type,
+  amount,
+  status,
+  payment_method,
+  created_at,
+  description,
+  fee_amount,
+  net_amount,
+  currency,
+  metadata
+FROM transactions 
+WHERE type = 'deposit' AND user_id = auth.uid()
+
+UNION ALL
+
+SELECT 
+  id,
+  user_id,
+  'withdrawal' as transaction_type,
+  amount,
+  status,
+  payment_method,
+  created_at,
+  description,
+  fee_amount,
+  net_amount,
+  currency,
+  metadata
+FROM transactions 
+WHERE type = 'withdrawal' AND user_id = auth.uid()
+
+UNION ALL
+
+SELECT 
+  id,
+  user_id,
+  'game_win' as transaction_type,
+  win_amount as amount,
+  'completed' as status,
+  'game' as payment_method,
+  created_at,
+  'Game win - ' || game_type as description,
+  0 as fee_amount,
+  win_amount as net_amount,
+  'usd' as currency,
+  jsonb_build_object('game_id', game_id, 'bet_amount', bet_amount, 'multiplier', multiplier, 'game_type', game_type) as metadata
+FROM game_history 
+WHERE win_amount > bet_amount AND user_id = auth.uid()
+
+UNION ALL
+
+SELECT 
+  id,
+  user_id,
+  'game_loss' as transaction_type,
+  bet_amount as amount,
+  'completed' as status,
+  'game' as payment_method,
+  created_at,
+  'Game bet - ' || game_type as description,
+  0 as fee_amount,
+  -bet_amount as net_amount,
+  'usd' as currency,
+  jsonb_build_object('game_id', game_id, 'win_amount', win_amount, 'multiplier', multiplier, 'game_type', game_type) as metadata
+FROM game_history 
+WHERE user_id = auth.uid()
+
+ORDER BY created_at DESC;
+
+-- Enable RLS on new tables
+ALTER TABLE withdrawals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_methods ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for withdrawals
+CREATE POLICY "Users can view own withdrawals" ON withdrawals
+  FOR SELECT TO authenticated USING (user_id = auth.uid());
+
+CREATE POLICY "Users can insert own withdrawals" ON withdrawals
+  FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can update own withdrawals" ON withdrawals
+  FOR UPDATE TO authenticated USING (user_id = auth.uid());
+
+-- Create policies for payment methods
+CREATE POLICY "Users can view own payment methods" ON payment_methods
+  FOR SELECT TO authenticated USING (user_id = auth.uid() AND deleted_at IS NULL);
+
+CREATE POLICY "Users can insert own payment methods" ON payment_methods
+  FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can update own payment methods" ON payment_methods
+  FOR UPDATE TO authenticated USING (user_id = auth.uid() AND deleted_at IS NULL);
+
+CREATE POLICY "Users can delete own payment methods" ON payment_methods
+  FOR DELETE TO authenticated USING (user_id = auth.uid());
+
+-- Grant permissions on the view
+GRANT SELECT ON user_transaction_history TO authenticated;
 
 CREATE TABLE IF NOT EXISTS stripe_customers (
   id bigint primary key generated always as identity,
