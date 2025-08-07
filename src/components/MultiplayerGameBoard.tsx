@@ -380,23 +380,23 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
       {/* CSS Animations */}
       <style jsx>{`
         @keyframes fireJet {
-          0%, 100% { opacity: 0.9; transform: scaleY(4) scaleX(0.3) translateX(0); }
-          50% { opacity: 1; transform: scaleY(4.5) scaleX(0.25) translateX(-3px); }
+          0%, 100% { opacity: 0.9; transform: scaleX(1) scaleY(0.8) translateX(0); }
+          50% { opacity: 1; transform: scaleX(1.2) scaleY(0.9) translateX(-5px); }
         }
         
         @keyframes fireJet2 {
-          0%, 100% { opacity: 0.8; transform: translateY(-5px) scaleX(0.4) scaleY(3.5); }
-          50% { opacity: 1; transform: translateY(-8px) scaleX(0.3) scaleY(4); }
+          0%, 100% { opacity: 0.8; transform: translateX(-3px) scaleX(1.1) scaleY(0.9); }
+          50% { opacity: 1; transform: translateX(-8px) scaleX(1.3) scaleY(1); }
         }
         
         @keyframes fireJet3 {
-          0%, 100% { opacity: 0.7; transform: translateY(5px) scaleY(3.8) scaleX(0.35); }
-          50% { opacity: 0.95; transform: translateY(8px) scaleY(4.2) scaleX(0.28); }
+          0%, 100% { opacity: 0.7; transform: translateX(3px) scaleX(1.2) scaleY(0.85); }
+          50% { opacity: 0.95; transform: translateX(-6px) scaleX(1.4) scaleY(0.95); }
         }
         
         @keyframes fireCore {
-          0%, 100% { opacity: 1; width: 60px; height: 120px; }
-          50% { opacity: 1; width: 50px; height: 140px; }
+          0%, 100% { opacity: 1; width: 120px; height: 40px; }
+          50% { opacity: 1; width: 140px; height: 45px; }
         }
       `}</style>
 
@@ -412,56 +412,56 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         }}
       >
         <div className="relative">
-          {/* Fire Jets - only when flying */}
+          {/* Fire Jets - only when flying - HORIZONTAL */}
           {gameState.phase === 'flying' && (
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-6">
+            <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6">
               {/* Core fire jet */}
               <div 
-                className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+                className="absolute left-0 top-1/2 transform -translate-y-1/2"
                 style={{
-                  width: '60px',
-                  height: '120px',
-                  background: 'linear-gradient(to top, #ff4500 0%, #ff6500 30%, #ff8c00 60%, transparent 100%)',
+                  width: '120px',
+                  height: '40px',
+                  background: 'linear-gradient(to left, #cc1100 0%, #ff3300 30%, #ff5500 60%, transparent 100%)',
                   filter: 'blur(8px)',
                   animation: 'fireCore 0.2s ease-in-out infinite alternate',
-                  borderRadius: '50% 50% 0 0'
+                  borderRadius: '0 50% 50% 0'
                 }}
               />
               
               {/* Side jets */}
               <div 
-                className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+                className="absolute left-0 top-1/2 transform -translate-y-1/2"
                 style={{
-                  width: '40px',
-                  height: '100px',
-                  background: 'linear-gradient(to top, #ff6500 0%, #ffa500 40%, transparent 100%)',
+                  width: '100px',
+                  height: '25px',
+                  background: 'linear-gradient(to left, #ff3300 0%, #ff6600 40%, transparent 100%)',
                   filter: 'blur(6px)',
                   animation: 'fireJet 0.15s ease-in-out infinite alternate',
-                  borderRadius: '50% 50% 0 0'
+                  borderRadius: '0 50% 50% 0'
                 }}
               />
               
               <div 
-                className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 translate-y-2"
                 style={{
-                  width: '35px',
-                  height: '90px',
-                  background: 'linear-gradient(to top, #ff8c00 0%, #ffb500 50%, transparent 100%)',
+                  width: '90px',
+                  height: '20px',
+                  background: 'linear-gradient(to left, #ff5500 0%, #ff8800 50%, transparent 100%)',
                   filter: 'blur(4px)',
                   animation: 'fireJet2 0.12s ease-in-out infinite alternate',
-                  borderRadius: '50% 50% 0 0'
+                  borderRadius: '0 50% 50% 0'
                 }}
               />
               
               <div 
-                className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-y-2"
                 style={{
-                  width: '30px',
-                  height: '80px',
-                  background: 'linear-gradient(to top, #ffa500 0%, #ffd700 60%, transparent 100%)',
+                  width: '80px',
+                  height: '18px',
+                  background: 'linear-gradient(to left, #ff7700 0%, #ffaa00 60%, transparent 100%)',
                   filter: 'blur(3px)',
                   animation: 'fireJet3 0.1s ease-in-out infinite alternate',
-                  borderRadius: '50% 50% 0 0'
+                  borderRadius: '0 50% 50% 0'
                 }}
               />
             </div>
