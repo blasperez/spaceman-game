@@ -39,8 +39,8 @@
 
 /* Individual planet styles */
 .planet-1 {
-  --planet-color: #ff6b6b;
-  --planet-dark: #d63031;
+  background-image: url('/new-planet1.png');
+  background-size: cover;
   width: 100px;
   height: 100px;
   top: 15%;
@@ -49,8 +49,8 @@
 }
 
 .planet-2 {
-  --planet-color: #74b9ff;
-  --planet-dark: #0984e3;
+  background-image: url('/new-planet2.png');
+  background-size: cover;
   width: 80px;
   height: 80px;
   top: 25%;
@@ -59,13 +59,33 @@
 }
 
 .planet-3 {
-  --planet-color: #a29bfe;
-  --planet-dark: #6c5ce7;
+  background-image: url('/new-planet3.png');
+  background-size: cover;
   width: 120px;
   height: 120px;
   top: 60%;
   animation-duration: 55s;
   animation-delay: 10s;
+}
+
+.planet-4 {
+  background-image: url('/new-planet4.png');
+  background-size: cover;
+  width: 90px;
+  height: 90px;
+  top: 40%;
+  animation-duration: 50s;
+  animation-delay: 15s;
+}
+
+.planet-5 {
+  background-image: url('/new-planet5.png');
+  background-size: cover;
+  width: 110px;
+  height: 110px;
+  top: 70%;
+  animation-duration: 60s;
+  animation-delay: 20s;
 }
 
 /* Enhanced spaceship with realistic fire trail */

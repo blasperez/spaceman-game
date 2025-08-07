@@ -16,8 +16,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   soundEnabled
 }) => {
   const [stars, setStars] = useState<Array<{ x: number; y: number; size: number; twinkle: number; id: number }>>([]);
-  const [fireTrail, setFireTrail] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; type: 'flame' | 'spark' | 'ember' }>>([]);
-  const [flightParticles, setFlightParticles] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; vx: number; vy: number; type: 'star' | 'sparkle' | 'trail' }>>([]);
   
   // Audio context and oscillator for background sound
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -205,40 +203,40 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   useEffect(() => {
     if (gamePhase === 'flying') {
       const interval = setInterval(() => {
-        setFireTrail(prevTrail => {
-          const newTrail = [...prevTrail];
+        // setFireTrail(prevTrail => { // Removed fireTrail state
+        //   const newTrail = [...prevTrail];
           
-          // Generate fire particles MUCH CLOSER to spaceman's rocket
-          const spacemanX = 50; // Always center
-          const spacemanY = 50; // Always center
+        //   // Generate fire particles MUCH CLOSER to spaceman's rocket
+        //   const spacemanX = 50; // Always center
+        //   const spacemanY = 50; // Always center
           
-          for (let i = 0; i < 12; i++) { // More particles for better effect
-            const particleId = Date.now() + Math.random() * 1000 + i;
-            newTrail.push({ 
-              x: spacemanX - 3 - Math.random() * 4, // MUCH closer to spaceman
-              y: spacemanY + (Math.random() - 0.5) * 8, // Tighter spread
-              opacity: 0.8 + Math.random() * 0.2,
-              size: 2 + Math.random() * 6, // Good size particles
-              type: Math.random() > 0.6 ? 'spark' : Math.random() > 0.3 ? 'flame' : 'ember',
-              id: particleId
-            });
-          }
+        //   for (let i = 0; i < 12; i++) { // More particles for better effect
+        //     const particleId = Date.now() + Math.random() * 1000 + i;
+        //     newTrail.push({ 
+        //       x: spacemanX - 3 - Math.random() * 4, // MUCH closer to spaceman
+        //       y: spacemanY + (Math.random() - 0.5) * 8, // Tighter spread
+        //       opacity: 0.8 + Math.random() * 0.2,
+        //       size: 2 + Math.random() * 6, // Good size particles
+        //       type: Math.random() > 0.6 ? 'spark' : Math.random() > 0.3 ? 'flame' : 'ember',
+        //       id: particleId
+        //     });
+        //   }
           
-          const updatedTrail = newTrail.map(particle => ({
-            ...particle,
-            x: particle.x - 2, // Faster movement for better visibility
-            y: particle.y + (Math.random() - 0.5) * 1.2,
-            opacity: particle.opacity - 0.03, // Slower fade
-            size: particle.size * 0.97
-          })).filter(particle => particle.opacity > 0 && particle.x > -15);
+        //   const updatedTrail = newTrail.map(particle => ({
+        //     ...particle,
+        //     x: particle.x - 2, // Faster movement for better visibility
+        //     y: particle.y + (Math.random() - 0.5) * 1.2,
+        //     opacity: particle.opacity - 0.03, // Slower fade
+        //     size: particle.size * 0.97
+        //   })).filter(particle => particle.opacity > 0 && particle.x > -15);
           
-          return updatedTrail.slice(-150); // More particles for denser effect
-        });
+        //   return updatedTrail.slice(-150); // More particles for denser effect
+        // });
       }, 30); // Faster generation
 
       return () => clearInterval(interval);
     } else {
-      setFireTrail([]);
+      // setFireTrail([]); // Removed fireTrail state
     }
   }, [gamePhase]);
 
@@ -246,42 +244,42 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   useEffect(() => {
     if (gamePhase === 'flying') {
       const interval = setInterval(() => {
-        setFlightParticles(prevParticles => {
-          const newParticles = [...prevParticles];
+        // setFlightParticles(prevParticles => { // Removed flightParticles state
+        //   const newParticles = [...prevParticles];
           
-          // Generate flight particles around larger spaceman
-          for (let i = 0; i < 6; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 25 + Math.random() * 20; // Larger radius for bigger spaceman
-            const particleId = Date.now() + Math.random() * 1000 + i;
+        //   // Generate flight particles around larger spaceman
+        //   for (let i = 0; i < 6; i++) {
+        //     const angle = Math.random() * Math.PI * 2;
+        //     const distance = 25 + Math.random() * 20; // Larger radius for bigger spaceman
+        //     const particleId = Date.now() + Math.random() * 1000 + i;
             
-            newParticles.push({
-              x: 50 + Math.cos(angle) * distance,
-              y: 50 + Math.sin(angle) * distance,
-              opacity: 0.7 + Math.random() * 0.3,
-              size: 1 + Math.random() * 3, // Larger particles
-              id: particleId,
-              vx: (Math.random() - 0.5) * 3,
-              vy: (Math.random() - 0.5) * 3,
-              type: Math.random() > 0.5 ? 'star' : Math.random() > 0.3 ? 'sparkle' : 'trail'
-            });
-          }
+        //     newParticles.push({
+        //       x: 50 + Math.cos(angle) * distance,
+        //       y: 50 + Math.sin(angle) * distance,
+        //       opacity: 0.7 + Math.random() * 0.3,
+        //       size: 1 + Math.random() * 3, // Larger particles
+        //       id: particleId,
+        //       vx: (Math.random() - 0.5) * 3,
+        //       vy: (Math.random() - 0.5) * 3,
+        //       type: Math.random() > 0.5 ? 'star' : Math.random() > 0.3 ? 'sparkle' : 'trail'
+        //     });
+        //   }
           
-          const updatedParticles = newParticles.map(particle => ({
-            ...particle,
-            x: particle.x + particle.vx,
-            y: particle.y + particle.vy,
-            opacity: particle.opacity - 0.025,
-            size: particle.size * 0.97
-          })).filter(particle => particle.opacity > 0);
+        //   const updatedParticles = newParticles.map(particle => ({
+        //     ...particle,
+        //     x: particle.x + particle.vx,
+        //     y: particle.y + particle.vy,
+        //     opacity: particle.opacity - 0.025,
+        //     size: particle.size * 0.97
+        //   })).filter(particle => particle.opacity > 0);
           
-          return updatedParticles.slice(-100); // More particles
-        });
+        //   return updatedParticles.slice(-100); // More particles
+        // });
       }, 60);
 
       return () => clearInterval(interval);
     } else {
-      setFlightParticles([]);
+      // setFlightParticles([]); // Removed flightParticles state
     }
   }, [gamePhase]);
 
@@ -454,36 +452,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       />
 
       {/* Flight particles - FIXED */}
-      {flightParticles.map((particle) => (
-        <div
-          key={particle.id}
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            width: `${particle.size}px`,
-            height: `${particle.size}px`,
-            opacity: particle.opacity,
-            ...getFlightParticleStyle(particle)
-          }}
-        />
-      ))}
+      {/* Removed flight particles rendering */}
 
       {/* Fire trail particles - FIXED */}
-      {fireTrail.map((particle) => (
-        <div
-          key={particle.id}
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            width: `${particle.size}px`,
-            height: `${particle.size}px`,
-            opacity: particle.opacity,
-            ...getFireParticleStyle(particle)
-          }}
-        />
-      ))}
+      {/* Removed fire trail rendering */}
 
       {/* UFO Beam - Following Reference */}
       {gamePhase === 'waiting' && (

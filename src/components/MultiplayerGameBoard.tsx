@@ -219,7 +219,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             style={{
               width: '200px',
               height: '80px',
-              background: `linear-gradient(to left, 
+              background: `linear-gradient(to right, 
                 transparent 0%,
                 rgba(255, 100, 0, 0.1) 30%,
                 rgba(255, 200, 0, 0.3) 50%,
@@ -238,7 +238,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             style={{
               width: '250px',
               height: '60px',
-              background: `linear-gradient(to left, 
+              background: `linear-gradient(to right, 
                 transparent 0%,
                 rgba(255, 0, 0, 0.1) 20%,
                 rgba(255, 100, 0, 0.2) 40%,
@@ -256,7 +256,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             style={{
               width: '180px',
               height: '40px',
-              background: `linear-gradient(to left, 
+              background: `linear-gradient(to right, 
                 transparent 0%,
                 rgba(255, 150, 0, 0.2) 30%,
                 rgba(255, 200, 50, 0.4) 60%,
@@ -327,7 +327,6 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
           }`}
                style={{
-                 transform: `rotate(${astronautRotation}deg)`,
                  filter: gameState.phase === 'flying' ? 'brightness(1.2)' : 'brightness(1)'
                }}>
             <img 
