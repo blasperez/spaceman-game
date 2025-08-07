@@ -1020,7 +1020,7 @@ function GameApp() {
               <Maximize size={16} className="text-white" />
             </button>
             <button 
-              onClick={() => setShowProfileModal(true)}
+              onClick={() => setShowAccountPanel(true)}
               className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full pl-1 pr-3 py-1 transition-colors"
             >
               <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full" />
@@ -1203,7 +1203,7 @@ function GameApp() {
 
       {/* Stripe Checkout */}
       {showStripeCheckout && (
-        <StripeCheckout onClose={() => setShowStripeCheckout(false)} amount={1000} />
+        <StripeCheckout onClose={() => setShowStripeCheckout(false)} amount={50} />
       )}
 
       {/* Profile Modal */}
