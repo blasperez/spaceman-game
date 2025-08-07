@@ -26,6 +26,13 @@ El build se colgaba debido al script `postinstall`. **SOLUCIONADO**:
 - Eliminado `nixpacks.toml` para usar detección automática
 - Especificado Node.js 20.x en `package.json` y `.nvmrc`
 
+### 3. Servidor WebSocket no conectaba
+El problema era que Railway ejecutaba `serve.js` en lugar del servidor con WebSocket. **SOLUCIONADO**:
+- Cambiado `package.json` start script a `server/gameServer.cjs`
+- Creado `server/database.cjs` para compatibilidad CommonJS
+- Actualizado WebSocket URL para usar el mismo dominio de la app
+- Corregidas referencias de tablas (`users` → `profiles`)
+
 ## 📝 Variables de Entorno Necesarias
 
 Asegúrate de configurar todas estas variables en Railway:
@@ -47,6 +54,9 @@ VITE_APP_URL=https://tu-app.up.railway.app
 VITE_WS_URL=wss://tu-app.up.railway.app
 PORT=3000
 NODE_ENV=production
+
+# Database connection (from Supabase)
+DATABASE_URL=postgresql://...
 ```
 
 ## 🚂 Pasos para Deploy

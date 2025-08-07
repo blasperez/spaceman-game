@@ -11,7 +11,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start": "node serve.js",
+    "start": "node server/gameServer.cjs",
     "check-planets": "node copy-planets.cjs",
     "check-env": "node check-env.cjs"
   },

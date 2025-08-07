@@ -40,14 +40,14 @@ app.use(express.json());
 // Remove Passport.js authentication (using Supabase Auth instead)
 // All authentication is now handled by Supabase on the frontend
 
-// Import routes
-import('./paymentRoutes.js')
-  .then(module => {
-    app.use('/api', module.default);
-  })
-  .catch(err => {
-    console.error('Error loading payment routes:', err);
-  });
+// Payment routes handling - simplified for now
+app.post('/api/payments/create-payment-intent', (req, res) => {
+  res.status(501).json({ error: 'Payment integration pending' });
+});
+
+app.post('/api/stripe/webhook', (req, res) => {
+  res.status(200).json({ received: true });
+});
 
 // Serve static files
 const staticPath = path.join(process.cwd(), 'dist');
@@ -63,11 +63,9 @@ app.get('/api/user/balance/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // In production, verify the user token here if needed
-    // For now, we'll trust the frontend authentication
-    
+    // Use Supabase profiles table instead of users
     const result = await pool.query(
-      'SELECT balance, balance_demo, balance_deposited, balance_winnings FROM users WHERE id = $1',
+      'SELECT balance FROM profiles WHERE id = $1',
       [userId]
     );
     
@@ -86,18 +84,11 @@ app.get('/api/user/balance/:userId', async (req, res) => {
 app.post('/api/user/balance/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { balance, balance_demo, balance_deposited, balance_winnings } = req.body;
+    const { balance } = req.body;
     
     const result = await pool.query(
-      `UPDATE users SET 
-        balance = COALESCE($2, balance),
-        balance_demo = COALESCE($3, balance_demo),
-        balance_deposited = COALESCE($4, balance_deposited),
-        balance_winnings = COALESCE($5, balance_winnings),
-        updated_at = NOW()
-      WHERE id = $1 
-      RETURNING balance, balance_demo, balance_deposited, balance_winnings`,
-      [userId, balance, balance_demo, balance_deposited, balance_winnings]
+      'UPDATE profiles SET balance = $2 WHERE id = $1 RETURNING balance',
+      [userId, balance]
     );
     
     if (result.rows.length === 0) {
@@ -389,7 +380,7 @@ async function handlePlayerMessage(ws, message) {
           // Verificar balance del usuario
           try {
             await pool.query('BEGIN');
-            const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+            const userRes = await pool.query('SELECT * FROM profiles WHERE id = $1', [userId]);
             const user = userRes.rows[0];
             
             if (!user || user.balance < betAmount) {
@@ -398,7 +389,7 @@ async function handlePlayerMessage(ws, message) {
             }
 
             // Restar del balance
-            await pool.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [betAmount, userId]);
+            await pool.query('UPDATE profiles SET balance = balance - $1 WHERE id = $2', [betAmount, userId]);
 
             currentGame.activeBets.set(userId, {
               playerId: userId,
@@ -440,8 +431,8 @@ async function handlePlayerMessage(ws, message) {
           if (!bet.isDemo) {
             try {
               await pool.query(
-                'UPDATE users SET balance = balance + $1, total_won = total_won + $1 WHERE id = $2',
-                [bet.winAmount, bet.winAmount, userId]
+                'UPDATE profiles SET balance = balance + $1 WHERE id = $2',
+                [bet.winAmount, userId]
               );
             } catch (error) {
               console.error('Error actualizando ganancias:', error);

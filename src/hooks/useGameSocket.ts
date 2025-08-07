@@ -48,21 +48,20 @@ export const useGameSocket = (userId: string, userName: string) => {
 
   // Get WebSocket URL based on environment
   const getWebSocketUrl = () => {
-    // Check for environment variable first
+    // Check for VITE_WS_URL first
+    if (import.meta.env.VITE_WS_URL) {
+      return import.meta.env.VITE_WS_URL;
+    }
+    
+    // Check for legacy VITE_WEBSOCKET_URL
     if (import.meta.env.VITE_WEBSOCKET_URL) {
       return import.meta.env.VITE_WEBSOCKET_URL;
     }
     
-    // Production URLs - try multiple endpoints
+    // Production: use same domain as app
     if (import.meta.env.PROD) {
-      const productionUrls = [
-        'wss://spaceman-game-production.up.railway.app',
-        'wss://spaceman-server-production.up.railway.app',
-        'wss://spaceman-game-server.herokuapp.com'
-      ];
-      
-      // Return first URL for now, could implement fallback logic
-      return productionUrls[0];
+      const currentHost = window.location.host;
+      return `wss://${currentHost}`;
     }
     
     // Development URL
