@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usePayments } from '../hooks/usePayments';
 import { 
   CreditCard, 
-  Bank, 
+  Building, 
   DollarSign, 
   Star, 
   Trash2, 
@@ -56,7 +56,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
       case 'card':
         return <CreditCard size={20} className="text-blue-400" />;
       case 'bank_account':
-        return <Bank size={20} className="text-green-400" />;
+        return <Building size={20} className="text-green-400" />;
       case 'paypal':
         return <DollarSign size={20} className="text-yellow-400" />;
       default:

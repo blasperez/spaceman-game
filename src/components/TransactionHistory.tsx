@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usePayments } from '../hooks/usePayments';
 import { 
   CreditCard, 
-  Bank, 
+  Building, 
   DollarSign, 
   TrendingUp, 
   TrendingDown, 
@@ -30,7 +30,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ classNam
       case 'deposit':
         return <DollarSign size={16} className="text-green-400" />;
       case 'withdrawal':
-        return <Bank size={16} className="text-blue-400" />;
+        return <Building size={16} className="text-blue-400" />;
       case 'game_win':
         return <TrendingUp size={16} className="text-green-400" />;
       case 'game_loss':
@@ -275,7 +275,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ classNam
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <Bank size={16} className="text-blue-400" />
+                    <Building size={16} className="text-blue-400" />
                     <div>
                       <div className="text-white font-medium">
                         Retiro a {withdrawal.payment_method}

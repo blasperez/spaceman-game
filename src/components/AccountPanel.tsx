@@ -13,7 +13,7 @@ import {
   Settings, 
   LogOut,
   Plus,
-  Bank,
+  Building,
   TrendingUp,
   Shield
 } from 'lucide-react';
@@ -51,7 +51,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
     { id: 'overview', label: 'Resumen', icon: User },
     { id: 'payments', label: 'Pagos', icon: CreditCard },
     { id: 'history', label: 'Historial', icon: History },
-    { id: 'withdrawals', label: 'Retiros', icon: Bank },
+    { id: 'withdrawals', label: 'Retiros', icon: Building },
     { id: 'settings', label: 'Configuración', icon: Settings },
   ];
 
@@ -112,7 +112,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                 onClick={() => setShowWithdrawalForm(true)}
                 className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white p-4 rounded-xl transition-all duration-200 flex flex-col items-center space-y-2"
               >
-                <Bank size={20} />
+                <Building size={20} />
                 <span className="text-sm font-medium">Solicitar Retiro</span>
               </button>
             </div>
@@ -144,7 +144,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
           <div className="space-y-6">
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6">
               <h3 className="text-white font-semibold text-lg mb-4 flex items-center">
-                <Bank size={20} className="mr-2 text-blue-400" />
+                <Building size={20} className="mr-2 text-blue-400" />
                 Solicitar Retiro
               </h3>
               
@@ -169,7 +169,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                 onClick={() => setShowWithdrawalForm(true)}
                 className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
               >
-                <Bank size={20} />
+                <Building size={20} />
                 <span>Solicitar Retiro</span>
               </button>
             </div>

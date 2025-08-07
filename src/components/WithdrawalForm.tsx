@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { usePayments } from '../hooks/usePayments';
 import { useAuth } from '../hooks/useAuth';
-import { 
-  Bank, 
-  CreditCard, 
-  DollarSign, 
-  AlertCircle, 
+import {
+  Building,
+  CreditCard,
+  DollarSign,
+  AlertCircle,
   CheckCircle,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 
 interface WithdrawalFormProps {
@@ -104,7 +105,7 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ onClose, onSucce
   const getPaymentMethodIcon = (method: string) => {
     switch (method) {
       case 'bank':
-        return <Bank size={20} />;
+        return <Building size={20} />;
       case 'paypal':
         return <CreditCard size={20} />;
       case 'crypto':

@@ -224,7 +224,30 @@ function GameApp() {
             if (updateError) {
               console.error('Error enriching profile:', updateError);
             } else if (updatedProfile) {
-              profile = { ...profile, ...updatedProfile };
+              // Create a new enriched profile object instead of reassigning
+              const enrichedProfile = { ...profile, ...updatedProfile };
+              // Use the enriched profile for the return statement
+              return {
+                id: enrichedProfile.id,
+                name: enrichedProfile.full_name || supabaseUser.user_metadata?.full_name || 'Usuario',
+                email: enrichedProfile.email || supabaseUser.email || '',
+                avatar: enrichedProfile.avatar_url || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(enrichedProfile.full_name || 'Usuario')}&background=random`,
+                provider: enrichedProfile.provider || 'google',
+                balance: enrichedProfile.balance || 1000,
+                isDemo: false,
+                age: enrichedProfile.age,
+                country: enrichedProfile.country,
+                phone: enrichedProfile.phone,
+                kyc_verified: enrichedProfile.kyc_verified || false,
+                withdrawal_methods: enrichedProfile.withdrawal_methods || [],
+                deposit_limit: enrichedProfile.deposit_limit || 1000,
+                withdrawal_limit: enrichedProfile.withdrawal_limit || 1000,
+                total_deposits: enrichedProfile.total_deposits || 0,
+                total_withdrawals: enrichedProfile.total_withdrawals || 0,
+                games_played: enrichedProfile.games_played || 0,
+                total_wagered: enrichedProfile.total_wagered || 0,
+                total_won: enrichedProfile.total_won || 0
+              };
             }
           }
         }
