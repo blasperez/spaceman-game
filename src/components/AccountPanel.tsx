@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { usePayments } from '../hooks/usePayments';
 import { TransactionHistory } from './TransactionHistory';
 import { PaymentMethods } from './PaymentMethods';
 import { WithdrawalForm } from './WithdrawalForm';
 import { Statistics } from './Statistics';
+import { RechargeModal } from './RechargeModal';
+import { supabase } from '../lib/supabase';
 import { 
   User, 
   CreditCard, 
@@ -15,7 +17,9 @@ import {
   Plus,
   Building,
   TrendingUp,
-  Shield
+  Shield,
+  Calendar,
+  AlertCircle
 } from 'lucide-react';
 
 interface AccountPanelProps {
@@ -30,6 +34,98 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showWithdrawalForm, setShowWithdrawalForm] = useState(false);
   const [showAddPaymentMethod, setShowAddPaymentMethod] = useState(false);
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [showBirthdateModal, setShowBirthdateModal] = useState(false);
+  const [birthdateInput, setBirthdateInput] = useState('');
+  const [savingBirthdate, setSavingBirthdate] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [rechargeHistory, setRechargeHistory] = useState<any[]>([]);
+  const [withdrawalHistory, setWithdrawalHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserData();
+    }
+  }, [user]);
+
+  const fetchUserData = async () => {
+    if (!user) return;
+
+    try {
+      // Fetch user profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        setUserProfile(profile);
+        
+        // Check if user needs birthdate
+        if (!profile.birthdate) {
+          setShowBirthdateModal(true);
+        }
+      }
+
+      // Fetch recharge history (deposits)
+      const { data: deposits } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('type', 'deposit')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      setRechargeHistory(deposits || []);
+
+      // Fetch withdrawal history
+      const { data: withdrawals } = await supabase
+        .from('withdrawal_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      setWithdrawalHistory(withdrawals || []);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  const calculateAge = (birthdate: string): number => {
+    const birth = new Date(birthdate);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const canRechargeOrWithdraw = userProfile && userProfile.birthdate && calculateAge(userProfile.birthdate) >= 18;
+
+  const handleSaveBirthdate = async () => {
+    if (!user || !birthdateInput) return;
+
+    setSavingBirthdate(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ birthdate: birthdateInput })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setShowBirthdateModal(false);
+      fetchUserData(); // Refresh data
+    } catch (error) {
+      console.error('Error saving birthdate:', error);
+    } finally {
+      setSavingBirthdate(false);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -41,10 +137,20 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'MXN'
     }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const tabs = [
@@ -71,8 +177,13 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                     {user?.email || 'Usuario'}
                   </h3>
                   <p className="text-white/60 text-sm">
-                    Miembro desde {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                    Miembro desde {userProfile?.created_at ? new Date(userProfile.created_at).toLocaleDateString() : 'N/A'}
                   </p>
+                  {userProfile?.birthdate && (
+                    <p className="text-white/60 text-sm">
+                      Edad: {calculateAge(userProfile.birthdate)} años
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -98,19 +209,44 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
               </div>
             )}
 
+            {/* Age Warning */}
+            {!canRechargeOrWithdraw && (
+              <div className="bg-yellow-500/10 border border-yellow-400/20 rounded-xl p-4">
+                <div className="flex items-center space-x-2 text-yellow-300">
+                  <AlertCircle size={16} />
+                  <span className="text-sm">
+                    {!userProfile?.birthdate 
+                      ? 'Necesitas agregar tu fecha de nacimiento para recargar o retirar'
+                      : 'Debes ser mayor de 18 años para recargar o retirar dinero'
+                    }
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Quick Actions */}
             <div className="grid grid-cols-2 gap-4">
               <button
-                onClick={() => setActiveTab('payments')}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white p-4 rounded-xl transition-all duration-200 flex flex-col items-center space-y-2"
+                onClick={() => setShowRechargeModal(true)}
+                disabled={!canRechargeOrWithdraw}
+                className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center space-y-2 ${
+                  canRechargeOrWithdraw
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white'
+                    : 'bg-gray-500/20 text-gray-400 cursor-not-allowed'
+                }`}
               >
                 <Plus size={20} />
-                <span className="text-sm font-medium">Agregar Fondos</span>
+                <span className="text-sm font-medium">Recargar Saldo</span>
               </button>
               
               <button
                 onClick={() => setShowWithdrawalForm(true)}
-                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white p-4 rounded-xl transition-all duration-200 flex flex-col items-center space-y-2"
+                disabled={!canRechargeOrWithdraw}
+                className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center space-y-2 ${
+                  canRechargeOrWithdraw
+                    ? 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white'
+                    : 'bg-gray-500/20 text-gray-400 cursor-not-allowed'
+                }`}
               >
                 <Building size={20} />
                 <span className="text-sm font-medium">Solicitar Retiro</span>
@@ -157,7 +293,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                 <div className="bg-blue-500/10 border border-blue-400/20 rounded-xl p-4">
                   <h4 className="text-blue-300 font-medium mb-2">Información Importante:</h4>
                   <ul className="text-blue-200 text-sm space-y-1">
-                    <li>• Monto mínimo: $10.00</li>
+                    <li>• Monto mínimo: $50.00 MXN</li>
                     <li>• Comisión: 2.5%</li>
                     <li>• Verificación de identidad requerida</li>
                     <li>• Confirmación por email</li>
@@ -167,12 +303,47 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
               
               <button
                 onClick={() => setShowWithdrawalForm(true)}
-                className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
+                disabled={!canRechargeOrWithdraw}
+                className={`w-full font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 ${
+                  canRechargeOrWithdraw
+                    ? 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white'
+                    : 'bg-gray-500/20 text-gray-400 cursor-not-allowed'
+                }`}
               >
                 <Building size={20} />
                 <span>Solicitar Retiro</span>
               </button>
             </div>
+
+            {/* Withdrawal History */}
+            {withdrawalHistory.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6">
+                <h3 className="text-white font-semibold text-lg mb-4">Historial de Retiros</h3>
+                <div className="space-y-3">
+                  {withdrawalHistory.map((withdrawal) => (
+                    <div key={withdrawal.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                      <div>
+                        <div className="text-white font-medium">
+                          {formatCurrency(withdrawal.amount)}
+                        </div>
+                        <div className="text-white/60 text-sm">
+                          {formatDate(withdrawal.created_at)}
+                        </div>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-xs font-medium ${
+                        withdrawal.status === 'completed' ? 'bg-green-500/20 text-green-300' :
+                        withdrawal.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300' :
+                        'bg-red-500/20 text-red-300'
+                      }`}>
+                        {withdrawal.status === 'completed' ? 'Completado' :
+                         withdrawal.status === 'pending' ? 'Pendiente' :
+                         'Rechazado'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -294,8 +465,65 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
           onSuccess={() => {
             setShowWithdrawalForm(false);
             setActiveTab('history');
+            fetchUserData();
           }}
         />
+      )}
+
+      {showRechargeModal && (
+        <RechargeModal
+          onClose={() => {
+            setShowRechargeModal(false);
+            fetchUserData();
+          }}
+        />
+      )}
+
+      {/* Birthdate Modal */}
+      {showBirthdateModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-white font-semibold text-lg mb-4 flex items-center">
+                <Calendar size={20} className="mr-2 text-blue-400" />
+                Fecha de Nacimiento
+              </h3>
+              
+              <p className="text-white/70 mb-4">
+                Para poder recargar y retirar dinero, necesitamos verificar tu edad. 
+                Debes ser mayor de 18 años.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-white/80 text-sm mb-2">Fecha de Nacimiento:</label>
+                  <input
+                    type="date"
+                    value={birthdateInput}
+                    onChange={(e) => setBirthdateInput(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-blue-400"
+                  />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowBirthdateModal(false)}
+                    className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSaveBirthdate}
+                    disabled={!birthdateInput || savingBirthdate}
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {savingBirthdate ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

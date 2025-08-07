@@ -927,15 +927,13 @@ function GameApp() {
         {/* Account Panel */}
         {showAccountPanel && (
           <AccountPanel 
-            isOpen={showAccountPanel} 
             onClose={() => setShowAccountPanel(false)}
-            onShowStripeCheckout={() => setShowStripeCheckout(true)}
           />
         )}
 
         {/* Stripe Checkout */}
         {showStripeCheckout && (
-          <StripeCheckout onClose={() => setShowStripeCheckout(false)} amount={1000} />
+          <StripeCheckout onClose={() => setShowStripeCheckout(false)} amount={50} />
         )}
       </div>
     );
@@ -1199,9 +1197,7 @@ function GameApp() {
       {/* Account Panel */}
         {showAccountPanel && (
           <AccountPanel 
-            isOpen={showAccountPanel} 
             onClose={() => setShowAccountPanel(false)}
-            onShowStripeCheckout={() => setShowStripeCheckout(true)}
           />
         )}
 
