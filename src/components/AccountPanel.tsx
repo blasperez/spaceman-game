@@ -26,15 +26,19 @@ import {
   Home,
   BarChart3,
   Phone,
-  ShieldAlert,
-  Headphones
+  Calendar,
+  MapPin,
+  ShieldCheck,
+  Headphones,
+  ArrowUpRight,
+  ArrowDownRight
 } from 'lucide-react';
 
 interface AccountPanelProps {
   onClose: () => void;
 }
 
-type TabType = 'dashboard' | 'accounts' | 'games' | 'payments' | 'settings';
+type TabType = 'dashboard' | 'games' | 'transactions' | 'payments' | 'settings';
 
 export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
   const { user, signOut } = useAuth();
@@ -42,10 +46,21 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [showWithdrawalForm, setShowWithdrawalForm] = useState(false);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [gameHistory, setGameHistory] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [showBalanceDetails, setShowBalanceDetails] = useState(false);
   const [profileImage, setProfileImage] = useState<string>('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -67,7 +82,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
       if (profile) {
         setUserProfile(profile);
         // Use Google avatar if available
-        setProfileImage(profile.avatar_url || user.avatar || '');
+        setProfileImage(profile.avatar_url || user.user_metadata?.avatar_url || '');
       }
 
       // Fetch game history
@@ -79,6 +94,16 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
         .limit(20);
 
       setGameHistory(games || []);
+
+      // Fetch transactions (deposits and withdrawals)
+      const { data: trans } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      setTransactions(trans || []);
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
@@ -113,6 +138,18 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
     };
   };
 
+  const calculateAge = (birthdate: string): number | null => {
+    if (!birthdate) return null;
+    const birth = new Date(birthdate);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const stats = calculateStats();
 
   const formatCurrency = (amount: number) => {
@@ -143,9 +180,9 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
 
   const sidebarItems = [
     { id: 'dashboard', label: 'Mi tablero', icon: Home, active: true },
-    { id: 'accounts', label: 'Cuentas', icon: User, disabled: true },
     { id: 'games', label: 'Juegos', icon: BarChart3, disabled: false },
-    { id: 'payments', label: 'Pagos', icon: CreditCard, disabled: true },
+    { id: 'transactions', label: 'Transacciones', icon: History, disabled: false },
+    { id: 'payments', label: 'Pagos', icon: CreditCard, disabled: false },
     { id: 'settings', label: 'Configuración', icon: Settings, disabled: true },
     { id: 'support', label: 'Soporte', icon: Headphones, disabled: true },
   ];
@@ -154,13 +191,13 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-6 relative overflow-visible">
+          <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-4 md:p-8 flex flex-col lg:flex-row gap-6 relative overflow-visible">
             {/* Profile Card */}
-            <section className="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full md:w-[320px] flex flex-col items-center">
-              <div className="relative mb-6">
+            <section className="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-6 w-full lg:w-[320px] flex flex-col items-center">
+              <div className="relative mb-4 md:mb-6 w-full">
                 <img 
                   alt="Foto de perfil" 
-                  className="rounded-xl w-full h-64 object-cover border-2 border-white/20"
+                  className="rounded-xl w-full h-48 md:h-64 object-cover border-2 border-white/20"
                   src={profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.full_name || user?.name || 'Usuario')}&background=6366f1&color=fff&size=280`}
                 />
                 <button 
@@ -173,47 +210,82 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
               </div>
 
               <div className="w-full">
-                <div className="flex justify-between items-center mb-3">
+                <div className="flex justify-between items-start mb-3">
                   <h2 className="font-semibold text-base text-white">Mi perfil</h2>
                   <p className="text-xs text-gray-400 text-right">
-                    Último login {userProfile?.updated_at ? formatDate(userProfile.updated_at) : 'Hoy'}
+                    Último login
+                    <br />
+                    {userProfile?.updated_at ? formatDate(userProfile.updated_at) : 'Hoy'}
                   </p>
                 </div>
 
-                <div className="mb-3">
-                  <p className="text-sm font-semibold text-white mb-1">
-                    {userProfile?.full_name || user?.name || 'Usuario'}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {userProfile?.phone || '+52 - XXX-XXX-XXXX'}
-                  </p>
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      {userProfile?.full_name || user?.name || 'Usuario'}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {user?.email || 'email@ejemplo.com'}
+                    </p>
+                  </div>
+
+                  {userProfile?.age && (
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <Calendar size={12} />
+                      <span>{userProfile.age} años</span>
+                    </div>
+                  )}
+
+                  {userProfile?.phone && (
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <Phone size={12} />
+                      <span>{userProfile.phone}</span>
+                    </div>
+                  )}
+
+                  {userProfile?.country && (
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <MapPin size={12} />
+                      <span>{userProfile.country}</span>
+                    </div>
+                  )}
+
+                  {userProfile?.kyc_verified && (
+                    <div className="flex items-center gap-2 text-xs text-green-400">
+                      <ShieldCheck size={12} />
+                      <span>Cuenta verificada</span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="mb-6">
-                  <p className="text-sm font-semibold text-white mb-1">
-                    {user?.email || 'email@ejemplo.com'}
-                  </p>
-                  <hr className="border-gray-700" />
-                </div>
+                <hr className="border-gray-700 mb-4" />
 
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <button className="text-xs font-semibold text-purple-400 hover:underline focus:outline-none" type="button">
                     Alertas SMS activadas
                   </button>
                   <div aria-label="Estado de alertas SMS" className="w-4 h-4 rounded-full bg-green-500 shadow-[0_0_6px_#22c55e]"></div>
                 </div>
 
+                <button 
+                  onClick={() => setShowPaymentMethods(true)}
+                  className="w-full bg-gray-700/50 hover:bg-gray-700/70 text-white text-sm font-semibold rounded-full py-2 mb-2 flex items-center justify-center gap-2"
+                >
+                  <CreditCard size={14} />
+                  Métodos de Pago
+                </button>
+
                 <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold rounded-full py-2" type="button">
-                  Guardar
+                  Editar Perfil
                 </button>
               </div>
             </section>
 
             {/* Right Cards Container */}
             <section className="flex flex-col gap-6 flex-1">
-              {/* My xPay accounts */}
-              <div className="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full max-w-md flex flex-col">
-                <div className="flex justify-between items-center mb-4">
+              {/* Account Balance */}
+              <div className="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-6 w-full">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
                   <h3 className="text-sm font-semibold text-white">Mi cuenta Spaceman</h3>
                   <div className="flex items-center gap-2">
                     <button 
@@ -222,6 +294,13 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                     >
                       <Plus size={12} />
                       Recargar
+                    </button>
+                    <button 
+                      onClick={() => setShowWithdrawalForm(true)}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full px-3 py-1 flex items-center gap-1"
+                    >
+                      <Building size={12} />
+                      Retirar
                     </button>
                   </div>
                 </div>
@@ -259,8 +338,8 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                 )}
               </div>
 
-              {/* Games History */}
-              <div className="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full max-w-md flex flex-col">
+              {/* Games History Summary */}
+              <div className="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-6 w-full">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-semibold text-white">Juegos ganados y perdidos</h3>
                   <button 
@@ -303,7 +382,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
 
       case 'games':
         return (
-          <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-6 md:p-8">
+          <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-4 md:p-8">
             <h2 className="text-xl font-semibold text-white mb-6">Historial de Juegos</h2>
             
             <div className="space-y-4">
@@ -314,7 +393,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
               ) : (
                 gameHistory.map((game) => (
                   <div key={game.id} className="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-xl p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                           game.win_amount > 0 ? 'bg-green-500/20' : 'bg-red-500/20'
@@ -352,9 +431,76 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
           </div>
         );
 
+      case 'transactions':
+        return (
+          <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-4 md:p-8">
+            <h2 className="text-xl font-semibold text-white mb-6">Historial de Transacciones</h2>
+            
+            <div className="space-y-4">
+              {transactions.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-400">No hay transacciones registradas aún</p>
+                </div>
+              ) : (
+                transactions.map((transaction) => (
+                  <div key={transaction.id} className="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          transaction.type === 'deposit' ? 'bg-green-500/20' : 'bg-blue-500/20'
+                        }`}>
+                          {transaction.type === 'deposit' ? (
+                            <ArrowDownRight size={20} className="text-green-400" />
+                          ) : (
+                            <ArrowUpRight size={20} className="text-blue-400" />
+                          )}
+                        </div>
+                        
+                        <div>
+                          <p className="text-white font-medium">
+                            {transaction.type === 'deposit' ? 'Depósito' : 'Retiro'}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {formatDate(transaction.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className={`font-bold ${transaction.type === 'deposit' ? 'text-green-400' : 'text-blue-400'}`}>
+                          {transaction.type === 'deposit' ? '+' : '-'}${formatCurrency(transaction.amount)}
+                        </p>
+                        <p className={`text-xs px-2 py-1 rounded-full inline-block ${
+                          transaction.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                          transaction.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-red-500/20 text-red-400'
+                        }`}>
+                          {transaction.status === 'completed' ? 'Completado' :
+                           transaction.status === 'pending' ? 'Pendiente' : 'Fallido'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        );
+
+      case 'payments':
+        return (
+          <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-4 md:p-8">
+            <h2 className="text-xl font-semibold text-white mb-6">Métodos de Pago</h2>
+            <PaymentMethods 
+              onAddNew={() => setShowPaymentMethods(true)}
+              showAddButton={true}
+            />
+          </div>
+        );
+
       default:
         return (
-          <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-6 md:p-8">
+          <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-4 md:p-8">
             <h2 className="text-xl font-semibold text-white mb-6">En construcción</h2>
             <p className="text-gray-400">Esta sección estará disponible próximamente.</p>
           </div>
@@ -365,43 +511,31 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
       <div className="relative w-full max-w-7xl bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden">
-        {/* Header top right */}
-        <div className="absolute top-6 right-6 flex items-center gap-4 text-xs font-normal text-gray-300 z-50">
-          <button aria-label="Notificaciones" className="text-gray-400 hover:text-white transition-colors">
-            <Bell size={16} />
-          </button>
-          <img 
-            alt="Avatar del usuario" 
-            className="rounded-full w-8 h-8"
-            src={profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.full_name || user?.name || 'Usuario')}&background=6366f1&color=fff&size=32`}
-          />
-          <div className="flex items-center gap-1 cursor-pointer select-none">
-            <span>Hola {userProfile?.full_name?.split(' ')[0] || user?.name || 'Usuario'}</span>
-            <ChevronDown size={12} className="text-gray-400" />
+        {/* Header - Mobile/Desktop */}
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10">
+          <div>
+            <h1 className="text-lg font-semibold text-white">Mi panel de finanzas</h1>
+            <p className="text-xs font-normal text-gray-400">Bienvenido al portal de pagos Spaceman</p>
           </div>
-          <button
-            onClick={onClose}
-            className="ml-4 text-gray-400 hover:text-white transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Header top left */}
-        <div className="absolute top-6 left-6 z-50">
-          <h1 className="text-lg font-semibold text-white">Mi panel de finanzas</h1>
-          <p className="text-xs font-normal text-gray-400">Bienvenido al portal de pagos Spaceman</p>
+          
+          <div className="flex items-center gap-2 md:gap-4">
+            <button aria-label="Notificaciones" className="text-gray-400 hover:text-white transition-colors">
+              <Bell size={16} />
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Main container */}
-        <div className="flex pt-20 pb-6 px-6 gap-6 h-[85vh]">
-          {/* Left Sidebar */}
-          <aside className="flex flex-col items-center md:items-start md:w-36 space-y-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-6">
-              <span className="text-white font-bold text-lg">S</span>
-            </div>
-            
-            <nav className="flex flex-col space-y-4 w-full">
+        <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] md:h-[85vh]">
+          {/* Sidebar - Mobile horizontal / Desktop vertical */}
+          <aside className={`${isMobile ? 'border-b' : 'border-r'} border-white/10 p-4 lg:p-6 lg:w-48`}>
+            <nav className={`flex ${isMobile ? 'flex-row overflow-x-auto gap-3' : 'flex-col space-y-4'} w-full`}>
               {sidebarItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -411,7 +545,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                     key={item.id}
                     onClick={() => !item.disabled && setActiveTab(item.id as TabType)}
                     disabled={item.disabled}
-                    className={`flex items-center gap-3 text-sm font-medium rounded-full px-4 py-2 w-full transition-all ${
+                    className={`flex items-center gap-3 text-sm font-medium rounded-full px-4 py-2 transition-all whitespace-nowrap ${
                       isActive
                         ? 'text-white bg-gradient-to-r from-purple-500 to-pink-500'
                         : item.disabled
@@ -420,23 +554,27 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                     }`}
                   >
                     <Icon size={16} />
-                    {item.label}
+                    <span className={isMobile ? 'hidden' : ''}>{item.label}</span>
                   </button>
                 );
               })}
               
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-3 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-full px-4 py-2 w-full transition-all mt-6"
+                className={`flex items-center gap-3 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-full px-4 py-2 transition-all ${
+                  isMobile ? '' : 'mt-6'
+                }`}
               >
                 <LogOut size={16} />
-                Cerrar sesión
+                <span className={isMobile ? 'hidden' : ''}>Cerrar sesión</span>
               </button>
             </nav>
           </aside>
 
           {/* Main Content */}
-          {renderContent()}
+          <div className="flex-1 overflow-y-auto">
+            {renderContent()}
+          </div>
         </div>
       </div>
 
@@ -458,6 +596,28 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
             fetchUserData();
           }}
         />
+      )}
+
+      {showPaymentMethods && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-white/20">
+              <h2 className="text-xl font-semibold text-white">Métodos de Pago</h2>
+              <button
+                onClick={() => setShowPaymentMethods(false)}
+                className="text-white/70 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <PaymentMethods 
+                onAddNew={() => {}}
+                showAddButton={true}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
