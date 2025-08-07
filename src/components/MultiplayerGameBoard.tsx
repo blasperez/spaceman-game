@@ -33,10 +33,13 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
   isConnected,
   currentUserId
 }) => {
-  const [stars, setStars] = useState<Array<{ x: number; y: number; size: number }>>([]);
-  const [fireParticles, setFireParticles] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; type: 'flame' | 'spark' | 'ember' }>>([]);
+  const [stars, setStars] = useState<Array<{ x: number; y: number; size: number; speed: number }>>([]);
+  const [clouds, setClouds] = useState<Array<{ x: number; y: number; size: number; speed: number; opacity: number }>>([]);
+  const [fireParticles, setFireParticles] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; type: 'flame' | 'spark' | 'smoke' }>>([]);
   const [showPlayersModal, setShowPlayersModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [rocketShake, setRocketShake] = useState(0);
+  const [turbineRotation, setTurbineRotation] = useState(0);
 
   // Mobile detection
   useEffect(() => {
@@ -57,57 +60,122 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     };
   }, []);
 
-  // Generate stars background
+  // Generate parallax background elements
   useEffect(() => {
+    // Stars with different speeds
     const generateStars = () => {
-      const starCount = 120;
+      const starCount = 150;
       const newStars = [];
       for (let i = 0; i < starCount; i++) {
         newStars.push({
-          x: Math.random() * 100,
+          x: Math.random() * 200, // Extended for continuous loop
           y: Math.random() * 100,
-          size: Math.random() * 3 + 0.5
+          size: Math.random() * 3 + 0.5,
+          speed: 0.1 + Math.random() * 0.5 // Different speeds for parallax
         });
       }
       setStars(newStars);
     };
+
+    // Clouds for depth
+    const generateClouds = () => {
+      const cloudCount = 8;
+      const newClouds = [];
+      for (let i = 0; i < cloudCount; i++) {
+        newClouds.push({
+          x: Math.random() * 200,
+          y: Math.random() * 100,
+          size: 80 + Math.random() * 120,
+          speed: 0.3 + Math.random() * 0.7,
+          opacity: 0.1 + Math.random() * 0.2
+        });
+      }
+      setClouds(newClouds);
+    };
+
     generateStars();
+    generateClouds();
   }, []);
 
-  // ENHANCED fire trail effect - más visible y realista
+  // Animate background elements
+  useEffect(() => {
+    if (gameState.phase === 'flying') {
+      const interval = setInterval(() => {
+        // Move stars
+        setStars(prevStars => 
+          prevStars.map(star => ({
+            ...star,
+            x: star.x - star.speed < -10 ? 200 : star.x - star.speed
+          }))
+        );
+
+        // Move clouds
+        setClouds(prevClouds => 
+          prevClouds.map(cloud => ({
+            ...cloud,
+            x: cloud.x - cloud.speed < -20 ? 200 : cloud.x - cloud.speed
+          }))
+        );
+      }, 50);
+
+      return () => clearInterval(interval);
+    }
+  }, [gameState.phase]);
+
+  // Rocket shake and turbine animation
+  useEffect(() => {
+    if (gameState.phase === 'flying') {
+      const shakeInterval = setInterval(() => {
+        setRocketShake(Math.sin(Date.now() * 0.01) * 2);
+      }, 50);
+
+      const turbineInterval = setInterval(() => {
+        setTurbineRotation(prev => prev + 30);
+      }, 50);
+
+      return () => {
+        clearInterval(shakeInterval);
+        clearInterval(turbineInterval);
+      };
+    } else {
+      setRocketShake(0);
+    }
+  }, [gameState.phase]);
+
+  // Enhanced cartoon fire effect
   useEffect(() => {
     if (gameState.phase === 'flying') {
       const interval = setInterval(() => {
         setFireParticles(prevParticles => {
           const newParticles = [...prevParticles];
           
-          // Generar MÁS partículas de fuego desde la cola izquierda del astronauta
-          for (let i = 0; i < 15; i++) { // Aumentado de 8 a 15 partículas
+          // Generate cartoon fire particles
+          for (let i = 0; i < 8; i++) {
             const particleId = Date.now() + Math.random() * 1000 + i;
-            const particleType = Math.random() > 0.7 ? 'spark' : Math.random() > 0.4 ? 'flame' : 'ember';
+            const particleType = Math.random() > 0.7 ? 'smoke' : Math.random() > 0.3 ? 'flame' : 'spark';
             
             newParticles.push({
-              x: 47 - Math.random() * 3, // Más cerca de la cola izquierda
-              y: 50 + (Math.random() - 0.5) * 8, // Spread vertical
-              opacity: 0.9 + Math.random() * 0.1,
-              size: 3 + Math.random() * 6, // Partículas más grandes
+              x: 35, // From rocket rear
+              y: 50 + (Math.random() - 0.5) * 10,
+              opacity: 1,
+              size: particleType === 'smoke' ? 15 + Math.random() * 10 : 8 + Math.random() * 12,
               id: particleId,
               type: particleType
             });
           }
           
-          // Actualizar partículas existentes con movimiento más dramático
+          // Update existing particles
           const updatedParticles = newParticles.map(particle => ({
             ...particle,
-            x: particle.x - (2 + Math.random() * 2), // Movimiento más rápido hacia la izquierda
-            y: particle.y + (Math.random() - 0.5) * 1.5,
-            opacity: particle.opacity - 0.025, // Fade más lento
-            size: particle.size * 0.96
-          })).filter(particle => particle.opacity > 0 && particle.x > -20);
+            x: particle.x - (particle.type === 'smoke' ? 2 : 3),
+            y: particle.y + (particle.type === 'smoke' ? (Math.random() - 0.5) * 2 : 0),
+            opacity: particle.opacity - (particle.type === 'smoke' ? 0.015 : 0.025),
+            size: particle.size + (particle.type === 'smoke' ? 0.5 : -0.1)
+          })).filter(particle => particle.opacity > 0 && particle.x > -10);
           
-          return updatedParticles.slice(-200); // Más partículas activas
+          return updatedParticles;
         });
-      }, 40); // Generación más frecuente
+      }, 50);
 
       return () => clearInterval(interval);
     } else {
@@ -115,165 +183,162 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     }
   }, [gameState.phase]);
 
+  const getFireParticleStyle = (particle: typeof fireParticles[0]) => {
+    switch (particle.type) {
+      case 'flame':
+        return {
+          background: `radial-gradient(circle, 
+            rgba(255, 255, 100, ${particle.opacity}) 0%, 
+            rgba(255, 200, 0, ${particle.opacity * 0.8}) 30%, 
+            rgba(255, 100, 0, ${particle.opacity * 0.6}) 60%, 
+            rgba(255, 0, 0, 0) 100%)`,
+          filter: 'blur(2px)',
+          animation: 'flameFlicker 0.2s infinite'
+        };
+      case 'spark':
+        return {
+          background: `radial-gradient(circle, 
+            rgba(255, 255, 255, ${particle.opacity}) 0%, 
+            rgba(255, 255, 0, ${particle.opacity * 0.8}) 50%, 
+            rgba(255, 200, 0, 0) 100%)`,
+          filter: 'blur(1px)',
+          boxShadow: `0 0 10px rgba(255, 255, 0, ${particle.opacity})`
+        };
+      case 'smoke':
+        return {
+          background: `radial-gradient(circle, 
+            rgba(100, 100, 100, ${particle.opacity * 0.3}) 0%, 
+            rgba(50, 50, 50, ${particle.opacity * 0.2}) 50%, 
+            rgba(0, 0, 0, 0) 100%)`,
+          filter: 'blur(4px)'
+        };
+    }
+  };
+
+  const calculatePosition = () => {
+    if (gameState.phase === 'waiting') return { x: 50, y: 70 };
+    if (gameState.phase === 'crashed') return { x: 50, y: 70 + Math.min((gameState.crashPoint || 1) * 5, 20) };
+    
+    const progress = Math.min((gameState.multiplier - 1) / 10, 1);
+    const y = 70 - (progress * 50);
+    
+    return { x: 50, y };
+  };
+
+  const rocketPosition = calculatePosition();
+
   const getMultiplierColor = () => {
-    if (gameState.multiplier < 1.5) return 'text-white';
+    if (gameState.multiplier < 1.5) return 'text-green-400';
     if (gameState.multiplier < 2) return 'text-yellow-400';
     if (gameState.multiplier < 5) return 'text-orange-400';
-    if (gameState.multiplier < 10) return 'text-red-400';
-    return 'text-purple-400';
+    return 'text-red-400';
   };
 
-  // ENHANCED fire particle styles - más realistas y visibles
-  const getFireParticleStyle = (particle: any) => {
-    if (particle.type === 'spark') {
-      return {
-        background: `radial-gradient(circle, 
-          rgba(255, 255, 255, ${particle.opacity}) 0%,
-          rgba(255, 255, 100, ${particle.opacity * 0.95}) 20%,
-          rgba(255, 200, 0, ${particle.opacity * 0.9}) 50%,
-          rgba(255, 100, 0, ${particle.opacity * 0.8}) 80%,
-          transparent 100%)`,
-        filter: 'blur(0.3px)',
-        boxShadow: `0 0 ${particle.size * 3}px rgba(255, 200, 0, ${particle.opacity * 0.9})`
-      };
-    }
-    
-    if (particle.type === 'ember') {
-      return {
-        background: `radial-gradient(circle, 
-          rgba(255, 100, 0, ${particle.opacity}) 0%,
-          rgba(255, 50, 0, ${particle.opacity * 0.9}) 40%,
-          rgba(200, 0, 0, ${particle.opacity * 0.8}) 70%,
-          rgba(100, 0, 0, ${particle.opacity * 0.6}) 90%,
-          transparent 100%)`,
-        filter: 'blur(0.8px)',
-        boxShadow: `0 0 ${particle.size * 2}px rgba(255, 100, 0, ${particle.opacity * 0.8})`
-      };
-    }
-    
-    // Flame particles - más intensos
-    return {
-      background: `radial-gradient(ellipse, 
-        rgba(255, 255, 255, ${particle.opacity * 0.95}) 0%,
-        rgba(255, 255, 150, ${particle.opacity}) 10%,
-        rgba(255, 200, 0, ${particle.opacity * 0.95}) 25%,
-        rgba(255, 150, 0, ${particle.opacity * 0.9}) 45%,
-        rgba(255, 100, 0, ${particle.opacity * 0.85}) 65%,
-        rgba(200, 50, 0, ${particle.opacity * 0.7}) 85%,
-        rgba(100, 0, 0, ${particle.opacity * 0.4}) 100%)`,
-      filter: 'blur(1px)',
-      boxShadow: `0 0 ${particle.size * 4}px rgba(255, 150, 0, ${particle.opacity * 0.9})`
-    };
-  };
+  // Get current user's bet
+  const currentUserBet = activeBets.find(bet => bet.playerId === currentUserId);
+  const otherBets = activeBets.filter(bet => bet.playerId !== currentUserId);
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 overflow-hidden">
-      {/* Connection Status */}
-      <div className="absolute top-4 right-4 z-50">
-        <div className={`flex items-center space-x-2 px-3 py-2 rounded-xl backdrop-blur-md border ${
-          isConnected 
-            ? 'bg-green-500/20 border-green-400/30 text-green-300' 
-            : 'bg-red-500/20 border-red-400/30 text-red-300'
-        }`}>
-          {isConnected ? <Wifi size={16} /> : <WifiOff size={16} />}
-          <span className="text-sm font-medium">
-            {isConnected ? 'Conectado' : 'Desconectado'}
-          </span>
-        </div>
+    <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900">
+      {/* Animated CSS */}
+      <style jsx>{`
+        @keyframes flameFlicker {
+          0%, 100% { transform: scale(1) rotate(0deg); }
+          33% { transform: scale(1.1) rotate(-2deg); }
+          66% { transform: scale(0.9) rotate(2deg); }
+        }
+        
+        @keyframes rocketFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes turbineSpin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+
+      {/* Deep background layer */}
+      <div className="absolute inset-0 opacity-30">
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/20 to-black/40" />
       </div>
 
-      {/* Enhanced space background with CORRECTED planet animations */}
+      {/* Clouds layer (furthest back) */}
+      {clouds.map((cloud, index) => (
+        <div
+          key={`cloud-${index}`}
+          className="absolute rounded-full"
+          style={{
+            left: `${cloud.x}%`,
+            top: `${cloud.y}%`,
+            width: `${cloud.size}px`,
+            height: `${cloud.size * 0.6}px`,
+            background: `radial-gradient(ellipse, rgba(255, 255, 255, ${cloud.opacity}) 0%, transparent 70%)`,
+            filter: 'blur(8px)',
+            transform: 'translateX(-50%)'
+          }}
+        />
+      ))}
+
+      {/* Stars layer */}
       <div className="absolute inset-0">
-        {/* Stars */}
         {stars.map((star, index) => (
           <div
-            key={index}
-            className="absolute bg-white rounded-full animate-pulse"
+            key={`star-${index}`}
+            className="absolute rounded-full"
             style={{
               left: `${star.x}%`,
               top: `${star.y}%`,
               width: `${star.size}px`,
               height: `${star.size}px`,
-              opacity: 0.3 + Math.random() * 0.7,
-              animationDelay: `${Math.random() * 3}s`
+              background: 'white',
+              boxShadow: `0 0 ${star.size * 2}px white`,
+              opacity: 0.8 + Math.random() * 0.2
             }}
           />
         ))}
+      </div>
 
-        {/* CORRECTED: Planetas se mueven de IZQUIERDA a DERECHA */}
+      {/* Moving planets with cartoon style */}
+      <div className="absolute inset-0">
+        {/* Big planet */}
         <div 
-          className="absolute rounded-full opacity-90 shadow-2xl"
+          className="absolute rounded-full"
           style={{ 
-            width: '120px',
-            height: '120px',
-            background: 'radial-gradient(circle at 30% 30%, #60A5FA, #3B82F6, #1E40AF)',
-            boxShadow: '0 0 50px rgba(59, 130, 246, 0.6), inset -15px -15px 30px rgba(0,0,0,0.4)',
-            animation: 'planetFloat1 25s linear infinite',
-            top: '15%',
-            filter: 'brightness(1.8)',
+            width: '150px',
+            height: '150px',
+            background: 'linear-gradient(135deg, #FF6B6B 0%, #C44569 50%, #793FDF 100%)',
+            boxShadow: '0 0 50px rgba(199, 69, 105, 0.5), inset -20px -20px 40px rgba(0,0,0,0.3)',
+            left: `${100 + (gameState.phase === 'flying' ? -Date.now() * 0.005 % 200 : 0)}%`,
+            top: '20%',
+            transform: 'translateX(-50%)',
             zIndex: 1
           }}
-        />
-        
+        >
+          {/* Planet rings */}
+          <div className="absolute inset-0 rounded-full border-4 border-purple-300/30 transform rotate-12" 
+               style={{ width: '200%', height: '50%', left: '-50%', top: '25%' }} />
+        </div>
+
+        {/* Small moon */}
         <div 
-          className="absolute rounded-full opacity-85 shadow-2xl"
+          className="absolute rounded-full"
           style={{ 
-            width: '100px',
-            height: '100px',
-            background: 'radial-gradient(circle at 30% 30%, #A78BFA, #8B5CF6, #7C3AED)',
-            boxShadow: '0 0 40px rgba(147, 51, 234, 0.6), inset -12px -12px 25px rgba(0,0,0,0.4)',
-            animation: 'planetFloat2 30s linear infinite',
-            top: '25%',
-            filter: 'brightness(1.6)',
-            zIndex: 1
-          }}
-        />
-        
-        <div 
-          className="absolute rounded-full opacity-80 shadow-2xl"
-          style={{ 
-            width: '140px',
-            height: '140px',
-            background: 'radial-gradient(circle at 30% 30%, #FB923C, #F97316, #EA580C)',
-            boxShadow: '0 0 60px rgba(251, 146, 60, 0.5), inset -18px -18px 35px rgba(0,0,0,0.4)',
-            animation: 'planetFloat3 35s linear infinite',
+            width: '60px',
+            height: '60px',
+            background: 'linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%)',
+            boxShadow: '0 0 30px rgba(78, 205, 196, 0.5), inset -10px -10px 20px rgba(0,0,0,0.3)',
+            left: `${150 + (gameState.phase === 'flying' ? -Date.now() * 0.008 % 200 : 0)}%`,
             top: '60%',
-            filter: 'brightness(1.5)',
-            zIndex: 1
-          }}
-        />
-
-        {/* Moving Moons - también corregidos */}
-        <div 
-          className="absolute rounded-full opacity-85 shadow-xl"
-          style={{ 
-            width: '50px',
-            height: '50px',
-            background: 'radial-gradient(circle at 30% 30%, #D1D5DB, #9CA3AF, #6B7280)',
-            boxShadow: '0 0 25px rgba(156, 163, 175, 0.7), inset -8px -8px 15px rgba(0,0,0,0.5)',
-            animation: 'moonFloat1 20s linear infinite',
-            top: '35%',
-            filter: 'brightness(1.4)',
-            zIndex: 1
-          }}
-        />
-        
-        <div 
-          className="absolute rounded-full opacity-90 shadow-xl"
-          style={{ 
-            width: '40px',
-            height: '40px',
-            background: 'radial-gradient(circle at 30% 30%, #FEF3C7, #FBBF24, #F59E0B)',
-            boxShadow: '0 0 20px rgba(250, 204, 21, 0.8), inset -6px -6px 12px rgba(0,0,0,0.3)',
-            animation: 'moonFloat2 25s linear infinite',
-            top: '75%',
-            filter: 'brightness(1.5)',
+            transform: 'translateX(-50%)',
             zIndex: 1
           }}
         />
       </div>
 
-      {/* ENHANCED fire trail particles - más visibles */}
+      {/* Fire particles */}
       {fireParticles.map((particle) => (
         <div
           key={particle.id}
@@ -284,12 +349,99 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             width: `${particle.size}px`,
             height: `${particle.size}px`,
             opacity: particle.opacity,
-            ...getFireParticleStyle(particle)
+            ...getFireParticleStyle(particle),
+            zIndex: 5
           }}
         />
       ))}
 
-      {/* Game Status - Waiting with 20 second countdown */}
+      {/* Cartoon Rocket */}
+      <div
+        className="absolute transition-all duration-100"
+        style={{
+          left: `${rocketPosition.x}%`,
+          top: `${rocketPosition.y}%`,
+          transform: `translate(-50%, -50%) rotate(-45deg) translateY(${rocketShake}px)`,
+          zIndex: 10,
+          filter: gameState.phase === 'crashed' ? 'brightness(0.7)' : 'none'
+        }}
+      >
+        {/* Rocket body */}
+        <div className="relative">
+          {/* Main body */}
+          <div 
+            className="w-24 h-40 relative"
+            style={{
+              background: 'linear-gradient(135deg, #FF6B6B 0%, #C44569 50%, #793FDF 100%)',
+              borderRadius: '50% 50% 20% 20%',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.3), inset -5px -5px 15px rgba(0,0,0,0.2)'
+            }}
+          >
+            {/* Cockpit window */}
+            <div 
+              className="absolute top-4 left-1/2 transform -translate-x-1/2 w-12 h-12 rounded-full"
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                boxShadow: 'inset 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(102, 126, 234, 0.5)'
+              }}
+            />
+            
+            {/* Side fins */}
+            <div 
+              className="absolute -left-4 top-20 w-8 h-16"
+              style={{
+                background: 'linear-gradient(135deg, #C44569 0%, #793FDF 100%)',
+                clipPath: 'polygon(100% 0%, 0% 50%, 100% 100%)',
+                boxShadow: '-5px 0 10px rgba(0,0,0,0.2)'
+              }}
+            />
+            <div 
+              className="absolute -right-4 top-20 w-8 h-16"
+              style={{
+                background: 'linear-gradient(135deg, #C44569 0%, #793FDF 100%)',
+                clipPath: 'polygon(0% 0%, 100% 50%, 0% 100%)',
+                boxShadow: '5px 0 10px rgba(0,0,0,0.2)'
+              }}
+            />
+            
+            {/* Turbine */}
+            <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-8">
+              <div 
+                className="w-full h-full"
+                style={{
+                  background: 'linear-gradient(135deg, #2D3436 0%, #636E72 100%)',
+                  borderRadius: '0 0 50% 50%',
+                  boxShadow: 'inset 0 -5px 10px rgba(0,0,0,0.3)'
+                }}
+              >
+                {/* Rotating turbine blades */}
+                <div 
+                  className="absolute inset-0 flex items-center justify-center"
+                  style={{ transform: `rotate(${turbineRotation}deg)` }}
+                >
+                  <div className="absolute w-12 h-1 bg-gray-600" />
+                  <div className="absolute w-12 h-1 bg-gray-600 transform rotate-60" />
+                  <div className="absolute w-12 h-1 bg-gray-600 transform rotate-120" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Astronaut in rocket */}
+          <div 
+            className="absolute top-3 left-1/2 transform -translate-x-1/2 w-8 h-8"
+            style={{ filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' }}
+          >
+            <div className="w-full h-full rounded-full bg-white relative">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-b from-gray-100 to-gray-300" />
+              <div className="absolute top-2 left-1 w-2 h-2 bg-black rounded-full" />
+              <div className="absolute top-2 right-1 w-2 h-2 bg-black rounded-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Game Status */}
       {gameState.phase === 'waiting' && gameState.countdown > 0 && (
         <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 text-center">
           <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-blue-400/30 rounded-3xl p-8 shadow-2xl">
@@ -297,39 +449,10 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
               {gameState.countdown > 0 ? '🚀 COLOCA TUS APUESTAS' : '🚀 PRÓXIMO VUELO'}
             </div>
             
-            {/* Countdown Circle - 20 seconds betting window */}
+            {/* Countdown with cartoon style */}
             <div className="relative w-32 h-32 mx-auto mb-4">
-              <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="50"
-                  stroke="rgba(255,255,255,0.2)"
-                  strokeWidth="8"
-                  fill="transparent"
-                />
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="50"
-                  stroke="url(#gradient)"
-                  strokeWidth="8"
-                  fill="transparent"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 50}`}
-                  strokeDashoffset={`${2 * Math.PI * 50 * (gameState.countdown / 20)}`}
-                  className="transition-all duration-1000 ease-linear"
-                />
-                <defs>
-                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#3B82F6" />
-                    <stop offset="50%" stopColor="#8B5CF6" />
-                    <stop offset="100%" stopColor="#EF4444" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 animate-pulse" />
+              <div className="absolute inset-2 rounded-full bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center">
                 <span className="text-5xl font-bold text-white drop-shadow-2xl animate-pulse">
                   {gameState.countdown}
                 </span>
@@ -337,21 +460,20 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             </div>
             
             <div className="text-blue-200 text-xl drop-shadow-xl animate-pulse">
-              ✨ ¡Coloca tus apuestas! ✨
+              ✨ ¡Prepárate para despegar! ✨
             </div>
           </div>
         </div>
       )}
 
-      {/* Multiplier Display - Flying */}
+      {/* Multiplier Display */}
       {gameState.phase === 'flying' && (
         <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <div className="text-center">
-            <span className={`text-8xl font-bold ${getMultiplierColor()} drop-shadow-2xl animate-pulse`}
+            <span className={`text-8xl font-bold ${getMultiplierColor()} drop-shadow-2xl`}
                   style={{ 
-                    textShadow: '0 0 30px rgba(255, 255, 255, 0.9), 0 0 60px rgba(255, 255, 255, 0.7)',
-                    filter: 'brightness(1.3)',
-                    transform: `scale(${1 + (gameState.multiplier - 1) * 0.1})`
+                    textShadow: '0 0 30px currentColor, 0 0 60px currentColor',
+                    animation: 'pulse 0.5s ease-in-out infinite'
                   }}>
               {gameState.multiplier.toFixed(2)}x
             </span>
@@ -359,176 +481,134 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       )}
 
-      {/* Spaceman with enhanced fire trail */}
-      <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 ${
-        gameState.phase === 'crashed' ? 'animate-bounce scale-125' : ''
-      } ${gameState.phase === 'flying' ? 'animate-pulse scale-110' : 'scale-100'}`}>
-        <div className="relative">
-          <div className={`w-32 h-32 flex items-center justify-center overflow-hidden ${
-            gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
-          }`}
-               style={{
-                 filter: gameState.phase === 'flying' ? 'brightness(1.4) saturate(1.4) drop-shadow(0 0 25px rgba(255,165,0,0.8))' : 'brightness(1.1)',
-                 transform: gameState.phase === 'flying' ? `scale(${1 + (gameState.multiplier - 1) * 0.05})` : 'scale(1)'
-               }}>
-            <img 
-              src="/png-png-urbanbrush-13297 copy.png" 
-              alt="Spaceman"
-              className="w-full h-full object-contain"
-              style={{
-                filter: gameState.phase === 'flying' ? 'brightness(1.3) saturate(1.3) drop-shadow(0 0 15px rgba(255,165,0,0.7))' : 'none'
-              }}
-            />
+      {/* Crash Display */}
+      {gameState.phase === 'crashed' && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <div className="bg-gradient-to-r from-red-600/90 to-orange-600/90 backdrop-blur-xl border-2 border-red-400 rounded-3xl p-8 shadow-2xl animate-bounce">
+            <div className="text-white text-4xl font-bold mb-2">💥 CRASH! 💥</div>
+            <div className="text-red-200 text-5xl font-bold">{gameState.crashPoint?.toFixed(2)}x</div>
           </div>
         </div>
+      )}
+
+      {/* Top Info Bar */}
+      <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
+        <div className="bg-black/30 backdrop-blur-md rounded-full px-4 py-2 flex items-center space-x-2 border border-white/20">
+          {isConnected ? (
+            <Wifi size={16} className="text-green-400" />
+          ) : (
+            <WifiOff size={16} className="text-red-400" />
+          )}
+          <span className="text-white text-sm">{isConnected ? 'Conectado' : 'Desconectado'}</span>
+        </div>
+
+        <button 
+          onClick={() => setShowPlayersModal(true)}
+          className="bg-black/30 backdrop-blur-md rounded-full px-4 py-2 flex items-center space-x-2 border border-white/20 hover:bg-white/20 transition-colors"
+        >
+          <Users size={16} className="text-white" />
+          <span className="text-white text-sm">{totalPlayers} jugadores</span>
+        </button>
       </div>
 
-      {/* Crash Message */}
-      {gameState.phase === 'crashed' && (
-        <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="bg-red-500/90 border-4 border-red-300/90 rounded-3xl px-12 py-6 backdrop-blur-sm animate-bounce"
-               style={{ boxShadow: '0 0 40px rgba(239, 68, 68, 0.8)' }}>
-            <span className="text-red-50 font-bold text-3xl drop-shadow-2xl">
-              💥 CRASHED at {gameState.crashPoint?.toFixed(2)}x!
-            </span>
+      {/* Active Bets Display */}
+      <div className="absolute bottom-4 left-4 right-4 max-h-48 overflow-y-auto space-y-2 z-20">
+        {currentUserBet && (
+          <div className={`bg-gradient-to-r ${
+            currentUserBet.cashedOut 
+              ? 'from-green-500/30 to-blue-500/30 border-green-400' 
+              : 'from-blue-500/30 to-purple-500/30 border-blue-400'
+          } backdrop-blur-md rounded-xl p-3 border shadow-lg`}>
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="text-white font-bold">TÚ</span>
+                <span className="text-white/80 ml-2">${currentUserBet.betAmount}</span>
+              </div>
+              {currentUserBet.cashedOut ? (
+                <div className="text-green-400 font-bold">
+                  ✓ {currentUserBet.cashOutMultiplier?.toFixed(2)}x = ${currentUserBet.winAmount?.toFixed(0)}
+                </div>
+              ) : (
+                <div className="text-yellow-400 font-bold animate-pulse">EN VUELO</div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Mobile Players Button */}
-      {isMobile && (
-        <button
-          onClick={() => setShowPlayersModal(true)}
-          className="absolute top-20 right-4 z-40 bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl p-3 flex items-center space-x-2 hover:bg-black/40 transition-colors"
-        >
-          <Users size={20} className="text-purple-400" />
-          <span className="text-white text-sm font-medium">
-            {totalPlayers} online
-          </span>
-        </button>
-      )}
-
-      {/* Desktop Active Players Panel */}
-      {!isMobile && (
-        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-40">
-          <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl p-4 w-80 max-h-96 overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-semibold flex items-center">
-                <Users size={20} className="mr-2 text-purple-400" />
-                Jugadores Activos
-              </h3>
-              <div className="text-white/70 text-sm">
-                {totalPlayers} online
+        {isMobile ? (
+          otherBets.length > 0 && (
+            <div className="bg-black/20 backdrop-blur-md rounded-xl p-2 border border-white/10">
+              <div className="text-white/60 text-xs text-center">
+                +{otherBets.length} jugadores más apostando
               </div>
             </div>
-            
-            {/* Table Header */}
-            <div className="grid grid-cols-4 gap-2 text-white/70 text-xs mb-2 border-b border-white/20 pb-2">
-              <div>Jugador</div>
-              <div className="text-right">Apuesta</div>
-              <div className="text-right">Multi.</div>
-              <div className="text-right">Ganancia</div>
+          )
+        ) : (
+          otherBets.slice(0, 5).map((bet) => (
+            <div key={bet.playerId} className={`bg-black/20 backdrop-blur-md rounded-xl p-2 border ${
+              bet.cashedOut ? 'border-green-400/30' : 'border-white/10'
+            }`}>
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="text-white/80 text-sm">{bet.playerName}</span>
+                  <span className="text-white/60 text-sm ml-2">${bet.betAmount}</span>
+                </div>
+                {bet.cashedOut ? (
+                  <div className="text-green-400 text-sm">
+                    {bet.cashOutMultiplier?.toFixed(2)}x
+                  </div>
+                ) : gameState.phase === 'flying' ? (
+                  <div className="text-yellow-400/60 text-xs">EN VUELO</div>
+                ) : null}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Players Modal */}
+      {showPlayersModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-900/90 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-hidden">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-white text-xl font-bold">Jugadores Activos ({activeBets.length})</h3>
+              <button 
+                onClick={() => setShowPlayersModal(false)}
+                className="text-white/60 hover:text-white"
+              >
+                <X size={24} />
+              </button>
             </div>
             
-            {/* Players List */}
-            <div className="space-y-1">
+            <div className="overflow-y-auto max-h-[60vh] space-y-2">
               {activeBets.map((bet) => (
-                <div
-                  key={bet.playerId}
-                  className={`grid grid-cols-4 gap-2 text-xs py-2 px-2 rounded ${
-                    bet.playerId === currentUserId 
-                      ? 'bg-blue-500/20 border border-blue-400/30' 
-                      : 'bg-white/5'
-                  } ${bet.cashedOut ? 'text-green-300' : 'text-white'}`}
-                >
-                  <div className="truncate">
-                    {bet.playerId === currentUserId ? '👤 ' : ''}{bet.playerName}
-                  </div>
-                  <div className="text-right">${bet.betAmount}</div>
-                  <div className="text-right">
-                    {bet.cashedOut ? `${bet.cashOutMultiplier?.toFixed(2)}x` : 
-                     gameState.phase === 'flying' ? `${gameState.multiplier.toFixed(2)}x` : '-'}
-                  </div>
-                  <div className="text-right">
-                    {bet.cashedOut ? `$${bet.winAmount?.toFixed(2)}` :
-                     gameState.phase === 'flying' ? `$${(bet.betAmount * gameState.multiplier).toFixed(2)}` : '-'}
+                <div key={bet.playerId} className={`bg-black/30 rounded-lg p-3 border ${
+                  bet.playerId === currentUserId ? 'border-blue-400' : 'border-white/10'
+                }`}>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-white font-medium">
+                        {bet.playerId === currentUserId ? 'TÚ' : bet.playerName}
+                      </span>
+                      <span className="text-white/60 ml-2">${bet.betAmount}</span>
+                    </div>
+                    {bet.cashedOut ? (
+                      <div className="text-right">
+                        <div className="text-green-400 font-medium">
+                          {bet.cashOutMultiplier?.toFixed(2)}x
+                        </div>
+                        <div className="text-green-300 text-sm">
+                          +${bet.winAmount?.toFixed(0)}
+                        </div>
+                      </div>
+                    ) : gameState.phase === 'flying' ? (
+                      <div className="text-yellow-400 animate-pulse">EN VUELO</div>
+                    ) : (
+                      <div className="text-white/40">ESPERANDO</div>
+                    )}
                   </div>
                 </div>
               ))}
-            </div>
-            
-            {activeBets.length === 0 && (
-              <div className="text-white/60 text-center py-4 text-sm">
-                Esperando jugadores...
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Mobile Players Modal */}
-      {isMobile && showPlayersModal && (
-        <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm">
-          <div className="h-full overflow-y-auto p-4">
-            <div className="bg-black/30 backdrop-blur-xl border border-white/20 rounded-2xl p-4 h-full">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-white font-bold text-lg flex items-center">
-                  <Users size={24} className="mr-2 text-purple-400" />
-                  Jugadores Activos
-                </h3>
-                <div className="flex items-center space-x-3">
-                  <div className="text-white/70 text-sm">
-                    {totalPlayers} online
-                  </div>
-                  <button
-                    onClick={() => setShowPlayersModal(false)}
-                    className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-                  >
-                    <X size={20} className="text-white" />
-                  </button>
-                </div>
-              </div>
-              
-              {/* Table Header */}
-              <div className="grid grid-cols-4 gap-2 text-white/70 text-sm mb-3 border-b border-white/20 pb-2">
-                <div>Jugador</div>
-                <div className="text-right">Apuesta</div>
-                <div className="text-right">Multi.</div>
-                <div className="text-right">Ganancia</div>
-              </div>
-              
-              {/* Players List */}
-              <div className="space-y-2">
-                {activeBets.map((bet) => (
-                  <div
-                    key={bet.playerId}
-                    className={`grid grid-cols-4 gap-2 text-sm py-3 px-3 rounded-lg ${
-                      bet.playerId === currentUserId 
-                        ? 'bg-blue-500/20 border border-blue-400/30' 
-                        : 'bg-white/5'
-                    } ${bet.cashedOut ? 'text-green-300' : 'text-white'}`}
-                  >
-                    <div className="truncate">
-                      {bet.playerId === currentUserId ? '👤 ' : ''}{bet.playerName}
-                    </div>
-                    <div className="text-right">${bet.betAmount}</div>
-                    <div className="text-right">
-                      {bet.cashedOut ? `${bet.cashOutMultiplier?.toFixed(2)}x` : 
-                       gameState.phase === 'flying' ? `${gameState.multiplier.toFixed(2)}x` : '-'}
-                    </div>
-                    <div className="text-right">
-                      {bet.cashedOut ? `$${bet.winAmount?.toFixed(2)}` :
-                       gameState.phase === 'flying' ? `$${(bet.betAmount * gameState.multiplier).toFixed(2)}` : '-'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {activeBets.length === 0 && (
-                <div className="text-white/60 text-center py-8 text-lg">
-                  Esperando jugadores...
-                </div>
-              )}
             </div>
           </div>
         </div>
