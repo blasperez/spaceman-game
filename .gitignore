@@ -24,3 +24,28 @@ dist-ssr
 *.sw?
 .env
 deploydebug.txt
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+
+# Test files
+test-*.js
+test-*.cjs
+test-*.ts
+*.test.js
+*.test.ts
+
+# SQL migration files (already applied)
+*-migration.sql
+*-setup.sql
+fix-*.sql
+
+# Documentation drafts
+*_DRAFT.md
+*_OLD.md
+CORRECCIONES_*.md
+FIX_*.md

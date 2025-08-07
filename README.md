@@ -1,105 +1,104 @@
-# 🚀 Spaceman - Crash Game
+# 🚀 Spaceman Multiplayer Game
 
-Un emocionante juego de crash estilo "Spaceman" construido con React, TypeScript y Tailwind CSS.
+Un emocionante juego multijugador de apuestas espaciales con gráficos cartoon 2D y efectos visuales mejorados.
 
-## ✨ Características
+## 🎮 Características
 
-- **Juego de Crash**: Mecánica clásica de crash con multiplicadores dinámicos
-- **Responsive Design**: Optimizado para móvil y desktop
-- **Auto Betting Bot**: Sistema de apuestas automáticas con múltiples estrategias
-- **Autenticación**: Sistema de login con OAuth y modo demo
-- **Estadísticas**: Historial completo de juegos y estadísticas
-- **Chat en vivo**: Sistema de chat para interacción social
-- **Efectos visuales**: Animaciones y efectos de partículas
+- **Multijugador en tiempo real** con WebSocket
+- **Sistema de apuestas** con cash out automático
+- **Autenticación con Google** via Supabase Auth
+- **Pagos con Stripe** para recargas
+- **Efectos visuales cartoon 2D** con animaciones fluidas
+- **Diseño responsivo** para móvil y desktop
+- **Panel de cuenta completo** con historial de juegos y transacciones
 
-## 🎮 Cómo Jugar
+## 🛠️ Stack Tecnológico
 
-1. **Iniciar sesión**: Usa OAuth (Google, Facebook, Twitter) o modo demo
-2. **Apostar**: Selecciona tu monto de apuesta antes del despegue
-3. **Volar**: Observa cómo el multiplicador aumenta mientras el spaceman vuela
-4. **Retirar**: Haz cash out antes de que se estrelle para ganar
-5. **Ganar**: Tu apuesta se multiplica por el valor al momento de retirar
+- **Frontend**: React + TypeScript + Vite
+- **Backend**: Node.js + Express + WebSocket
+- **Base de datos**: Supabase (PostgreSQL)
+- **Autenticación**: Supabase Auth + Google OAuth
+- **Pagos**: Stripe
+- **Hosting**: Railway
 
-## 🤖 Auto Bot
+## 📋 Requisitos
 
-El sistema de auto betting incluye:
+- Node.js 18+
+- NPM 9+
+- Cuenta en Supabase
+- Cuenta en Stripe
+- Cuenta en Railway
 
-- **Estrategias**: Fixed, Martingale, Fibonacci
-- **Auto Cash Out**: Retiro automático en multiplicador específico
-- **Límites**: Control de pérdidas máximas, ganancias máximas y rondas
-- **Estadísticas**: Seguimiento en tiempo real del rendimiento
+## 🚀 Despliegue en Railway
 
-## 🛠️ Tecnologías
+### Variables de Entorno Requeridas
 
-- **React 18** con TypeScript
-- **Tailwind CSS** para estilos
-- **Lucide React** para iconos
-- **Vite** como bundler
-- **ESLint** para linting
+```env
+# Supabase
+VITE_SUPABASE_URL=tu_supabase_url
+VITE_SUPABASE_ANON_KEY=tu_supabase_anon_key
+DATABASE_URL=tu_database_url
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
 
-## 🚀 Instalación y Desarrollo
+# Stripe
+VITE_STRIPE_PUBLISHABLE_KEY=tu_stripe_publishable_key
+STRIPE_SECRET_KEY=tu_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=tu_stripe_webhook_secret
+
+# App
+VITE_APP_URL=https://tu-app.up.railway.app
+VITE_WS_URL=wss://tu-app.up.railway.app
+PORT=3000
+NODE_ENV=production
+```
+
+### Configuración
+
+1. **Supabase**: Ejecuta las migraciones en el SQL Editor
+2. **Google OAuth**: Configura en Supabase Dashboard
+3. **Stripe**: Configura webhooks apuntando a `/api/stripe/webhook`
+4. **Railway**: Importa el repositorio y añade las variables de entorno
+
+## 🏃‍♂️ Desarrollo Local
 
 ```bash
-# Clonar repositorio
-git clone <repository-url>
-cd spaceman-crash-game
-
 # Instalar dependencias
 npm install
 
 # Ejecutar en desarrollo
 npm run dev
 
-# Build para producción
+# Construir para producción
 npm run build
+
+# Ejecutar servidor de producción
+npm start
 ```
 
-## 📱 Características Móviles
+## 📱 Características del Juego
 
-- **Touch-friendly**: Controles optimizados para dispositivos táctiles
-- **Orientación adaptable**: Funciona en portrait y landscape
-- **Interfaz móvil**: Diseño específico para pantallas pequeñas
-- **Gestos táctiles**: Interacciones naturales en móvil
+- **Apuestas**: 1-10,000 pesos mexicanos
+- **Multiplicador**: Aumenta progresivamente hasta explotar
+- **Cash Out**: Manual o automático
+- **Auto Bot**: Sistema de apuestas automáticas
+- **Chat**: Comunicación entre jugadores
+- **Estadísticas**: Historial completo de juegos
 
-## 🎯 Características del Juego
+## 🔒 Seguridad
 
-### Sistema de Crash
-- Algoritmo balanceado con edge de casa del 4%
-- Distribución realista de multiplicadores
-- Efectos visuales y sonoros inmersivos
-
-### Auto Betting
-- **Fixed**: Apuesta fija cada ronda
-- **Martingale**: Dobla la apuesta después de cada pérdida
-- **Fibonacci**: Sigue la secuencia de Fibonacci
-
-### Controles Avanzados
-- Auto cash out en multiplicador específico
-- 50% auto cash out para gestión de riesgo
-- Límites configurables de pérdida y ganancia
-
-## 🎨 Diseño
-
-- **Tema espacial**: Diseño inmersivo con efectos de estrellas y partículas
-- **Gradientes modernos**: Paleta de colores atractiva
-- **Animaciones fluidas**: Transiciones y efectos suaves
-- **Tipografía clara**: Legibilidad optimizada
-
-## 📊 Estadísticas
-
-- Historial completo de juegos
-- Tasa de victorias y multiplicador máximo
-- Ganancias netas y total apostado
-- Multiplicadores recientes
-
-## 🔧 Configuración
-
-El juego funciona completamente en el frontend sin necesidad de configuración adicional. Para características avanzadas como autenticación real y multijugador, consulta los archivos de configuración incluidos.
+- Autenticación segura con Supabase
+- Pagos procesados por Stripe
+- Validación de edad (18+)
+- WebSocket seguro con autenticación
 
 ## 📄 Licencia
 
+<<<<<<< Current (Your changes)
 MIT License - ver archivo LICENSE para detalles.
 
 ---
 
 ¡Disfruta jugando Spaceman! 🚀✨
+=======
+Todos los derechos reservados.
+>>>>>>> Incoming (Background Agent changes)

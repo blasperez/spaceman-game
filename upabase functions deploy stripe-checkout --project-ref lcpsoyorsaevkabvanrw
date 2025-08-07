@@ -1,5 +1,0 @@
-[33m8987791[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Implement complete payment system for both desktop and mobile versions - Add RechargeModal with amount selection (50-10000 MXN) - Update AccountPanel with age validation and withdrawal history - Fix hardcoded 1000 amount issue - Add birthdate modal for age verification - Implement proper currency formatting (MXN) - Add withdrawal history display - Enable/disable buttons based on age validation
-[33m707b549[m Fix build errors: replace Bank icon with Building, fix profile assignment issue
-[33m31e5d06[m ok
-[33mcc5e776[m a
-[33me838b5c[m Merge branch 'main' of https://github.com/blasperez/spaceman-game
