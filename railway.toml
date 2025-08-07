@@ -7,9 +7,6 @@ healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
-<<<<<<< Current (Your changes)
-=======
 
 [build.nixpacks]
 providers = ["node"]
->>>>>>> Incoming (Background Agent changes)
