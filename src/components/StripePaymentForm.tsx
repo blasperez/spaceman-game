@@ -6,6 +6,7 @@ import {
   useStripe,
   useElements
 } from '@stripe/react-stripe-js';
+import { supabase } from '../lib/supabase';
 
 // Enhanced Stripe initialization with error handling
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -59,6 +60,13 @@ const CheckoutForm: React.FC<{ amount: number; onPaymentSuccess: () => void }> =
     }
 
     try {
+      // Get current user session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('No active session found. Please log in again.');
+      }
+
       // Enhanced payment intent creation with better error handling
       console.log('🔄 Creating payment intent...');
       
@@ -66,7 +74,8 @@ const CheckoutForm: React.FC<{ amount: number; onPaymentSuccess: () => void }> =
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({ 
           amount: Math.round(amount * 100), // Convert to cents
