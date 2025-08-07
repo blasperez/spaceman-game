@@ -46,6 +46,13 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     planet1b: { x: 220, y: 45 },
     planet3b: { x: 240, y: 25 }
   });
+  
+  const [nebulaPositions, setNebulaPositions] = useState({
+    nebula1: { x: 120, y: 10 },
+    nebula2: { x: 160, y: 60 },
+    nebula3: { x: 110, y: 70 },
+    nebula4: { x: 180, y: 20 }
+  });
 
   // Mobile detection
   useEffect(() => {
@@ -108,6 +115,14 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
           planet1b: { ...prev.planet1b, x: prev.planet1b.x - 0.45 < -50 ? 220 : prev.planet1b.x - 0.45 },
           planet3b: { ...prev.planet3b, x: prev.planet3b.x - 0.38 < -50 ? 240 : prev.planet3b.x - 0.38 }
         }));
+        
+        // Move nebula clouds slowly
+        setNebulaPositions(prev => ({
+          nebula1: { ...prev.nebula1, x: prev.nebula1.x - 0.1 < -60 ? 120 : prev.nebula1.x - 0.1 },
+          nebula2: { ...prev.nebula2, x: prev.nebula2.x - 0.08 < -60 ? 160 : prev.nebula2.x - 0.08 },
+          nebula3: { ...prev.nebula3, x: prev.nebula3.x - 0.12 < -60 ? 110 : prev.nebula3.x - 0.12 },
+          nebula4: { ...prev.nebula4, x: prev.nebula4.x - 0.09 < -60 ? 180 : prev.nebula4.x - 0.09 }
+        }));
       }, 50);
 
       return () => clearInterval(interval);
@@ -138,46 +153,92 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
       </div>
 
       {/* Stars layer */}
-      <div className="absolute inset-0">
+      {/* Enhanced parallax stars background */}
+      <div className="absolute inset-0" style={{ zIndex: -10 }}>
         {stars.map((star, index) => (
           <div
             key={`star-${index}`}
-            className="absolute rounded-full"
+            className="absolute rounded-full animate-pulse"
             style={{
               left: `${star.x}%`,
               top: `${star.y}%`,
               width: `${star.size}px`,
               height: `${star.size}px`,
-              background: 'white',
-              boxShadow: `0 0 ${star.size * 2}px white`,
-              opacity: 0.8 + Math.random() * 0.2
+              background: star.size > 2 ? 
+                `radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(200,200,255,0.6) 50%, transparent 100%)` :
+                `rgba(255, 255, 255, 0.8)`,
+              opacity: 0.4 + Math.sin(Date.now() * 0.001 + index) * 0.3 + 0.3,
+              boxShadow: star.size > 2 ? 
+                `0 0 ${star.size * 3}px rgba(255, 255, 255, 0.7), 0 0 ${star.size * 6}px rgba(200, 200, 255, 0.3)` :
+                `0 0 ${star.size * 2}px rgba(255, 255, 255, 0.5)`,
+              animationDelay: `${index * 0.1}s`,
+              animationDuration: `${2 + Math.random() * 4}s`
             }}
           />
         ))}
       </div>
 
-      {/* Moving planets - Fixed animation */}
-      <div className="absolute inset-0">
-        {/* Planet 1 - Large */}
-        <img
-          src="/Planeta (1).png"
-          alt="Planet 1"
-          className="absolute transition-all duration-75 ease-linear"
+      {/* Moving nebula clouds and gas */}
+      <div className="absolute inset-0" style={{ zIndex: -5 }}>
+        <div 
+          className="absolute opacity-20 animate-pulse transition-all duration-300 ease-linear"
           style={{
-            width: '180px',
-            height: '180px',
-            left: `${planetPositions.planet1.x}%`,
-            top: `${planetPositions.planet1.y}%`,
-            transform: 'translateX(-50%)',
-            zIndex: 1,
-            opacity: 0.9
-          }}
-          onError={(e) => {
-            e.currentTarget.src = '/Planeta (1).svg';
+            width: '400px',
+            height: '200px',
+            left: `${nebulaPositions.nebula1.x}%`,
+            top: `${nebulaPositions.nebula1.y}%`,
+            background: 'radial-gradient(ellipse, rgba(138, 43, 226, 0.3) 0%, rgba(75, 0, 130, 0.2) 40%, transparent 70%)',
+            filter: 'blur(15px)',
+            animationDuration: '8s'
           }}
         />
+        
+        <div 
+          className="absolute opacity-15 animate-pulse transition-all duration-300 ease-linear"
+          style={{
+            width: '300px',
+            height: '150px',
+            left: `${nebulaPositions.nebula2.x}%`,
+            top: `${nebulaPositions.nebula2.y}%`,
+            background: 'radial-gradient(ellipse, rgba(30, 144, 255, 0.3) 0%, rgba(0, 100, 200, 0.2) 40%, transparent 70%)',
+            filter: 'blur(20px)',
+            animationDuration: '12s',
+            animationDelay: '2s'
+          }}
+        />
+        
+        <div 
+          className="absolute opacity-10 animate-pulse transition-all duration-300 ease-linear"
+          style={{
+            width: '500px',
+            height: '100px',
+            left: `${nebulaPositions.nebula3.x}%`,
+            top: `${nebulaPositions.nebula3.y}%`,
+            background: 'radial-gradient(ellipse, rgba(255, 20, 147, 0.2) 0%, rgba(139, 69, 19, 0.1) 50%, transparent 80%)',
+            filter: 'blur(25px)',
+            animationDuration: '15s',
+            animationDelay: '5s'
+          }}
+        />
+        
+        <div 
+          className="absolute opacity-25 animate-pulse transition-all duration-300 ease-linear"
+          style={{
+            width: '200px',
+            height: '300px',
+            left: `${nebulaPositions.nebula4.x}%`,
+            top: `${nebulaPositions.nebula4.y}%`,
+            background: 'radial-gradient(ellipse, rgba(50, 205, 50, 0.2) 0%, rgba(34, 139, 34, 0.1) 40%, transparent 70%)',
+            filter: 'blur(18px)',
+            animationDuration: '10s',
+            animationDelay: '3s'
+          }}
+        />
+      </div>
 
-        {/* Planet 2 - Very Large */}
+      {/* Moving planets - Fixed animation with proper layering */}
+      <div className="absolute inset-0">
+        {/* Far planets (background) */}
         <img
           src="/Planeta (2).png"
           alt="Planet 2"
@@ -188,34 +249,15 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             left: `${planetPositions.planet2.x}%`,
             top: `${planetPositions.planet2.y}%`,
             transform: 'translateX(-50%)',
-            zIndex: 1,
-            opacity: 0.8
+            zIndex: -3,
+            opacity: 0.4,
+            filter: 'blur(1px)'
           }}
           onError={(e) => {
             e.currentTarget.src = '/Planeta (2).svg';
           }}
         />
 
-        {/* Planet 3 - Medium */}
-        <img
-          src="/Planeta (3).png"
-          alt="Planet 3"
-          className="absolute transition-all duration-75 ease-linear"
-          style={{
-            width: '140px',
-            height: '140px',
-            left: `${planetPositions.planet3.x}%`,
-            top: `${planetPositions.planet3.y}%`,
-            transform: 'translateX(-50%)',
-            zIndex: 1,
-            opacity: 0.85
-          }}
-          onError={(e) => {
-            e.currentTarget.src = '/Planeta (3).svg';
-          }}
-        />
-
-        {/* Planet 4 - Large (Detailed) */}
         <img
           src="/Planeta (4).png"
           alt="Planet 4"
@@ -226,15 +268,53 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             left: `${planetPositions.planet4.x}%`,
             top: `${planetPositions.planet4.y}%`,
             transform: 'translateX(-50%)',
-            zIndex: 1,
-            opacity: 0.75
+            zIndex: -2,
+            opacity: 0.5,
+            filter: 'blur(0.5px)'
           }}
           onError={(e) => {
             e.currentTarget.src = '/Planeta (4).svg';
           }}
         />
 
-        {/* Planet 5 - Small (Moon-like) */}
+        {/* Medium distance planets */}
+        <img
+          src="/Planeta (1).png"
+          alt="Planet 1"
+          className="absolute transition-all duration-75 ease-linear"
+          style={{
+            width: '180px',
+            height: '180px',
+            left: `${planetPositions.planet1.x}%`,
+            top: `${planetPositions.planet1.y}%`,
+            transform: 'translateX(-50%)',
+            zIndex: -1,
+            opacity: 0.7
+          }}
+          onError={(e) => {
+            e.currentTarget.src = '/Planeta (1).svg';
+          }}
+        />
+
+        <img
+          src="/Planeta (3).png"
+          alt="Planet 3"
+          className="absolute transition-all duration-75 ease-linear"
+          style={{
+            width: '140px',
+            height: '140px',
+            left: `${planetPositions.planet3.x}%`,
+            top: `${planetPositions.planet3.y}%`,
+            transform: 'translateX(-50%)',
+            zIndex: -1,
+            opacity: 0.75
+          }}
+          onError={(e) => {
+            e.currentTarget.src = '/Planeta (3).svg';
+          }}
+        />
+
+        {/* Close planets (foreground) */}
         <img
           src="/Planeta (5).png"
           alt="Planet 5"
@@ -245,7 +325,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             left: `${planetPositions.planet5.x}%`,
             top: `${planetPositions.planet5.y}%`,
             transform: 'translateX(-50%)',
-            zIndex: 1,
+            zIndex: 5,
             opacity: 0.9
           }}
           onError={(e) => {
@@ -253,7 +333,6 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
           }}
         />
 
-        {/* Additional random planets for variety */}
         <img
           src="/Planeta (1).png"
           alt="Planet 1b"
@@ -264,8 +343,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             left: `${planetPositions.planet1b.x}%`,
             top: `${planetPositions.planet1b.y}%`,
             transform: 'translateX(-50%) rotate(45deg)',
-            zIndex: 1,
-            opacity: 0.7
+            zIndex: 6,
+            opacity: 0.8
           }}
           onError={(e) => {
             e.currentTarget.src = '/Planeta (1).svg';
@@ -282,8 +361,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             left: `${planetPositions.planet3b.x}%`,
             top: `${planetPositions.planet3b.y}%`,
             transform: 'translateX(-50%) rotate(-30deg)',
-            zIndex: 1,
-            opacity: 0.6
+            zIndex: 4,
+            opacity: 0.7
           }}
           onError={(e) => {
             e.currentTarget.src = '/Planeta (3).svg';
@@ -412,7 +491,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         }}
       >
         <div className="relative">
-          {/* Fire Jets - only when flying - HORIZONTAL - ONLY RED */}
+          {/* Fire Jets - only when flying - HORIZONTAL */}
           {gameState.phase === 'flying' && (
             <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6">
               {/* Core fire jet - RED ONLY */}
@@ -437,6 +516,32 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   background: 'linear-gradient(to left, #ff3300 0%, #ff6600 40%, transparent 100%)',
                   filter: 'blur(6px)',
                   animation: 'fireJet 0.15s ease-in-out infinite alternate',
+                  borderRadius: '0 50% 50% 0'
+                }}
+              />
+              
+              {/* Third fire layer - yellow/orange */}
+              <div 
+                className="absolute left-0 top-1/2 transform -translate-y-1/2"
+                style={{
+                  width: '80px',
+                  height: '20px',
+                  background: 'linear-gradient(to left, #ffaa00 0%, #ffcc44 50%, transparent 100%)',
+                  filter: 'blur(4px)',
+                  animation: 'fireJet 0.12s ease-in-out infinite alternate',
+                  borderRadius: '0 50% 50% 0'
+                }}
+              />
+              
+              {/* Fourth fire layer - white core */}
+              <div 
+                className="absolute left-0 top-1/2 transform -translate-y-1/2"
+                style={{
+                  width: '60px',
+                  height: '15px',
+                  background: 'linear-gradient(to left, #ffffff 0%, #ffeeaa 60%, transparent 100%)',
+                  filter: 'blur(2px)',
+                  animation: 'fireJet 0.1s ease-in-out infinite alternate',
                   borderRadius: '0 50% 50% 0'
                 }}
               />
