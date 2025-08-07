@@ -152,6 +152,43 @@ export class AuthHelper {
   }
 
   /**
+   * Clear authentication state and force reload
+   */
+  static async clearAuthState() {
+    try {
+      console.log('🧹 Clearing authentication state...');
+      
+      // Clear Supabase session
+      await supabase.auth.signOut();
+      
+      // Clear local storage
+      localStorage.removeItem('spaceman-auth-token');
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Clear session storage
+      sessionStorage.clear();
+      
+      // Force page reload
+      window.location.reload();
+    } catch (error) {
+      console.error('Error clearing auth state:', error);
+      // Force reload anyway
+      window.location.reload();
+    }
+  }
+
+  /**
+   * Check if auth is stuck in loading state
+   */
+  static isAuthStuck() {
+    const authToken = localStorage.getItem('spaceman-auth-token');
+    const supabaseToken = localStorage.getItem('supabase.auth.token');
+    
+    // If we have tokens but no valid session, auth might be stuck
+    return (authToken || supabaseToken) && !supabase.auth.getSession();
+  }
+
+  /**
    * Get current auth state with detailed info
    */
   static async getAuthState() {

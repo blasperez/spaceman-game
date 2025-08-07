@@ -190,76 +190,136 @@ function GameApp() {
   const [, setTransactions] = useState<Transaction[]>([]);
 
   const fetchUserProfileWithRetry = useCallback(async (supabaseUser: any): Promise<UserProfile | null> => {
-    for (let i = 0; i < 5; i++) {
+    try {
+      console.log('🔍 Fetching user profile for:', supabaseUser.id);
+      
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
 
+      if (error) {
+        console.error('❌ Error fetching profile:', error);
+        
+        // If profile doesn't exist, create it
+        if (error.code === 'PGRST116') {
+          console.log('📝 Creating new profile for user');
+          const newProfile = {
+            id: supabaseUser.id,
+            email: supabaseUser.email,
+            full_name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'Usuario',
+            avatar_url: supabaseUser.user_metadata?.avatar_url,
+            provider: supabaseUser.app_metadata?.provider || 'google',
+            balance: 1000,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          const { data: createdProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert(newProfile)
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('❌ Error creating profile:', createError);
+            return null;
+          }
+
+          if (createdProfile) {
+            console.log('✅ New profile created successfully');
+            return {
+              id: createdProfile.id,
+              name: createdProfile.full_name || 'Usuario',
+              email: createdProfile.email || '',
+              avatar: createdProfile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(createdProfile.full_name || 'Usuario')}&background=random`,
+              provider: createdProfile.provider || 'google',
+              balance: createdProfile.balance || 1000,
+              isDemo: false,
+              age: createdProfile.age,
+              country: createdProfile.country,
+              phone: createdProfile.phone,
+              kyc_verified: createdProfile.kyc_verified || false,
+              withdrawal_methods: createdProfile.withdrawal_methods || [],
+              deposit_limit: createdProfile.deposit_limit || 1000,
+              withdrawal_limit: createdProfile.withdrawal_limit || 1000,
+              total_deposits: createdProfile.total_deposits || 0,
+              total_withdrawals: createdProfile.total_withdrawals || 0,
+              games_played: createdProfile.games_played || 0,
+              total_wagered: createdProfile.total_wagered || 0,
+              total_won: createdProfile.total_won || 0
+            };
+          }
+        }
+        
+        return null;
+      }
+
       if (profile) {
-                  // Enrich profile with Google data if available
-          const provider = supabaseUser.app_metadata.provider;
-          if (provider === 'google') {
-            const { user_metadata } = supabaseUser;
-            const updates: { age?: number; country?: string; birthdate?: string } = {};
+        console.log('✅ Profile loaded from database');
+        
+        // Enrich profile with Google data if available
+        const provider = supabaseUser.app_metadata?.provider;
+        if (provider === 'google') {
+          const { user_metadata } = supabaseUser;
+          const updates: { age?: number; country?: string; birthdate?: string } = {};
 
-            // Check for birthdate from Google
-            if (!profile.birthdate && user_metadata?.birthdate) {
-              updates.birthdate = user_metadata.birthdate;
-              const age = calculateAge(user_metadata.birthdate);
-              if (age) updates.age = age;
-            } else if (profile.birthdate && !profile.age) {
-              // Calculate age from existing birthdate
-              const age = calculateAge(profile.birthdate);
-              if (age) updates.age = age;
-            }
+          // Check for birthdate from Google
+          if (!profile.birthdate && user_metadata?.birthdate) {
+            updates.birthdate = user_metadata.birthdate;
+            const age = calculateAge(user_metadata.birthdate);
+            if (age) updates.age = age;
+          } else if (profile.birthdate && !profile.age) {
+            // Calculate age from existing birthdate
+            const age = calculateAge(profile.birthdate);
+            if (age) updates.age = age;
+          }
 
-            if (!profile.country && user_metadata?.locale) {
-              const countryCode = user_metadata.locale.split('-')[1];
-              if (countryCode) updates.country = countryCode.toUpperCase();
-            }
+          if (!profile.country && user_metadata?.locale) {
+            const countryCode = user_metadata.locale.split('-')[1];
+            if (countryCode) updates.country = countryCode.toUpperCase();
+          }
 
-            if (Object.keys(updates).length > 0) {
-              const { data: updatedProfile, error: updateError } = await supabase
-                .from('profiles')
-                .update(updates)
-                .eq('id', supabaseUser.id)
-                .select()
-                .single();
+          if (Object.keys(updates).length > 0) {
+            const { data: updatedProfile, error: updateError } = await supabase
+              .from('profiles')
+              .update(updates)
+              .eq('id', supabaseUser.id)
+              .select()
+              .single();
 
-              if (updateError) {
-                console.error('Error enriching profile:', updateError);
-              } else if (updatedProfile) {
-                // Create a new enriched profile object instead of reassigning
-                const enrichedProfile = { ...profile, ...updatedProfile };
-                // Use the enriched profile for the return statement
-                return {
-                  id: enrichedProfile.id,
-                  name: enrichedProfile.full_name || supabaseUser.user_metadata?.full_name || 'Usuario',
-                  email: enrichedProfile.email || supabaseUser.email || '',
-                  avatar: enrichedProfile.avatar_url || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(enrichedProfile.full_name || 'Usuario')}&background=random`,
-                  provider: enrichedProfile.provider || 'google',
-                  balance: enrichedProfile.balance || 1000,
-                  isDemo: false,
-                  age: enrichedProfile.age,
-                  country: enrichedProfile.country,
-                  phone: enrichedProfile.phone,
-                  kyc_verified: enrichedProfile.kyc_verified || false,
-                  withdrawal_methods: enrichedProfile.withdrawal_methods || [],
-                  deposit_limit: enrichedProfile.deposit_limit || 1000,
-                  withdrawal_limit: enrichedProfile.withdrawal_limit || 1000,
-                  total_deposits: enrichedProfile.total_deposits || 0,
-                  total_withdrawals: enrichedProfile.total_withdrawals || 0,
-                  games_played: enrichedProfile.games_played || 0,
-                  total_wagered: enrichedProfile.total_wagered || 0,
-                  total_won: enrichedProfile.total_won || 0
-                };
-              }
+            if (updateError) {
+              console.error('Error enriching profile:', updateError);
+            } else if (updatedProfile) {
+              // Create a new enriched profile object instead of reassigning
+              const enrichedProfile = { ...profile, ...updatedProfile };
+              // Use the enriched profile for the return statement
+              return {
+                id: enrichedProfile.id,
+                name: enrichedProfile.full_name || supabaseUser.user_metadata?.full_name || 'Usuario',
+                email: enrichedProfile.email || supabaseUser.email || '',
+                avatar: enrichedProfile.avatar_url || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(enrichedProfile.full_name || 'Usuario')}&background=random`,
+                provider: enrichedProfile.provider || 'google',
+                balance: enrichedProfile.balance || 1000,
+                isDemo: false,
+                age: enrichedProfile.age,
+                country: enrichedProfile.country,
+                phone: enrichedProfile.phone,
+                kyc_verified: enrichedProfile.kyc_verified || false,
+                withdrawal_methods: enrichedProfile.withdrawal_methods || [],
+                deposit_limit: enrichedProfile.deposit_limit || 1000,
+                withdrawal_limit: enrichedProfile.withdrawal_limit || 1000,
+                total_deposits: enrichedProfile.total_deposits || 0,
+                total_withdrawals: enrichedProfile.total_withdrawals || 0,
+                games_played: enrichedProfile.games_played || 0,
+                total_wagered: enrichedProfile.total_wagered || 0,
+                total_won: enrichedProfile.total_won || 0
+              };
             }
           }
-        
-        console.log('✅ Profile loaded from database');
+        }
+      
         return {
           id: profile.id,
           name: profile.full_name || supabaseUser.user_metadata?.full_name || 'Usuario',
@@ -282,17 +342,12 @@ function GameApp() {
           total_won: profile.total_won || 0
         };
       }
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching profile:', error);
-        break; // Don't retry on critical errors
-      }
-      if (i < 4) {
-        console.log(`Profile not found, attempt ${i + 1}. Retrying...`);
-        await new Promise(res => setTimeout(res, 500));
-      }
+      
+      return null;
+    } catch (error) {
+      console.error('❌ Unexpected error in fetchUserProfileWithRetry:', error);
+      return null;
     }
-    console.warn('Could not fetch profile after multiple attempts.');
-    return null;
   }, []);
 
   const handleLogin = useCallback(async (supabaseUser: any) => {
@@ -306,34 +361,50 @@ function GameApp() {
   useEffect(() => {
     const checkInitialSession = async () => {
       try {
+        console.log('🔍 Checking initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        
+        if (error) {
+          console.error('❌ Session check error:', error);
+          throw error;
+        }
         
         if (session?.user) {
+          console.log('✅ Session found, fetching profile...');
           const profile = await fetchUserProfileWithRetry(session.user);
           if (profile) {
+            console.log('✅ Profile loaded, logging in...');
             await handleLogin(session.user);
           } else {
-            // If profile fetch fails, refresh session
-            const { data, error: refreshError } = await supabase.auth.refreshSession();
-            if (refreshError || !data.session) {
-              console.error('Session refresh failed, signing out');
-              await supabase.auth.signOut();
-            } else if (data.session.user) {
-              await handleLogin(data.session.user);
-            }
+            console.log('❌ Profile fetch failed, signing out...');
+            await supabase.auth.signOut();
           }
+        } else {
+          console.log('ℹ️ No active session found');
         }
       } catch (err) {
-        console.error('Initial session check failed:', err);
-        await supabase.auth.signOut();
+        console.error('❌ Initial session check failed:', err);
+        // Don't sign out on error, just continue without user
       } finally {
+        console.log('✅ Session check completed');
         setSessionChecked(true);
         setIsLoading(false);
       }
     };
+    
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (isLoading) {
+        console.warn('⚠️ Session check timeout, forcing completion');
+        setSessionChecked(true);
+        setIsLoading(false);
+      }
+    }, 10000); // 10 second timeout
+    
     checkInitialSession();
-  }, [handleLogin]);
+    
+    return () => clearTimeout(timeoutId);
+  }, [handleLogin, isLoading]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -716,7 +787,21 @@ function GameApp() {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white text-lg">Cargando...</p>
+          <p className="text-white text-lg mb-4">Cargando...</p>
+          
+          {/* Emergency reset button */}
+          <button
+            onClick={async () => {
+              console.log('🚨 Emergency reset triggered');
+              await supabase.auth.signOut();
+              localStorage.clear();
+              sessionStorage.clear();
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
+          >
+            🔄 Reiniciar si no carga
+          </button>
         </div>
       </div>
     );
