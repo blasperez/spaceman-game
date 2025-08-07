@@ -23,13 +23,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const gainNodeRef = useRef<GainNode | null>(null);
   const filterRef = useRef<BiquadFilterNode | null>(null);
   
-  // Moving planets state
+  // Moving planets state - adjusted for left to right movement
   const [planetPositions, setPlanetPositions] = useState({
-    planet1: { x: 8, y: 8 },
-    planet2: { x: 88, y: 12 },
-    planet3: { x: 92, y: 80 },
-    moon1: { x: 15, y: 85 },
-    moon2: { x: 75, y: 15 }
+    planet1: { x: -10, y: 10 }, // Start off-screen left
+    planet2: { x: -20, y: 20 },
+    planet3: { x: -15, y: 60 },
+    moon1: { x: -25, y: 80 },
+    moon2: { x: -30, y: 15 }
   });
 
   // Generate enhanced stars background - FIXED
@@ -167,34 +167,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [gamePhase, multiplier, soundEnabled]);
 
-  // Moving planets animation - FIXED
+  // Moving planets animation - left to right with different speeds
   useEffect(() => {
     if (gamePhase === 'flying') {
       const interval = setInterval(() => {
         setPlanetPositions(prev => ({
-          planet1: {
-            x: prev.planet1.x - 0.4 < -25 ? 125 : prev.planet1.x - 0.4,
-            y: prev.planet1.y + Math.sin(Date.now() * 0.001) * 0.15
-          },
-          planet2: {
-            x: prev.planet2.x - 0.3 < -30 ? 130 : prev.planet2.x - 0.3,
-            y: prev.planet2.y + Math.cos(Date.now() * 0.0008) * 0.12
-          },
-          planet3: {
-            x: prev.planet3.x - 0.35 < -35 ? 135 : prev.planet3.x - 0.35,
-            y: prev.planet3.y + Math.sin(Date.now() * 0.0012) * 0.1
-          },
-          moon1: {
-            x: prev.moon1.x - 0.5 < -20 ? 120 : prev.moon1.x - 0.5,
-            y: prev.moon1.y + Math.cos(Date.now() * 0.0015) * 0.18
-          },
-          moon2: {
-            x: prev.moon2.x - 0.45 < -22 ? 122 : prev.moon2.x - 0.45,
-            y: prev.moon2.y + Math.sin(Date.now() * 0.0009) * 0.14
-          }
+          planet1: { x: prev.planet1.x + 0.15, y: prev.planet1.y + Math.sin(Date.now() * 0.001) * 0.05 },
+          planet2: { x: prev.planet2.x + 0.12, y: prev.planet2.y + Math.cos(Date.now() * 0.0008) * 0.04 },
+          planet3: { x: prev.planet3.x + 0.18, y: prev.planet3.y + Math.sin(Date.now() * 0.0006) * 0.06 },
+          moon1: { x: prev.moon1.x + 0.10, y: prev.moon1.y + Math.cos(Date.now() * 0.0012) * 0.03 },
+          moon2: { x: prev.moon2.x + 0.14, y: prev.moon2.y + Math.sin(Date.now() * 0.0009) * 0.05 },
         }));
       }, 50);
-
       return () => clearInterval(interval);
     }
   }, [gamePhase]);
@@ -384,70 +368,69 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         ))}
       </div>
 
-      {/* Moving Planets - FIXED with better movement */}
-      <div 
+      {/* Moving Planets - using new images */}
+      <img 
+        src="/Planeta (1).png"
+        alt="Planet 1"
         className="absolute rounded-full opacity-80 shadow-2xl transition-all duration-75 ease-linear"
         style={{ 
           left: `${planetPositions.planet1.x}%`,
           top: `${planetPositions.planet1.y}%`,
-          width: '64px',
-          height: '64px',
-          background: 'radial-gradient(circle at 30% 30%, #60A5FA, #3B82F6, #1E40AF)',
-          boxShadow: '0 0 30px rgba(59, 130, 246, 0.5), inset -10px -10px 20px rgba(0,0,0,0.3)',
+          width: '120px',
+          height: '120px',
           transform: gamePhase === 'flying' ? 'scale(1.1)' : 'scale(1)'
         }}
       />
       
-      <div 
-        className="absolute rounded-full opacity-70 shadow-2xl transition-all duration-75 ease-linear"
+      <img 
+        src="/Planeta (2).png"
+        alt="Planet 2"
+        className="absolute rounded-full opacity-80 shadow-2xl transition-all duration-75 ease-linear"
         style={{ 
           left: `${planetPositions.planet2.x}%`,
           top: `${planetPositions.planet2.y}%`,
-          width: '40px',
-          height: '40px',
-          background: 'radial-gradient(circle at 30% 30%, #A78BFA, #8B5CF6, #7C3AED)',
-          boxShadow: '0 0 20px rgba(147, 51, 234, 0.5), inset -8px -8px 15px rgba(0,0,0,0.3)',
-          transform: gamePhase === 'flying' ? 'scale(1.05)' : 'scale(1)'
-        }}
-      />
-      
-      <div 
-        className="absolute rounded-full opacity-60 shadow-2xl transition-all duration-75 ease-linear"
-        style={{ 
-          left: `${planetPositions.planet3.x}%`,
-          top: `${planetPositions.planet3.y}%`,
-          width: '80px',
-          height: '80px',
-          background: 'radial-gradient(circle at 30% 30%, #FB923C, #F97316, #EA580C)',
-          boxShadow: '0 0 40px rgba(251, 146, 60, 0.4), inset -12px -12px 25px rgba(0,0,0,0.3)',
-          transform: gamePhase === 'flying' ? 'scale(1.15)' : 'scale(1)'
-        }}
-      />
-
-      {/* Moving Moons - FIXED */}
-      <div 
-        className="absolute rounded-full opacity-75 shadow-xl transition-all duration-75 ease-linear"
-        style={{ 
-          left: `${planetPositions.moon1.x}%`,
-          top: `${planetPositions.moon1.y}%`,
-          width: '32px',
-          height: '32px',
-          background: 'radial-gradient(circle at 30% 30%, #D1D5DB, #9CA3AF, #6B7280)',
-          boxShadow: '0 0 15px rgba(156, 163, 175, 0.6), inset -6px -6px 12px rgba(0,0,0,0.4)',
+          width: '100px',
+          height: '100px',
           transform: gamePhase === 'flying' ? 'scale(1.1)' : 'scale(1)'
         }}
       />
       
-      <div 
-        className="absolute rounded-full opacity-80 shadow-xl transition-all duration-75 ease-linear"
+      <img 
+        src="/Planeta (3).png"
+        alt="Planet 3"
+        className="absolute rounded-full opacity-80 shadow-2xl transition-all duration-75 ease-linear"
+        style={{ 
+          left: `${planetPositions.planet3.x}%`,
+          top: `${planetPositions.planet3.y}%`,
+          width: '140px',
+          height: '140px',
+          transform: gamePhase === 'flying' ? 'scale(1.1)' : 'scale(1)'
+        }}
+      />
+      
+      <img 
+        src="/Planeta (4).png"
+        alt="Moon 1"
+        className="absolute rounded-full opacity-80 shadow-2xl transition-all duration-75 ease-linear"
+        style={{ 
+          left: `${planetPositions.moon1.x}%`,
+          top: `${planetPositions.moon1.y}%`,
+          width: '80px',
+          height: '80px',
+          transform: gamePhase === 'flying' ? 'scale(1.1)' : 'scale(1)'
+        }}
+      />
+      
+      <img 
+        src="/Planeta (5).png"
+        alt="Moon 2"
+        className="absolute rounded-full opacity-80 shadow-2xl transition-all duration-75 ease-linear"
         style={{ 
           left: `${planetPositions.moon2.x}%`,
           top: `${planetPositions.moon2.y}%`,
-          width: '24px',
-          height: '24px',
-          background: 'radial-gradient(circle at 30% 30%, #FEF3C7, #FBBF24, #F59E0B)',
-          boxShadow: '0 0 12px rgba(250, 204, 21, 0.7), inset -4px -4px 8px rgba(0,0,0,0.2)',
-          transform: gamePhase === 'flying' ? 'scale(1.08)' : 'scale(1)'
+          width: '90px',
+          height: '90px',
+          transform: gamePhase === 'flying' ? 'scale(1.1)' : 'scale(1)'
         }}
       />
 
@@ -544,7 +527,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       >
         <div className="relative">
           {/* LARGER Spaceman */}
-          <div className={`w-32 h-32 flex items-center justify-center overflow-hidden ${
+          <div className={`w-48 h-48 flex items-center justify-center overflow-hidden ${
             gamePhase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
           }`}
                style={{

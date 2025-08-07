@@ -239,7 +239,7 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
             transform: 'translate(-50%, -50%)'
           }}
         >
-          <div className="w-16 h-16 flex items-center justify-center">
+          <div className="w-32 h-32 flex items-center justify-center">
             <img 
               src="/png-png-urbanbrush-13297 copy.png" 
               alt="Spaceman"

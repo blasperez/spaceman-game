@@ -323,7 +323,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         }}
       >
         <div className="relative">
-          <div className={`w-32 h-32 flex items-center justify-center ${
+          <div className={`w-48 h-48 flex items-center justify-center ${
             gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
           }`}
                style={{

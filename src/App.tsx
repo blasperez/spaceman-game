@@ -304,12 +304,32 @@ function GameApp() {
 
   useEffect(() => {
     const checkInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await handleLogin(session.user);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        if (session?.user) {
+          const profile = await fetchUserProfileWithRetry(session.user);
+          if (profile) {
+            await handleLogin(session.user);
+          } else {
+            // If profile fetch fails, refresh session
+            const { data, error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError || !data.session) {
+              console.error('Session refresh failed, signing out');
+              await supabase.auth.signOut();
+            } else if (data.session.user) {
+              await handleLogin(data.session.user);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Initial session check failed:', err);
+        await supabase.auth.signOut();
+      } finally {
+        setSessionChecked(true);
+        setIsLoading(false);
       }
-      setSessionChecked(true);
-      setIsLoading(false);
     };
     checkInitialSession();
   }, [handleLogin]);
