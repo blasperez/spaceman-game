@@ -50,7 +50,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
 
   const fetchUserData = async () => {
     if (!user) return;
-
+    
     try {
       // Fetch user profile
       const { data: profile } = await supabase
@@ -164,14 +164,14 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
-        return (
+  return (
           <div className="space-y-6">
             {/* User Info */}
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6">
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                   <User size={24} className="text-white" />
-                </div>
+        </div>
                 <div>
                   <h3 className="text-white font-semibold text-lg">
                     {user?.email || 'Usuario'}
@@ -184,9 +184,9 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                       Edad: {calculateAge(userProfile.birthdate)} años
                     </p>
                   )}
-                </div>
-              </div>
-            </div>
+          </div>
+                        </div>
+                      </div>
 
             {/* Balance Overview */}
             {userBalance && (
@@ -196,18 +196,18 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                   <div className="text-green-300 text-sm mb-1">Balance Actual</div>
                   <div className="text-green-400 text-2xl font-bold">
                     {formatCurrency(userBalance.balance)}
-                  </div>
-                </div>
-                
+                      </div>
+                    </div>
+
                 <div className="bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-xl p-6 text-center">
                   <TrendingUp size={24} className="text-blue-400 mx-auto mb-2" />
                   <div className="text-blue-300 text-sm mb-1">Total Ganado</div>
                   <div className="text-blue-400 text-2xl font-bold">
                     {formatCurrency(userBalance.total_wins)}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )}
+                )}
 
             {/* Age Warning */}
             {!canRechargeOrWithdraw && (
@@ -270,9 +270,9 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
 
       case 'history':
         return (
-          <div className="space-y-6">
+                  <div className="space-y-6">
             <TransactionHistory />
-          </div>
+                        </div>
         );
 
       case 'withdrawals':
@@ -298,9 +298,9 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                     <li>• Verificación de identidad requerida</li>
                     <li>• Confirmación por email</li>
                   </ul>
-                </div>
-              </div>
-              
+                        </div>
+                      </div>
+
               <button
                 onClick={() => setShowWithdrawalForm(true)}
                 disabled={!canRechargeOrWithdraw}
@@ -341,10 +341,10 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-            )}
-          </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
         );
 
       case 'settings':
@@ -368,27 +368,27 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                 </div>
                 
                 <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
-                  <div>
+                        <div>
                     <div className="text-white font-medium">Verificación en dos pasos</div>
                     <div className="text-white/60 text-sm">Aumentar la seguridad de tu cuenta</div>
                   </div>
                   <button className="w-12 h-6 bg-white/20 rounded-full relative">
                     <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-all"></div>
                   </button>
-                </div>
+                        </div>
                 
                 <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
-                  <div>
+                        <div>
                     <div className="text-white font-medium">Auto Cash Out</div>
                     <div className="text-white/60 text-sm">Retirar automáticamente en multiplicador específico</div>
-                  </div>
+                          </div>
                   <button className="w-12 h-6 bg-blue-500 rounded-full relative">
                     <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 transition-all"></div>
                   </button>
-                </div>
-              </div>
-            </div>
-            
+                          </div>
+                        </div>
+                      </div>
+                      
             <div className="bg-red-500/10 backdrop-blur-md border border-red-400/20 rounded-xl p-6">
               <h3 className="text-red-300 font-semibold text-lg mb-4 flex items-center">
                 <Shield size={20} className="mr-2" />
@@ -402,8 +402,8 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                 <LogOut size={20} />
                 <span>Cerrar Sesión</span>
               </button>
-            </div>
-          </div>
+                          </div>
+                        </div>
         );
 
       default:
@@ -423,7 +423,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
           >
             ✕
           </button>
-        </div>
+                          </div>
 
         {/* Tabs */}
         <div className="flex border-b border-white/20 overflow-x-auto">
@@ -444,19 +444,19 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
               </button>
             );
           })}
-        </div>
+                        </div>
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
-            </div>
+                          </div>
           ) : (
             renderTabContent()
           )}
-        </div>
-      </div>
+                        </div>
+                      </div>
 
       {/* Modals */}
       {showWithdrawalForm && (
@@ -495,7 +495,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
               </p>
               
               <div className="space-y-4">
-                <div>
+                        <div>
                   <label className="block text-white/80 text-sm mb-2">Fecha de Nacimiento:</label>
                   <input
                     type="date"
@@ -503,8 +503,8 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                     onChange={(e) => setBirthdateInput(e.target.value)}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-blue-400"
                   />
-                </div>
-                
+                    </div>
+
                 <div className="flex space-x-3">
                   <button
                     onClick={() => setShowBirthdateModal(false)}
@@ -512,15 +512,15 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                   >
                     Cancelar
                   </button>
-                  <button
+                      <button
                     onClick={handleSaveBirthdate}
                     disabled={!birthdateInput || savingBirthdate}
                     className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
+                      >
                     {savingBirthdate ? 'Guardando...' : 'Guardar'}
-                  </button>
-                </div>
-              </div>
+                      </button>
+                    </div>
+                  </div>
             </div>
           </div>
         </div>

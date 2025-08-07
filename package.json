@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start": "vite --host 0.0.0.0 --port 3000",
-    "railway": "vite --host 0.0.0.0 --port 3000"
+    "start": "npm run build && node serve.js",
+    "dev:server": "node serve.js"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^2.1.0",
@@ -16,7 +16,7 @@
     "@supabase/supabase-js": "^2.51.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
-    "express": "^4.18.0",
+    "express": "^4.21.2",
     "express-session": "^1.18.2",
     "framer-motion": "^12.23.9",
     "jsonwebtoken": "^9.0.2",
