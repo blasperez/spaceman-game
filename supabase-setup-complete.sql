@@ -51,8 +51,21 @@ ALTER TABLE wallets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE withdrawal_requests ENABLE ROW LEVEL SECURITY;
 
--- 4. CREAR POLÍTICAS DE SEGURIDAD
+-- 4. CREAR POLÍTICAS DE SEGURIDAD (SIN ERRORES)
 -- =====================================================
+
+-- Eliminar políticas existentes si las hay
+DROP POLICY IF EXISTS "Users can view their wallet" ON wallets;
+DROP POLICY IF EXISTS "Users can update their wallet" ON wallets;
+DROP POLICY IF EXISTS "Users can insert their wallet" ON wallets;
+
+DROP POLICY IF EXISTS "Users can view their transactions" ON transactions;
+DROP POLICY IF EXISTS "Users can insert their transactions" ON transactions;
+DROP POLICY IF EXISTS "Users can update their transactions" ON transactions;
+
+DROP POLICY IF EXISTS "Users can view their withdrawals" ON withdrawal_requests;
+DROP POLICY IF EXISTS "Users can insert their withdrawals" ON withdrawal_requests;
+DROP POLICY IF EXISTS "Users can update their withdrawals" ON withdrawal_requests;
 
 -- Políticas para wallets
 CREATE POLICY "Users can view their wallet" ON wallets FOR SELECT USING (user_id = auth.uid());
