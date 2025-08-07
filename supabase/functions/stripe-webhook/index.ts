@@ -56,107 +56,227 @@ Deno.serve(async (req) => {
 async function handleEvent(event: Stripe.Event) {
   console.log(`Processing event: ${event.type}`);
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
-    
-    if (session.payment_status === 'paid') {
-      console.log(`Processing successful payment for session: ${session.id}`);
+  switch (event.type) {
+    case 'checkout.session.completed':
+      await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+      break;
       
-      try {
-        // Extract payment details
-        const amount = session.amount_total ? session.amount_total / 100 : 0; // Convert from cents
-        const currency = session.currency;
-        const paymentIntentId = session.payment_intent as string;
-        
-        // Get user ID from metadata (you need to pass this when creating the checkout session)
-        const userId = session.metadata?.user_id;
-        
-        if (!userId) {
-          console.error('No user_id found in session metadata');
-          return;
-        }
+    case 'payment_intent.succeeded':
+      await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+      break;
+      
+    case 'customer.subscription.created':
+    case 'customer.subscription.updated':
+      await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+      break;
+      
+    case 'customer.subscription.deleted':
+      await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+      break;
+      
+    default:
+      console.log(`Unhandled event type: ${event.type}`);
+  }
+}
 
-        console.log(`Processing payment for user ${userId}, amount: ${amount} ${currency}`);
-
-        // 1. Insert transaction record
-        const { error: transactionError } = await supabase
-          .from('transactions')
-          .insert({
-            user_id: userId,
-            type: 'deposit',
-            amount: amount,
-            status: 'completed',
-            stripe_payment_id: paymentIntentId,
-          });
-
-        if (transactionError) {
-          console.error('Error inserting transaction:', transactionError);
-          return;
-        }
-
-        // 2. Update wallet balance
-        const { error: walletError } = await supabase
-          .from('wallets')
-          .upsert({
-            user_id: userId,
-            balance: amount, // This will add to existing balance
-          }, {
-            onConflict: 'user_id',
-            ignoreDuplicates: false
-          });
-
-        if (walletError) {
-          console.error('Error updating wallet:', walletError);
-          return;
-        }
-
-        // 3. If wallet doesn't exist, create it with the amount
-        const { data: existingWallet } = await supabase
-          .from('wallets')
-          .select('balance')
-          .eq('user_id', userId)
-          .single();
-
-        if (!existingWallet) {
-          // Create new wallet with initial balance
-          const { error: createWalletError } = await supabase
-            .from('wallets')
-            .insert({
-              user_id: userId,
-              balance: amount,
-            });
-
-          if (createWalletError) {
-            console.error('Error creating wallet:', createWalletError);
-            return;
-          }
-        } else {
-          // Add to existing balance
-          const { error: updateBalanceError } = await supabase
-            .from('wallets')
-            .update({ balance: existingWallet.balance + amount })
-            .eq('user_id', userId);
-
-          if (updateBalanceError) {
-            console.error('Error updating balance:', updateBalanceError);
-            return;
-          }
-        }
-
-        console.log(`Successfully processed payment: ${amount} ${currency} for user ${userId}`);
-        
-      } catch (error) {
-        console.error('Error processing checkout session:', error);
-      }
-    }
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  if (session.payment_status !== 'paid') {
+    console.log(`Payment not completed for session: ${session.id}`);
+    return;
   }
 
-  // Handle payment failures (optional)
-  if (event.type === 'payment_intent.payment_failed') {
-    const paymentIntent = event.data.object as Stripe.PaymentIntent;
-    console.log(`Payment failed for payment intent: ${paymentIntent.id}`);
+  console.log(`Processing successful checkout session: ${session.id}`);
+  
+  try {
+    const userId = session.metadata?.user_id;
+    const coins = parseInt(session.metadata?.coins || '0');
+    const amount = session.amount_total ? session.amount_total / 100 : 0;
+    const paymentIntentId = session.payment_intent as string;
     
-    // You can add logic here to handle failed payments
-    // For example, notify the user or update transaction status
+    if (!userId) {
+      console.error('No user_id found in session metadata');
+      return;
+    }
+
+    console.log(`Processing payment for user ${userId}, amount: ${amount}, coins: ${coins}`);
+
+    // 1. Insert transaction record
+    const { error: transactionError } = await supabase
+      .from('transactions')
+      .insert({
+        user_id: userId,
+        type: 'deposit',
+        amount: amount,
+        status: 'completed',
+        payment_method: 'stripe',
+        stripe_payment_id: paymentIntentId,
+      });
+
+    if (transactionError) {
+      console.error('Error inserting transaction:', transactionError);
+      return;
+    }
+
+    // 2. Update user balance in profiles table
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ 
+        balance: supabase.sql`balance + ${amount}`,
+        total_deposits: supabase.sql`total_deposits + ${amount}`
+      })
+      .eq('id', userId);
+
+    if (profileError) {
+      console.error('Error updating profile balance:', profileError);
+      return;
+    }
+
+    // 3. Insert order record for tracking
+    const { error: orderError } = await supabase
+      .from('stripe_orders')
+      .insert({
+        checkout_session_id: session.id,
+        payment_intent_id: paymentIntentId,
+        customer_id: session.customer as string,
+        amount_subtotal: session.amount_subtotal || 0,
+        amount_total: session.amount_total || 0,
+        currency: session.currency,
+        payment_status: session.payment_status,
+        status: 'completed'
+      });
+
+    if (orderError) {
+      console.error('Error inserting order:', orderError);
+    }
+
+    console.log(`Successfully processed checkout session: ${amount} ${session.currency} for user ${userId}`);
+    
+  } catch (error) {
+    console.error('Error processing checkout session:', error);
+  }
+}
+
+async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+  console.log(`Processing payment intent: ${paymentIntent.id}`);
+  
+  try {
+    const userId = paymentIntent.metadata?.userId;
+    const amount = paymentIntent.amount / 100;
+    
+    if (!userId) {
+      console.error('No userId found in payment intent metadata');
+      return;
+    }
+
+    console.log(`Processing payment intent for user ${userId}, amount: ${amount}`);
+
+    // 1. Insert transaction record
+    const { error: transactionError } = await supabase
+      .from('transactions')
+      .insert({
+        user_id: userId,
+        type: 'deposit',
+        amount: amount,
+        status: 'completed',
+        payment_method: 'stripe',
+        stripe_payment_id: paymentIntent.id,
+      });
+
+    if (transactionError) {
+      console.error('Error inserting transaction:', transactionError);
+      return;
+    }
+
+    // 2. Update user balance in profiles table
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ 
+        balance: supabase.sql`balance + ${amount}`,
+        total_deposits: supabase.sql`total_deposits + ${amount}`
+      })
+      .eq('id', userId);
+
+    if (profileError) {
+      console.error('Error updating profile balance:', profileError);
+      return;
+    }
+
+    console.log(`Successfully processed payment intent: ${amount} for user ${userId}`);
+    
+  } catch (error) {
+    console.error('Error processing payment intent:', error);
+  }
+}
+
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  console.log(`Processing subscription update: ${subscription.id}`);
+  
+  try {
+    const customerId = subscription.customer as string;
+    
+    // Get user ID from stripe_customers table
+    const { data: customerData, error: customerError } = await supabase
+      .from('stripe_customers')
+      .select('user_id')
+      .eq('customer_id', customerId)
+      .single();
+
+    if (customerError || !customerData) {
+      console.error('Error finding customer:', customerError);
+      return;
+    }
+
+    // Update subscription record
+    const { error: subscriptionError } = await supabase
+      .from('stripe_subscriptions')
+      .upsert({
+        customer_id: customerId,
+        subscription_id: subscription.id,
+        price_id: subscription.items.data[0]?.price.id,
+        current_period_start: subscription.current_period_start,
+        current_period_end: subscription.current_period_end,
+        cancel_at_period_end: subscription.cancel_at_period_end,
+        status: subscription.status,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'customer_id'
+      });
+
+    if (subscriptionError) {
+      console.error('Error updating subscription:', subscriptionError);
+      return;
+    }
+
+    console.log(`Successfully updated subscription for customer ${customerId}`);
+    
+  } catch (error) {
+    console.error('Error processing subscription update:', error);
+  }
+}
+
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  console.log(`Processing subscription deletion: ${subscription.id}`);
+  
+  try {
+    const customerId = subscription.customer as string;
+    
+    // Update subscription status to canceled
+    const { error: subscriptionError } = await supabase
+      .from('stripe_subscriptions')
+      .update({
+        status: 'canceled',
+        updated_at: new Date().toISOString()
+      })
+      .eq('customer_id', customerId);
+
+    if (subscriptionError) {
+      console.error('Error updating subscription status:', subscriptionError);
+      return;
+    }
+
+    console.log(`Successfully marked subscription as canceled for customer ${customerId}`);
+    
+  } catch (error) {
+    console.error('Error processing subscription deletion:', error);
   }
 }

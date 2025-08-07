@@ -6,7 +6,7 @@ const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('
 const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripe = new Stripe(stripeSecret, {
   appInfo: {
-    name: 'Bolt Integration',
+    name: 'Spaceman Game',
     version: '1.0.0',
   },
 });
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       return corsResponse({ error: 'Method not allowed' }, 405);
     }
 
-    const { price_id, success_url, cancel_url, mode } = await req.json();
+    const { price_id, success_url, cancel_url, mode, amount, coins } = await req.json();
 
     const error = validateParameters(
       { price_id, success_url, cancel_url, mode },
@@ -177,6 +177,17 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Prepare metadata for the checkout session
+    const metadata: Record<string, string> = {
+      user_id: user.id,
+    };
+
+    // Add coins and amount metadata for payment mode
+    if (mode === 'payment' && amount && coins) {
+      metadata.coins = coins.toString();
+      metadata.amount = amount.toString();
+    }
+
     // create Checkout Session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -190,6 +201,7 @@ Deno.serve(async (req) => {
       mode,
       success_url,
       cancel_url,
+      metadata,
     });
 
     console.log(`Created checkout session ${session.id} for customer ${customerId}`);
