@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start": "npm run build && node serve.js",
-    "dev:server": "node serve.js"
+    "start": "node serve.js",
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^2.1.0",
