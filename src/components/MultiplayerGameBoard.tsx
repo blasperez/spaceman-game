@@ -37,6 +37,15 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
   const [showPlayersModal, setShowPlayersModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [astronautRotation, setAstronautRotation] = useState(0);
+  const [planetPositions, setPlanetPositions] = useState({
+    planet1: { x: 150, y: 15 },
+    planet2: { x: 180, y: 55 },
+    planet3: { x: 160, y: 35 },
+    planet4: { x: 200, y: 5 },
+    planet5: { x: 170, y: 70 },
+    planet1b: { x: 220, y: 45 },
+    planet3b: { x: 240, y: 25 }
+  });
 
   // Mobile detection
   useEffect(() => {
@@ -88,34 +97,27 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             x: star.x - star.speed < -10 ? 200 : star.x - star.speed
           }))
         );
+        
+        // Move planets from right to left
+        setPlanetPositions(prev => ({
+          planet1: { ...prev.planet1, x: prev.planet1.x - 0.3 < -50 ? 150 : prev.planet1.x - 0.3 },
+          planet2: { ...prev.planet2, x: prev.planet2.x - 0.25 < -50 ? 180 : prev.planet2.x - 0.25 },
+          planet3: { ...prev.planet3, x: prev.planet3.x - 0.4 < -50 ? 160 : prev.planet3.x - 0.4 },
+          planet4: { ...prev.planet4, x: prev.planet4.x - 0.35 < -50 ? 200 : prev.planet4.x - 0.35 },
+          planet5: { ...prev.planet5, x: prev.planet5.x - 0.5 < -50 ? 170 : prev.planet5.x - 0.5 },
+          planet1b: { ...prev.planet1b, x: prev.planet1b.x - 0.45 < -50 ? 220 : prev.planet1b.x - 0.45 },
+          planet3b: { ...prev.planet3b, x: prev.planet3b.x - 0.38 < -50 ? 240 : prev.planet3b.x - 0.38 }
+        }));
       }, 50);
 
       return () => clearInterval(interval);
     }
   }, [gameState.phase]);
 
-  // Astronaut rotation
-  useEffect(() => {
-    if (gameState.phase === 'flying') {
-      const rotationInterval = setInterval(() => {
-        setAstronautRotation(prev => prev + 1);
-      }, 50);
+  // No rotation - astronaut stays static
 
-      return () => clearInterval(rotationInterval);
-    }
-  }, [gameState.phase]);
-
-  const calculatePosition = () => {
-    if (gameState.phase === 'waiting') return { x: 50, y: 70 };
-    if (gameState.phase === 'crashed') return { x: 50, y: 70 + Math.min((gameState.crashPoint || 1) * 5, 20) };
-    
-    const progress = Math.min((gameState.multiplier - 1) / 10, 1);
-    const y = 70 - (progress * 50);
-    
-    return { x: 50, y };
-  };
-
-  const astronautPosition = calculatePosition();
+  // Astronaut always in the center
+  const astronautPosition = { x: 50, y: 50 };
 
   const getMultiplierColor = () => {
     if (gameState.multiplier < 1.5) return 'text-green-400';
@@ -154,18 +156,18 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         ))}
       </div>
 
-      {/* Moving planets - Improved */}
+      {/* Moving planets - Fixed animation */}
       <div className="absolute inset-0">
         {/* Planet 1 - Large */}
         <img
           src="/Planeta (1).png"
           alt="Planet 1"
-          className="absolute"
+          className="absolute transition-all duration-75 ease-linear"
           style={{
             width: '180px',
             height: '180px',
-            left: `${120 + (gameState.phase === 'flying' ? -Date.now() * 0.002 % 240 : 0)}%`,
-            top: '15%',
+            left: `${planetPositions.planet1.x}%`,
+            top: `${planetPositions.planet1.y}%`,
             transform: 'translateX(-50%)',
             zIndex: 1,
             opacity: 0.9
@@ -179,12 +181,12 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         <img
           src="/Planeta (2).png"
           alt="Planet 2"
-          className="absolute"
+          className="absolute transition-all duration-75 ease-linear"
           style={{
             width: '250px',
             height: '250px',
-            left: `${160 + (gameState.phase === 'flying' ? -Date.now() * 0.0015 % 280 : 0)}%`,
-            top: '55%',
+            left: `${planetPositions.planet2.x}%`,
+            top: `${planetPositions.planet2.y}%`,
             transform: 'translateX(-50%)',
             zIndex: 1,
             opacity: 0.8
@@ -198,12 +200,12 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         <img
           src="/Planeta (3).png"
           alt="Planet 3"
-          className="absolute"
+          className="absolute transition-all duration-75 ease-linear"
           style={{
             width: '140px',
             height: '140px',
-            left: `${140 + (gameState.phase === 'flying' ? -Date.now() * 0.003 % 260 : 0)}%`,
-            top: '35%',
+            left: `${planetPositions.planet3.x}%`,
+            top: `${planetPositions.planet3.y}%`,
             transform: 'translateX(-50%)',
             zIndex: 1,
             opacity: 0.85
@@ -217,12 +219,12 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         <img
           src="/Planeta (4).png"
           alt="Planet 4"
-          className="absolute"
+          className="absolute transition-all duration-75 ease-linear"
           style={{
             width: '200px',
             height: '200px',
-            left: `${180 + (gameState.phase === 'flying' ? -Date.now() * 0.0025 % 300 : 0)}%`,
-            top: '5%',
+            left: `${planetPositions.planet4.x}%`,
+            top: `${planetPositions.planet4.y}%`,
             transform: 'translateX(-50%)',
             zIndex: 1,
             opacity: 0.75
@@ -236,12 +238,12 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         <img
           src="/Planeta (5).png"
           alt="Planet 5"
-          className="absolute"
+          className="absolute transition-all duration-75 ease-linear"
           style={{
             width: '80px',
             height: '80px',
-            left: `${150 + (gameState.phase === 'flying' ? -Date.now() * 0.004 % 250 : 0)}%`,
-            top: '70%',
+            left: `${planetPositions.planet5.x}%`,
+            top: `${planetPositions.planet5.y}%`,
             transform: 'translateX(-50%)',
             zIndex: 1,
             opacity: 0.9
@@ -255,12 +257,12 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         <img
           src="/Planeta (1).png"
           alt="Planet 1b"
-          className="absolute"
+          className="absolute transition-all duration-75 ease-linear"
           style={{
             width: '100px',
             height: '100px',
-            left: `${200 + (gameState.phase === 'flying' ? -Date.now() * 0.0035 % 320 : 0)}%`,
-            top: '45%',
+            left: `${planetPositions.planet1b.x}%`,
+            top: `${planetPositions.planet1b.y}%`,
             transform: 'translateX(-50%) rotate(45deg)',
             zIndex: 1,
             opacity: 0.7
@@ -273,12 +275,12 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         <img
           src="/Planeta (3).png"
           alt="Planet 3b"
-          className="absolute"
+          className="absolute transition-all duration-75 ease-linear"
           style={{
             width: '120px',
             height: '120px',
-            left: `${220 + (gameState.phase === 'flying' ? -Date.now() * 0.0028 % 340 : 0)}%`,
-            top: '25%',
+            left: `${planetPositions.planet3b.x}%`,
+            top: `${planetPositions.planet3b.y}%`,
             transform: 'translateX(-50%) rotate(-30deg)',
             zIndex: 1,
             opacity: 0.6
@@ -378,23 +380,23 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
       {/* CSS Animations */}
       <style jsx>{`
         @keyframes fireJet {
-          0%, 100% { opacity: 0.8; transform: scaleY(2) translateX(0); }
-          50% { opacity: 1; transform: scaleY(2.2) translateX(-5px); }
+          0%, 100% { opacity: 0.9; transform: scaleY(4) scaleX(0.3) translateX(0); }
+          50% { opacity: 1; transform: scaleY(4.5) scaleX(0.25) translateX(-3px); }
         }
         
         @keyframes fireJet2 {
-          0%, 100% { opacity: 0.7; transform: translateY(-10px) scaleX(1); }
-          50% { opacity: 0.9; transform: translateY(-10px) scaleX(1.1); }
+          0%, 100% { opacity: 0.8; transform: translateY(-5px) scaleX(0.4) scaleY(3.5); }
+          50% { opacity: 1; transform: translateY(-8px) scaleX(0.3) scaleY(4); }
         }
         
         @keyframes fireJet3 {
-          0%, 100% { opacity: 0.6; transform: translateY(10px) scaleY(1.5); }
-          50% { opacity: 0.8; transform: translateY(10px) scaleY(1.7); }
+          0%, 100% { opacity: 0.7; transform: translateY(5px) scaleY(3.8) scaleX(0.35); }
+          50% { opacity: 0.95; transform: translateY(8px) scaleY(4.2) scaleX(0.28); }
         }
         
         @keyframes fireCore {
-          0%, 100% { opacity: 0.9; width: 100px; }
-          50% { opacity: 1; width: 120px; }
+          0%, 100% { opacity: 1; width: 60px; height: 120px; }
+          50% { opacity: 1; width: 50px; height: 140px; }
         }
       `}</style>
 
@@ -410,11 +412,65 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         }}
       >
         <div className="relative">
+          {/* Fire Jets - only when flying */}
+          {gameState.phase === 'flying' && (
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-6">
+              {/* Core fire jet */}
+              <div 
+                className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+                style={{
+                  width: '60px',
+                  height: '120px',
+                  background: 'linear-gradient(to top, #ff4500 0%, #ff6500 30%, #ff8c00 60%, transparent 100%)',
+                  filter: 'blur(8px)',
+                  animation: 'fireCore 0.2s ease-in-out infinite alternate',
+                  borderRadius: '50% 50% 0 0'
+                }}
+              />
+              
+              {/* Side jets */}
+              <div 
+                className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+                style={{
+                  width: '40px',
+                  height: '100px',
+                  background: 'linear-gradient(to top, #ff6500 0%, #ffa500 40%, transparent 100%)',
+                  filter: 'blur(6px)',
+                  animation: 'fireJet 0.15s ease-in-out infinite alternate',
+                  borderRadius: '50% 50% 0 0'
+                }}
+              />
+              
+              <div 
+                className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+                style={{
+                  width: '35px',
+                  height: '90px',
+                  background: 'linear-gradient(to top, #ff8c00 0%, #ffb500 50%, transparent 100%)',
+                  filter: 'blur(4px)',
+                  animation: 'fireJet2 0.12s ease-in-out infinite alternate',
+                  borderRadius: '50% 50% 0 0'
+                }}
+              />
+              
+              <div 
+                className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+                style={{
+                  width: '30px',
+                  height: '80px',
+                  background: 'linear-gradient(to top, #ffa500 0%, #ffd700 60%, transparent 100%)',
+                  filter: 'blur(3px)',
+                  animation: 'fireJet3 0.1s ease-in-out infinite alternate',
+                  borderRadius: '50% 50% 0 0'
+                }}
+              />
+            </div>
+          )}
+          
           <div className={`w-32 h-32 flex items-center justify-center ${
             gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
           }`}
                style={{
-                 transform: `rotate(${astronautRotation}deg)`,
                  filter: gameState.phase === 'flying' ? 'brightness(1.2)' : 'brightness(1)'
                }}>
             <img 
