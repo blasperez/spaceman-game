@@ -29,8 +29,7 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-toast'],
-          'utils': ['axios', 'date-fns'],
+          'ui-vendor': ['lucide-react']
         }
       }
     }

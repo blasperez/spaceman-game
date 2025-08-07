@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "prebuild": "node copy-planets.cjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "start": "node server/gameServer.cjs",

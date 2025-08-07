@@ -156,48 +156,135 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
 
       {/* Moving planets - Improved */}
       <div className="absolute inset-0">
-        {/* Big planet */}
-        <div 
-          className="absolute rounded-full"
-          style={{ 
-            width: '120px',
-            height: '120px',
-            background: 'radial-gradient(circle at 30% 30%, #60A5FA, #3B82F6, #1E40AF)',
-            boxShadow: '0 0 50px rgba(59, 130, 246, 0.6), inset -15px -15px 30px rgba(0,0,0,0.4)',
-            left: `${120 + (gameState.phase === 'flying' ? -Date.now() * 0.003 % 240 : 0)}%`,
-            top: '20%',
+        {/* Planet 1 - Large */}
+        <img
+          src="/Planeta (1).png"
+          alt="Planet 1"
+          className="absolute"
+          style={{
+            width: '180px',
+            height: '180px',
+            left: `${120 + (gameState.phase === 'flying' ? -Date.now() * 0.002 % 240 : 0)}%`,
+            top: '15%',
             transform: 'translateX(-50%)',
-            zIndex: 1
+            zIndex: 1,
+            opacity: 0.9
+          }}
+          onError={(e) => {
+            e.currentTarget.src = '/Planeta (1).svg';
           }}
         />
 
-        {/* Medium planet */}
-        <div 
-          className="absolute rounded-full"
-          style={{ 
+        {/* Planet 2 - Very Large */}
+        <img
+          src="/Planeta (2).png"
+          alt="Planet 2"
+          className="absolute"
+          style={{
+            width: '250px',
+            height: '250px',
+            left: `${160 + (gameState.phase === 'flying' ? -Date.now() * 0.0015 % 280 : 0)}%`,
+            top: '55%',
+            transform: 'translateX(-50%)',
+            zIndex: 1,
+            opacity: 0.8
+          }}
+          onError={(e) => {
+            e.currentTarget.src = '/Planeta (2).svg';
+          }}
+        />
+
+        {/* Planet 3 - Medium */}
+        <img
+          src="/Planeta (3).png"
+          alt="Planet 3"
+          className="absolute"
+          style={{
+            width: '140px',
+            height: '140px',
+            left: `${140 + (gameState.phase === 'flying' ? -Date.now() * 0.003 % 260 : 0)}%`,
+            top: '35%',
+            transform: 'translateX(-50%)',
+            zIndex: 1,
+            opacity: 0.85
+          }}
+          onError={(e) => {
+            e.currentTarget.src = '/Planeta (3).svg';
+          }}
+        />
+
+        {/* Planet 4 - Large (Detailed) */}
+        <img
+          src="/Planeta (4).png"
+          alt="Planet 4"
+          className="absolute"
+          style={{
+            width: '200px',
+            height: '200px',
+            left: `${180 + (gameState.phase === 'flying' ? -Date.now() * 0.0025 % 300 : 0)}%`,
+            top: '5%',
+            transform: 'translateX(-50%)',
+            zIndex: 1,
+            opacity: 0.75
+          }}
+          onError={(e) => {
+            e.currentTarget.src = '/Planeta (4).svg';
+          }}
+        />
+
+        {/* Planet 5 - Small (Moon-like) */}
+        <img
+          src="/Planeta (5).png"
+          alt="Planet 5"
+          className="absolute"
+          style={{
             width: '80px',
             height: '80px',
-            background: 'radial-gradient(circle at 30% 30%, #A78BFA, #8B5CF6, #7C3AED)',
-            boxShadow: '0 0 40px rgba(139, 92, 246, 0.6), inset -10px -10px 20px rgba(0,0,0,0.4)',
-            left: `${180 + (gameState.phase === 'flying' ? -Date.now() * 0.005 % 280 : 0)}%`,
-            top: '60%',
+            left: `${150 + (gameState.phase === 'flying' ? -Date.now() * 0.004 % 250 : 0)}%`,
+            top: '70%',
             transform: 'translateX(-50%)',
-            zIndex: 1
+            zIndex: 1,
+            opacity: 0.9
+          }}
+          onError={(e) => {
+            e.currentTarget.src = '/Planeta (5).svg';
           }}
         />
 
-        {/* Small moon */}
-        <div 
-          className="absolute rounded-full"
-          style={{ 
-            width: '40px',
-            height: '40px',
-            background: 'radial-gradient(circle at 30% 30%, #FDE68A, #F59E0B, #D97706)',
-            boxShadow: '0 0 25px rgba(245, 158, 11, 0.6), inset -5px -5px 10px rgba(0,0,0,0.3)',
-            left: `${150 + (gameState.phase === 'flying' ? -Date.now() * 0.007 % 250 : 0)}%`,
-            top: '40%',
-            transform: 'translateX(-50%)',
-            zIndex: 1
+        {/* Additional random planets for variety */}
+        <img
+          src="/Planeta (1).png"
+          alt="Planet 1b"
+          className="absolute"
+          style={{
+            width: '100px',
+            height: '100px',
+            left: `${200 + (gameState.phase === 'flying' ? -Date.now() * 0.0035 % 320 : 0)}%`,
+            top: '45%',
+            transform: 'translateX(-50%) rotate(45deg)',
+            zIndex: 1,
+            opacity: 0.7
+          }}
+          onError={(e) => {
+            e.currentTarget.src = '/Planeta (1).svg';
+          }}
+        />
+
+        <img
+          src="/Planeta (3).png"
+          alt="Planet 3b"
+          className="absolute"
+          style={{
+            width: '120px',
+            height: '120px',
+            left: `${220 + (gameState.phase === 'flying' ? -Date.now() * 0.0028 % 340 : 0)}%`,
+            top: '25%',
+            transform: 'translateX(-50%) rotate(-30deg)',
+            zIndex: 1,
+            opacity: 0.6
+          }}
+          onError={(e) => {
+            e.currentTarget.src = '/Planeta (3).svg';
           }}
         />
       </div>
