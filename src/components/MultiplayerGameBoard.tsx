@@ -412,10 +412,10 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         }}
       >
         <div className="relative">
-          {/* Fire Jets - only when flying - HORIZONTAL */}
+          {/* Fire Jets - only when flying - HORIZONTAL - ONLY RED */}
           {gameState.phase === 'flying' && (
             <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6">
-              {/* Core fire jet */}
+              {/* Core fire jet - RED ONLY */}
               <div 
                 className="absolute left-0 top-1/2 transform -translate-y-1/2"
                 style={{
@@ -428,7 +428,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                 }}
               />
               
-              {/* Side jets */}
+              {/* Secondary red jet */}
               <div 
                 className="absolute left-0 top-1/2 transform -translate-y-1/2"
                 style={{
@@ -437,30 +437,6 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   background: 'linear-gradient(to left, #ff3300 0%, #ff6600 40%, transparent 100%)',
                   filter: 'blur(6px)',
                   animation: 'fireJet 0.15s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0'
-                }}
-              />
-              
-              <div 
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 translate-y-2"
-                style={{
-                  width: '90px',
-                  height: '20px',
-                  background: 'linear-gradient(to left, #ff5500 0%, #ff8800 50%, transparent 100%)',
-                  filter: 'blur(4px)',
-                  animation: 'fireJet2 0.12s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0'
-                }}
-              />
-              
-              <div 
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-y-2"
-                style={{
-                  width: '80px',
-                  height: '18px',
-                  background: 'linear-gradient(to left, #ff7700 0%, #ffaa00 60%, transparent 100%)',
-                  filter: 'blur(3px)',
-                  animation: 'fireJet3 0.1s ease-in-out infinite alternate',
                   borderRadius: '0 50% 50% 0'
                 }}
               />
