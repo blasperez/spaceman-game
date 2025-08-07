@@ -48,23 +48,34 @@ export const useGameSocket = (userId: string, userName: string) => {
 
   // Get WebSocket URL based on environment
   const getWebSocketUrl = () => {
+    console.log('🔍 WebSocket URL Detection:');
+    console.log('  VITE_WS_URL:', import.meta.env.VITE_WS_URL);
+    console.log('  VITE_WEBSOCKET_URL:', import.meta.env.VITE_WEBSOCKET_URL);
+    console.log('  PROD mode:', import.meta.env.PROD);
+    console.log('  Current host:', window.location.host);
+    
     // Check for VITE_WS_URL first
     if (import.meta.env.VITE_WS_URL) {
+      console.log('✅ Using VITE_WS_URL:', import.meta.env.VITE_WS_URL);
       return import.meta.env.VITE_WS_URL;
     }
     
     // Check for legacy VITE_WEBSOCKET_URL
     if (import.meta.env.VITE_WEBSOCKET_URL) {
+      console.log('✅ Using legacy VITE_WEBSOCKET_URL:', import.meta.env.VITE_WEBSOCKET_URL);
       return import.meta.env.VITE_WEBSOCKET_URL;
     }
     
     // Production: use same domain as app
     if (import.meta.env.PROD) {
       const currentHost = window.location.host;
-      return `wss://${currentHost}`;
+      const wsUrl = `wss://${currentHost}`;
+      console.log('✅ Using production URL:', wsUrl);
+      return wsUrl;
     }
     
     // Development URL
+    console.log('✅ Using development URL: ws://localhost:8080');
     return 'ws://localhost:8080';
   };
 
@@ -387,8 +398,12 @@ export const useGameSocket = (userId: string, userName: string) => {
 
   // Initialize connection
   useEffect(() => {
+    console.log('🎯 WebSocket useEffect triggered:', { userId, userName });
     if (userId && userName) {
+      console.log('👤 User available, initiating WebSocket connection...');
       connect();
+    } else {
+      console.log('⏳ Waiting for user authentication...');
     }
     
     return () => {

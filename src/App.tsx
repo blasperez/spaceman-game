@@ -12,6 +12,7 @@ import { StripeCheckout } from './components/StripeCheckout';
 import { SuccessPage } from './components/SuccessPage';
 import { CancelPage } from './components/CancelPage';
 import { SubscriptionStatus } from './components/SubscriptionStatus';
+import { DebugPanel } from './components/DebugPanel';
 import { useGameSocket } from './hooks/useGameSocket';
 import { Menu, BarChart3, Settings, Users, Maximize, Volume2, VolumeX, X, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { MultiplayerGameBoard } from './components/MultiplayerGameBoard';
@@ -1269,6 +1270,14 @@ function App() {
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      
+      {/* Debug Panel */}
+      <DebugPanel
+        user={null}
+        connectionStatus={'disconnected'}
+        isConnected={false}
+        gameData={null}
+      />
     </Router>
   );
 }
