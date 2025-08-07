@@ -47,14 +47,16 @@ BEGIN
     email,
     full_name,
     avatar_url,
-    provider
+    provider,
+    balance
   )
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuario'),
     NEW.raw_user_meta_data->>'avatar_url',
-    'google'
+    'google',
+    1000.00
   );
   RETURN NEW;
 END;
