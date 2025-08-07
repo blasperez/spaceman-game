@@ -6,7 +6,7 @@ interface RechargeModalProps {
   onClose: () => void;
 }
 
-const RECHARGE_AMOUNTS = [50, 100, 200, 500, 1000, 2000];
+const RECHARGE_AMOUNTS = [1, 5, 10, 50, 100, 200, 500, 1000, 2000];
 
 export const RechargeModal: React.FC<RechargeModalProps> = ({ onClose }) => {
   const [selectedAmount, setSelectedAmount] = useState(50);
@@ -29,8 +29,8 @@ export const RechargeModal: React.FC<RechargeModalProps> = ({ onClose }) => {
   const handleRecharge = () => {
     const amount = selectedAmount || parseFloat(customAmount);
     
-    if (!amount || amount < 50) {
-      setError('El monto mínimo es de 50 pesos mexicanos');
+    if (!amount || amount < 1) {
+      setError('El monto mínimo es de 1 peso mexicano');
       return;
     }
 
@@ -98,8 +98,8 @@ export const RechargeModal: React.FC<RechargeModalProps> = ({ onClose }) => {
                   type="number"
                   value={customAmount}
                   onChange={(e) => handleCustomAmountChange(e.target.value)}
-                  placeholder="50"
-                  min="50"
+                  placeholder="1"
+                  min="1"
                   max="10000"
                   className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-blue-400"
                 />
@@ -119,7 +119,7 @@ export const RechargeModal: React.FC<RechargeModalProps> = ({ onClose }) => {
               <div className="text-blue-300 text-sm">
                 <div className="font-medium mb-2">Información importante:</div>
                 <ul className="space-y-1 text-xs">
-                  <li>• Monto mínimo: $50 MXN</li>
+                  <li>• Monto mínimo: $1 MXN (para pruebas)</li>
                   <li>• Monto máximo: $10,000 MXN</li>
                   <li>• Conversión: 1 peso = 1 moneda virtual</li>
                   <li>• Procesamiento seguro con Stripe</li>

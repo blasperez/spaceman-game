@@ -1,178 +1,217 @@
 -- =====================================================
--- CONFIGURACIÓN COMPLETA PARA SISTEMA DE PAGOS STRIPE
+-- SCRIPT COMPLETO PARA CONFIGURAR SISTEMA DE PAGOS
+-- Basado en el esquema actual del usuario
 -- =====================================================
 
--- 1. CREAR TABLAS PRINCIPALES
+-- 1. CREAR TABLAS FALTANTES (si no existen)
 -- =====================================================
 
--- Tabla de wallets (saldo de usuarios)
-CREATE TABLE IF NOT EXISTS wallets (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+-- Tabla wallets (si no existe)
+CREATE TABLE IF NOT EXISTS public.wallets (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid REFERENCES auth.users(id),
   balance numeric DEFAULT 0,
-  created_at timestamp DEFAULT now()
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT wallets_pkey PRIMARY KEY (id),
+  CONSTRAINT wallets_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
 
--- Tabla de transacciones (recargas, retiros, juegos)
-CREATE TABLE IF NOT EXISTS transactions (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
-  type text CHECK (type IN ('deposit', 'withdrawal', 'game')),
-  amount numeric,
-  status text CHECK (status IN ('pending', 'completed', 'failed')),
-  stripe_payment_id text,
-  created_at timestamp DEFAULT now()
-);
-
--- Tabla de solicitudes de retiro
-CREATE TABLE IF NOT EXISTS withdrawal_requests (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+-- Tabla withdrawal_requests (si no existe)
+CREATE TABLE IF NOT EXISTS public.withdrawal_requests (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid REFERENCES auth.users(id),
   amount numeric,
   bank_clabe text,
   bank_name text,
-  status text CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  status text CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'completed'::text, 'failed'::text])),
   stripe_payout_id text,
-  created_at timestamp DEFAULT now()
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT withdrawal_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT withdrawal_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
 
--- 2. AGREGAR CAMPOS A TABLA PROFILES
+-- 2. AGREGAR COLUMNAS FALTANTES A PROFILES
 -- =====================================================
 
--- Agregar fecha de nacimiento y edad a profiles
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS birthdate date;
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS age integer;
+-- Agregar birthdate si no existe
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'profiles' AND column_name = 'birthdate') THEN
+        ALTER TABLE public.profiles ADD COLUMN birthdate date;
+    END IF;
+END $$;
 
--- 3. ACTIVAR ROW LEVEL SECURITY (RLS)
+-- Agregar age si no existe
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'profiles' AND column_name = 'age') THEN
+        ALTER TABLE public.profiles ADD COLUMN age integer;
+    END IF;
+END $$;
+
+-- 3. HABILITAR RLS EN TODAS LAS TABLAS
 -- =====================================================
 
--- Activar RLS en todas las tablas
-ALTER TABLE wallets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE withdrawal_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.withdrawal_requests ENABLE ROW LEVEL SECURITY;
 
--- 4. CREAR POLÍTICAS DE SEGURIDAD (SIN ERRORES)
+-- 4. CREAR POLÍTICAS RLS (con DROP IF EXISTS para evitar errores)
 -- =====================================================
-
--- Eliminar políticas existentes si las hay
-DROP POLICY IF EXISTS "Users can view their wallet" ON wallets;
-DROP POLICY IF EXISTS "Users can update their wallet" ON wallets;
-DROP POLICY IF EXISTS "Users can insert their wallet" ON wallets;
-
-DROP POLICY IF EXISTS "Users can view their transactions" ON transactions;
-DROP POLICY IF EXISTS "Users can insert their transactions" ON transactions;
-DROP POLICY IF EXISTS "Users can update their transactions" ON transactions;
-
-DROP POLICY IF EXISTS "Users can view their withdrawals" ON withdrawal_requests;
-DROP POLICY IF EXISTS "Users can insert their withdrawals" ON withdrawal_requests;
-DROP POLICY IF EXISTS "Users can update their withdrawals" ON withdrawal_requests;
 
 -- Políticas para wallets
-CREATE POLICY "Users can view their wallet" ON wallets FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "Users can update their wallet" ON wallets FOR UPDATE USING (user_id = auth.uid());
-CREATE POLICY "Users can insert their wallet" ON wallets FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "Users can view their wallet" ON public.wallets;
+CREATE POLICY "Users can view their wallet" ON public.wallets
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert their wallet" ON public.wallets;
+CREATE POLICY "Users can insert their wallet" ON public.wallets
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their wallet" ON public.wallets;
+CREATE POLICY "Users can update their wallet" ON public.wallets
+  FOR UPDATE USING (auth.uid() = user_id);
 
 -- Políticas para transactions
-CREATE POLICY "Users can view their transactions" ON transactions FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "Users can insert their transactions" ON transactions FOR INSERT WITH CHECK (user_id = auth.uid());
-CREATE POLICY "Users can update their transactions" ON transactions FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "Users can view their transactions" ON public.transactions;
+CREATE POLICY "Users can view their transactions" ON public.transactions
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert their transactions" ON public.transactions;
+CREATE POLICY "Users can insert their transactions" ON public.transactions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their transactions" ON public.transactions;
+CREATE POLICY "Users can update their transactions" ON public.transactions
+  FOR UPDATE USING (auth.uid() = user_id);
 
 -- Políticas para withdrawal_requests
-CREATE POLICY "Users can view their withdrawals" ON withdrawal_requests FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "Users can insert their withdrawals" ON withdrawal_requests FOR INSERT WITH CHECK (user_id = auth.uid());
-CREATE POLICY "Users can update their withdrawals" ON withdrawal_requests FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "Users can view their withdrawal requests" ON public.withdrawal_requests;
+CREATE POLICY "Users can view their withdrawal requests" ON public.withdrawal_requests
+  FOR SELECT USING (auth.uid() = user_id);
 
--- 5. FUNCIÓN PARA CALCULAR EDAD
+DROP POLICY IF EXISTS "Users can insert their withdrawal requests" ON public.withdrawal_requests;
+CREATE POLICY "Users can insert their withdrawal requests" ON public.withdrawal_requests
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their withdrawal requests" ON public.withdrawal_requests;
+CREATE POLICY "Users can update their withdrawal requests" ON public.withdrawal_requests
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- 5. CREAR FUNCIONES NECESARIAS
 -- =====================================================
 
-CREATE OR REPLACE FUNCTION calculate_age(birthdate date)
+-- Eliminar funciones y triggers existentes
+DROP TRIGGER IF EXISTS update_age_trigger ON public.profiles;
+DROP TRIGGER IF EXISTS trigger_update_age ON public.profiles;
+DROP FUNCTION IF EXISTS public.update_age_from_birthdate();
+DROP FUNCTION IF EXISTS public.calculate_age(date);
+
+-- Función para calcular edad
+CREATE OR REPLACE FUNCTION public.calculate_age(birthdate date)
 RETURNS integer AS $$
 BEGIN
   RETURN EXTRACT(YEAR FROM AGE(birthdate));
 END;
 $$ LANGUAGE plpgsql;
 
--- 6. TRIGGER PARA ACTUALIZAR EDAD AUTOMÁTICAMENTE
--- =====================================================
-
-CREATE OR REPLACE FUNCTION update_age_from_birthdate()
+-- Trigger para actualizar edad automáticamente
+CREATE OR REPLACE FUNCTION public.update_age_from_birthdate()
 RETURNS TRIGGER AS $$
 BEGIN
   IF NEW.birthdate IS NOT NULL THEN
-    NEW.age = calculate_age(NEW.birthdate);
+    NEW.age = public.calculate_age(NEW.birthdate);
   END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Crear trigger si no existe
-DROP TRIGGER IF EXISTS trigger_update_age ON profiles;
-CREATE TRIGGER trigger_update_age
-  BEFORE INSERT OR UPDATE ON profiles
+CREATE TRIGGER update_age_trigger
+  BEFORE INSERT OR UPDATE ON public.profiles
   FOR EACH ROW
-  EXECUTE FUNCTION update_age_from_birthdate();
+  EXECUTE FUNCTION public.update_age_from_birthdate();
 
--- 7. FUNCIÓN PARA INCREMENTAR SALDO DE WALLET
+-- 6. FUNCIONES RPC PARA OPERACIONES DE PAGOS
 -- =====================================================
 
-CREATE OR REPLACE FUNCTION increment_wallet_balance(p_user_id uuid, p_amount numeric)
-RETURNS void AS $$
-BEGIN
-  -- Insertar o actualizar wallet
-  INSERT INTO wallets (user_id, balance)
-  VALUES (p_user_id, p_amount)
-  ON CONFLICT (user_id)
-  DO UPDATE SET balance = wallets.balance + EXCLUDED.balance;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- Eliminar funciones existentes si las hay
+DROP FUNCTION IF EXISTS public.increment_wallet_balance(uuid, numeric);
+DROP FUNCTION IF EXISTS public.increment_wallet_balance(p_user_id uuid, p_amount numeric);
+DROP FUNCTION IF EXISTS public.withdraw_from_wallet(uuid, numeric, text, text);
+DROP FUNCTION IF EXISTS public.withdraw_from_wallet(p_user_id uuid, p_amount numeric, p_bank_clabe text, p_bank_name text);
 
--- 8. FUNCIÓN PARA RETIRAR DE WALLET
--- =====================================================
-
-CREATE OR REPLACE FUNCTION withdraw_from_wallet(
-  p_user_id uuid,
-  p_amount numeric,
-  p_bank_clabe text,
-  p_bank_name text
+-- Función para incrementar balance de wallet
+CREATE OR REPLACE FUNCTION public.increment_wallet_balance(
+  user_uuid uuid,
+  amount_to_add numeric
 )
 RETURNS void AS $$
-DECLARE
-  current_balance numeric;
 BEGIN
-  -- Obtener saldo actual
-  SELECT balance INTO current_balance 
-  FROM wallets 
-  WHERE user_id = p_user_id;
-  
-  -- Verificar saldo suficiente
-  IF current_balance IS NULL OR current_balance < p_amount THEN
-    RAISE EXCEPTION 'Saldo insuficiente';
-  END IF;
-  
-  -- Descontar saldo
-  UPDATE wallets 
-  SET balance = balance - p_amount 
-  WHERE user_id = p_user_id;
-  
-  -- Crear solicitud de retiro
-  INSERT INTO withdrawal_requests (user_id, amount, bank_clabe, bank_name, status)
-  VALUES (p_user_id, p_amount, p_bank_clabe, p_bank_name, 'pending');
+  INSERT INTO public.wallets (user_id, balance)
+  VALUES (user_uuid, amount_to_add)
+  ON CONFLICT (user_id)
+  DO UPDATE SET 
+    balance = wallets.balance + amount_to_add,
+    created_at = now();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 9. ÍNDICES PARA MEJOR RENDIMIENTO
+-- Función para retirar de wallet y crear solicitud
+CREATE OR REPLACE FUNCTION public.withdraw_from_wallet(
+  user_uuid uuid,
+  amount_to_withdraw numeric,
+  bank_clabe_param text,
+  bank_name_param text
+)
+RETURNS void AS $$
+BEGIN
+  -- Verificar que el usuario tiene suficiente balance
+  IF (SELECT balance FROM public.wallets WHERE user_id = user_uuid) < amount_to_withdraw THEN
+    RAISE EXCEPTION 'Insufficient balance';
+  END IF;
+  
+  -- Reducir balance
+  UPDATE public.wallets 
+  SET balance = balance - amount_to_withdraw
+  WHERE user_id = user_uuid;
+  
+  -- Crear solicitud de retiro
+  INSERT INTO public.withdrawal_requests (
+    user_id, 
+    amount, 
+    bank_clabe, 
+    bank_name, 
+    status
+  ) VALUES (
+    user_uuid, 
+    amount_to_withdraw, 
+    bank_clabe_param, 
+    bank_name_param, 
+    'pending'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 7. CREAR ÍNDICES PARA MEJOR RENDIMIENTO
 -- =====================================================
 
--- Índices para búsquedas rápidas
-CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON wallets(user_id);
-CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
-CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
-CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
-CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_user_id ON withdrawal_requests(user_id);
-CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_status ON withdrawal_requests(status);
+CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON public.wallets(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_user_id ON public.withdrawal_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON public.transactions(created_at);
+CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_created_at ON public.withdrawal_requests(created_at);
 
--- 10. MENSAJE DE CONFIRMACIÓN
+-- 8. MENSAJE DE CONFIRMACIÓN
 -- =====================================================
 
--- Esta query no hace nada, solo confirma que todo se ejecutó
-SELECT '✅ Configuración de Stripe y Supabase completada exitosamente' as status;
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Configuración de base de datos completada exitosamente';
+  RAISE NOTICE '📊 Tablas configuradas: wallets, transactions, withdrawal_requests';
+  RAISE NOTICE '🔒 RLS habilitado en todas las tablas';
+  RAISE NOTICE '⚡ Funciones RPC creadas para operaciones de pagos';
+  RAISE NOTICE '🎯 Sistema listo para recibir pagos con Stripe';
+END $$;
