@@ -34,12 +34,9 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
   currentUserId
 }) => {
   const [stars, setStars] = useState<Array<{ x: number; y: number; size: number; speed: number }>>([]);
-  const [clouds, setClouds] = useState<Array<{ x: number; y: number; size: number; speed: number; opacity: number }>>([]);
-  const [fireParticles, setFireParticles] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; type: 'flame' | 'spark' | 'smoke' }>>([]);
   const [showPlayersModal, setShowPlayersModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [rocketShake, setRocketShake] = useState(0);
-  const [turbineRotation, setTurbineRotation] = useState(0);
+  const [astronautRotation, setAstronautRotation] = useState(0);
 
   // Mobile detection
   useEffect(() => {
@@ -77,24 +74,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
       setStars(newStars);
     };
 
-    // Clouds for depth
-    const generateClouds = () => {
-      const cloudCount = 8;
-      const newClouds = [];
-      for (let i = 0; i < cloudCount; i++) {
-        newClouds.push({
-          x: Math.random() * 200,
-          y: Math.random() * 100,
-          size: 80 + Math.random() * 120,
-          speed: 0.3 + Math.random() * 0.7,
-          opacity: 0.1 + Math.random() * 0.2
-        });
-      }
-      setClouds(newClouds);
-    };
-
     generateStars();
-    generateClouds();
   }, []);
 
   // Animate background elements
@@ -108,112 +88,22 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             x: star.x - star.speed < -10 ? 200 : star.x - star.speed
           }))
         );
-
-        // Move clouds
-        setClouds(prevClouds => 
-          prevClouds.map(cloud => ({
-            ...cloud,
-            x: cloud.x - cloud.speed < -20 ? 200 : cloud.x - cloud.speed
-          }))
-        );
       }, 50);
 
       return () => clearInterval(interval);
     }
   }, [gameState.phase]);
 
-  // Rocket shake and turbine animation
+  // Astronaut rotation
   useEffect(() => {
     if (gameState.phase === 'flying') {
-      const shakeInterval = setInterval(() => {
-        setRocketShake(Math.sin(Date.now() * 0.01) * 2);
+      const rotationInterval = setInterval(() => {
+        setAstronautRotation(prev => prev + 1);
       }, 50);
 
-      const turbineInterval = setInterval(() => {
-        setTurbineRotation(prev => prev + 30);
-      }, 50);
-
-      return () => {
-        clearInterval(shakeInterval);
-        clearInterval(turbineInterval);
-      };
-    } else {
-      setRocketShake(0);
+      return () => clearInterval(rotationInterval);
     }
   }, [gameState.phase]);
-
-  // Enhanced cartoon fire effect
-  useEffect(() => {
-    if (gameState.phase === 'flying') {
-      const interval = setInterval(() => {
-        setFireParticles(prevParticles => {
-          const newParticles = [...prevParticles];
-          
-          // Generate cartoon fire particles
-          for (let i = 0; i < 8; i++) {
-            const particleId = Date.now() + Math.random() * 1000 + i;
-            const particleType = Math.random() > 0.7 ? 'smoke' : Math.random() > 0.3 ? 'flame' : 'spark';
-            
-            newParticles.push({
-              x: 35, // From rocket rear
-              y: 50 + (Math.random() - 0.5) * 10,
-              opacity: 1,
-              size: particleType === 'smoke' ? 15 + Math.random() * 10 : 8 + Math.random() * 12,
-              id: particleId,
-              type: particleType
-            });
-          }
-          
-          // Update existing particles
-          const updatedParticles = newParticles.map(particle => ({
-            ...particle,
-            x: particle.x - (particle.type === 'smoke' ? 2 : 3),
-            y: particle.y + (particle.type === 'smoke' ? (Math.random() - 0.5) * 2 : 0),
-            opacity: particle.opacity - (particle.type === 'smoke' ? 0.015 : 0.025),
-            size: particle.size + (particle.type === 'smoke' ? 0.5 : -0.1)
-          })).filter(particle => particle.opacity > 0 && particle.x > -10);
-          
-          return updatedParticles;
-        });
-      }, 50);
-
-      return () => clearInterval(interval);
-    } else {
-      setFireParticles([]);
-    }
-  }, [gameState.phase]);
-
-  const getFireParticleStyle = (particle: typeof fireParticles[0]) => {
-    switch (particle.type) {
-      case 'flame':
-        return {
-          background: `radial-gradient(circle, 
-            rgba(255, 255, 100, ${particle.opacity}) 0%, 
-            rgba(255, 200, 0, ${particle.opacity * 0.8}) 30%, 
-            rgba(255, 100, 0, ${particle.opacity * 0.6}) 60%, 
-            rgba(255, 0, 0, 0) 100%)`,
-          filter: 'blur(2px)',
-          animation: 'flameFlicker 0.2s infinite'
-        };
-      case 'spark':
-        return {
-          background: `radial-gradient(circle, 
-            rgba(255, 255, 255, ${particle.opacity}) 0%, 
-            rgba(255, 255, 0, ${particle.opacity * 0.8}) 50%, 
-            rgba(255, 200, 0, 0) 100%)`,
-          filter: 'blur(1px)',
-          boxShadow: `0 0 10px rgba(255, 255, 0, ${particle.opacity})`
-        };
-      case 'smoke':
-        return {
-          background: `radial-gradient(circle, 
-            rgba(100, 100, 100, ${particle.opacity * 0.3}) 0%, 
-            rgba(50, 50, 50, ${particle.opacity * 0.2}) 50%, 
-            rgba(0, 0, 0, 0) 100%)`,
-          filter: 'blur(4px)'
-        };
-    }
-  };
 
   const calculatePosition = () => {
     if (gameState.phase === 'waiting') return { x: 50, y: 70 };
@@ -225,7 +115,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     return { x: 50, y };
   };
 
-  const rocketPosition = calculatePosition();
+  const astronautPosition = calculatePosition();
 
   const getMultiplierColor = () => {
     if (gameState.multiplier < 1.5) return 'text-green-400';
@@ -240,47 +130,10 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900">
-      {/* Animated CSS */}
-      <style jsx>{`
-        @keyframes flameFlicker {
-          0%, 100% { transform: scale(1) rotate(0deg); }
-          33% { transform: scale(1.1) rotate(-2deg); }
-          66% { transform: scale(0.9) rotate(2deg); }
-        }
-        
-        @keyframes rocketFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes turbineSpin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-
       {/* Deep background layer */}
       <div className="absolute inset-0 opacity-30">
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/20 to-black/40" />
       </div>
-
-      {/* Clouds layer (furthest back) */}
-      {clouds.map((cloud, index) => (
-        <div
-          key={`cloud-${index}`}
-          className="absolute rounded-full"
-          style={{
-            left: `${cloud.x}%`,
-            top: `${cloud.y}%`,
-            width: `${cloud.size}px`,
-            height: `${cloud.size * 0.6}px`,
-            background: `radial-gradient(ellipse, rgba(255, 255, 255, ${cloud.opacity}) 0%, transparent 70%)`,
-            filter: 'blur(8px)',
-            transform: 'translateX(-50%)'
-          }}
-        />
-      ))}
 
       {/* Stars layer */}
       <div className="absolute inset-0">
@@ -301,142 +154,187 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         ))}
       </div>
 
-      {/* Moving planets with cartoon style */}
+      {/* Moving planets - Improved */}
       <div className="absolute inset-0">
         {/* Big planet */}
         <div 
           className="absolute rounded-full"
           style={{ 
-            width: '150px',
-            height: '150px',
-            background: 'linear-gradient(135deg, #FF6B6B 0%, #C44569 50%, #793FDF 100%)',
-            boxShadow: '0 0 50px rgba(199, 69, 105, 0.5), inset -20px -20px 40px rgba(0,0,0,0.3)',
-            left: `${100 + (gameState.phase === 'flying' ? -Date.now() * 0.005 % 200 : 0)}%`,
+            width: '120px',
+            height: '120px',
+            background: 'radial-gradient(circle at 30% 30%, #60A5FA, #3B82F6, #1E40AF)',
+            boxShadow: '0 0 50px rgba(59, 130, 246, 0.6), inset -15px -15px 30px rgba(0,0,0,0.4)',
+            left: `${120 + (gameState.phase === 'flying' ? -Date.now() * 0.003 % 240 : 0)}%`,
             top: '20%',
             transform: 'translateX(-50%)',
             zIndex: 1
           }}
-        >
-          {/* Planet rings */}
-          <div className="absolute inset-0 rounded-full border-4 border-purple-300/30 transform rotate-12" 
-               style={{ width: '200%', height: '50%', left: '-50%', top: '25%' }} />
-        </div>
+        />
+
+        {/* Medium planet */}
+        <div 
+          className="absolute rounded-full"
+          style={{ 
+            width: '80px',
+            height: '80px',
+            background: 'radial-gradient(circle at 30% 30%, #A78BFA, #8B5CF6, #7C3AED)',
+            boxShadow: '0 0 40px rgba(139, 92, 246, 0.6), inset -10px -10px 20px rgba(0,0,0,0.4)',
+            left: `${180 + (gameState.phase === 'flying' ? -Date.now() * 0.005 % 280 : 0)}%`,
+            top: '60%',
+            transform: 'translateX(-50%)',
+            zIndex: 1
+          }}
+        />
 
         {/* Small moon */}
         <div 
           className="absolute rounded-full"
           style={{ 
-            width: '60px',
-            height: '60px',
-            background: 'linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%)',
-            boxShadow: '0 0 30px rgba(78, 205, 196, 0.5), inset -10px -10px 20px rgba(0,0,0,0.3)',
-            left: `${150 + (gameState.phase === 'flying' ? -Date.now() * 0.008 % 200 : 0)}%`,
-            top: '60%',
+            width: '40px',
+            height: '40px',
+            background: 'radial-gradient(circle at 30% 30%, #FDE68A, #F59E0B, #D97706)',
+            boxShadow: '0 0 25px rgba(245, 158, 11, 0.6), inset -5px -5px 10px rgba(0,0,0,0.3)',
+            left: `${150 + (gameState.phase === 'flying' ? -Date.now() * 0.007 % 250 : 0)}%`,
+            top: '40%',
             transform: 'translateX(-50%)',
             zIndex: 1
           }}
         />
       </div>
 
-      {/* Fire particles */}
-      {fireParticles.map((particle) => (
-        <div
-          key={particle.id}
-          className="absolute rounded-full pointer-events-none"
+      {/* Continuous fire jet effect */}
+      {gameState.phase === 'flying' && (
+        <div 
+          className="absolute"
           style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            width: `${particle.size}px`,
-            height: `${particle.size}px`,
-            opacity: particle.opacity,
-            ...getFireParticleStyle(particle),
+            left: `${astronautPosition.x - 8}%`,
+            top: `${astronautPosition.y}%`,
+            transform: 'translate(-100%, -50%)',
             zIndex: 5
           }}
-        />
-      ))}
+        >
+          {/* Fire jet layers - creates continuous flame effect */}
+          <div 
+            className="absolute"
+            style={{
+              width: '200px',
+              height: '80px',
+              background: `linear-gradient(to left, 
+                transparent 0%,
+                rgba(255, 100, 0, 0.1) 30%,
+                rgba(255, 200, 0, 0.3) 50%,
+                rgba(255, 255, 100, 0.5) 70%,
+                rgba(255, 255, 255, 0.8) 90%,
+                rgba(255, 255, 255, 0.9) 95%,
+                transparent 100%)`,
+              filter: 'blur(15px)',
+              animation: 'fireJet 0.1s infinite',
+              transform: 'scaleY(2)'
+            }}
+          />
+          
+          <div 
+            className="absolute"
+            style={{
+              width: '250px',
+              height: '60px',
+              background: `linear-gradient(to left, 
+                transparent 0%,
+                rgba(255, 0, 0, 0.1) 20%,
+                rgba(255, 100, 0, 0.2) 40%,
+                rgba(255, 200, 0, 0.4) 60%,
+                rgba(255, 255, 0, 0.6) 80%,
+                transparent 100%)`,
+              filter: 'blur(20px)',
+              animation: 'fireJet2 0.15s infinite',
+              transform: 'translateY(-10px)'
+            }}
+          />
+          
+          <div 
+            className="absolute"
+            style={{
+              width: '180px',
+              height: '40px',
+              background: `linear-gradient(to left, 
+                transparent 0%,
+                rgba(255, 150, 0, 0.2) 30%,
+                rgba(255, 200, 50, 0.4) 60%,
+                rgba(255, 255, 150, 0.7) 85%,
+                transparent 100%)`,
+              filter: 'blur(10px)',
+              animation: 'fireJet3 0.12s infinite',
+              transform: 'translateY(10px) scaleY(1.5)'
+            }}
+          />
 
-      {/* Cartoon Rocket */}
+          {/* Inner bright core */}
+          <div 
+            className="absolute"
+            style={{
+              width: '100px',
+              height: '30px',
+              background: `linear-gradient(to left, 
+                transparent 0%,
+                rgba(255, 255, 255, 0.9) 70%,
+                rgba(255, 255, 200, 1) 90%,
+                transparent 100%)`,
+              filter: 'blur(5px)',
+              animation: 'fireCore 0.08s infinite',
+              left: '80px',
+              top: '25px'
+            }}
+          />
+        </div>
+      )}
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes fireJet {
+          0%, 100% { opacity: 0.8; transform: scaleY(2) translateX(0); }
+          50% { opacity: 1; transform: scaleY(2.2) translateX(-5px); }
+        }
+        
+        @keyframes fireJet2 {
+          0%, 100% { opacity: 0.7; transform: translateY(-10px) scaleX(1); }
+          50% { opacity: 0.9; transform: translateY(-10px) scaleX(1.1); }
+        }
+        
+        @keyframes fireJet3 {
+          0%, 100% { opacity: 0.6; transform: translateY(10px) scaleY(1.5); }
+          50% { opacity: 0.8; transform: translateY(10px) scaleY(1.7); }
+        }
+        
+        @keyframes fireCore {
+          0%, 100% { opacity: 0.9; width: 100px; }
+          50% { opacity: 1; width: 120px; }
+        }
+      `}</style>
+
+      {/* Original Astronaut */}
       <div
         className="absolute transition-all duration-100"
         style={{
-          left: `${rocketPosition.x}%`,
-          top: `${rocketPosition.y}%`,
-          transform: `translate(-50%, -50%) rotate(-45deg) translateY(${rocketShake}px)`,
+          left: `${astronautPosition.x}%`,
+          top: `${astronautPosition.y}%`,
+          transform: `translate(-50%, -50%)`,
           zIndex: 10,
           filter: gameState.phase === 'crashed' ? 'brightness(0.7)' : 'none'
         }}
       >
-        {/* Rocket body */}
         <div className="relative">
-          {/* Main body */}
-          <div 
-            className="w-24 h-40 relative"
-            style={{
-              background: 'linear-gradient(135deg, #FF6B6B 0%, #C44569 50%, #793FDF 100%)',
-              borderRadius: '50% 50% 20% 20%',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.3), inset -5px -5px 15px rgba(0,0,0,0.2)'
-            }}
-          >
-            {/* Cockpit window */}
-            <div 
-              className="absolute top-4 left-1/2 transform -translate-x-1/2 w-12 h-12 rounded-full"
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                boxShadow: 'inset 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(102, 126, 234, 0.5)'
-              }}
+          <div className={`w-32 h-32 flex items-center justify-center ${
+            gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
+          }`}
+               style={{
+                 transform: `rotate(${astronautRotation}deg)`,
+                 filter: gameState.phase === 'flying' ? 'brightness(1.2)' : 'brightness(1)'
+               }}>
+            <img 
+              src="/png-png-urbanbrush-13297 copy.png" 
+              alt="Spaceman"
+              className="w-full h-full object-contain"
             />
-            
-            {/* Side fins */}
-            <div 
-              className="absolute -left-4 top-20 w-8 h-16"
-              style={{
-                background: 'linear-gradient(135deg, #C44569 0%, #793FDF 100%)',
-                clipPath: 'polygon(100% 0%, 0% 50%, 100% 100%)',
-                boxShadow: '-5px 0 10px rgba(0,0,0,0.2)'
-              }}
-            />
-            <div 
-              className="absolute -right-4 top-20 w-8 h-16"
-              style={{
-                background: 'linear-gradient(135deg, #C44569 0%, #793FDF 100%)',
-                clipPath: 'polygon(0% 0%, 100% 50%, 0% 100%)',
-                boxShadow: '5px 0 10px rgba(0,0,0,0.2)'
-              }}
-            />
-            
-            {/* Turbine */}
-            <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-8">
-              <div 
-                className="w-full h-full"
-                style={{
-                  background: 'linear-gradient(135deg, #2D3436 0%, #636E72 100%)',
-                  borderRadius: '0 0 50% 50%',
-                  boxShadow: 'inset 0 -5px 10px rgba(0,0,0,0.3)'
-                }}
-              >
-                {/* Rotating turbine blades */}
-                <div 
-                  className="absolute inset-0 flex items-center justify-center"
-                  style={{ transform: `rotate(${turbineRotation}deg)` }}
-                >
-                  <div className="absolute w-12 h-1 bg-gray-600" />
-                  <div className="absolute w-12 h-1 bg-gray-600 transform rotate-60" />
-                  <div className="absolute w-12 h-1 bg-gray-600 transform rotate-120" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Astronaut in rocket */}
-          <div 
-            className="absolute top-3 left-1/2 transform -translate-x-1/2 w-8 h-8"
-            style={{ filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.5))' }}
-          >
-            <div className="w-full h-full rounded-full bg-white relative">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-b from-gray-100 to-gray-300" />
-              <div className="absolute top-2 left-1 w-2 h-2 bg-black rounded-full" />
-              <div className="absolute top-2 right-1 w-2 h-2 bg-black rounded-full" />
-            </div>
           </div>
         </div>
       </div>
@@ -449,10 +347,39 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
               {gameState.countdown > 0 ? '🚀 COLOCA TUS APUESTAS' : '🚀 PRÓXIMO VUELO'}
             </div>
             
-            {/* Countdown with cartoon style */}
+            {/* Countdown Circle */}
             <div className="relative w-32 h-32 mx-auto mb-4">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 animate-pulse" />
-              <div className="absolute inset-2 rounded-full bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center">
+              <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="50"
+                  stroke="rgba(255,255,255,0.2)"
+                  strokeWidth="8"
+                  fill="transparent"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="50"
+                  stroke="url(#gradient)"
+                  strokeWidth="8"
+                  fill="transparent"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 50}`}
+                  strokeDashoffset={`${2 * Math.PI * 50 * (1 - gameState.countdown / 20)}`}
+                  className="transition-all duration-1000 ease-linear"
+                />
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#3B82F6" />
+                    <stop offset="50%" stopColor="#8B5CF6" />
+                    <stop offset="100%" stopColor="#EF4444" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              
+              <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-5xl font-bold text-white drop-shadow-2xl animate-pulse">
                   {gameState.countdown}
                 </span>
