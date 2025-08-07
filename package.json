@@ -12,8 +12,14 @@
     "prebuild": "node copy-planets.cjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
+<<<<<<< Current (Your changes)
     "start": "node server/gameServer.cjs",
     "postinstall": "npm run build"
+=======
+    "start": "node serve.js",
+    "check-planets": "node copy-planets.cjs",
+    "check-env": "node check-env.cjs"
+>>>>>>> Incoming (Background Agent changes)
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^2.1.0",

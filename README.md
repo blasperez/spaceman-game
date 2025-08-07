@@ -95,11 +95,15 @@ npm start
 
 <<<<<<< Current (Your changes)
 <<<<<<< Current (Your changes)
+<<<<<<< Current (Your changes)
 MIT License - ver archivo LICENSE para detalles.
 
 ---
 
 ¡Disfruta jugando Spaceman! 🚀✨
+=======
+Todos los derechos reservados.
+>>>>>>> Incoming (Background Agent changes)
 =======
 Todos los derechos reservados.
 >>>>>>> Incoming (Background Agent changes)

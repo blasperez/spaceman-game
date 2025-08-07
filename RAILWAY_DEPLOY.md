@@ -12,13 +12,19 @@ Antes de hacer deploy, asegúrate de que las siguientes imágenes estén en el d
 
 Si no tienes las imágenes PNG, el juego usará los archivos SVG de placeholder que se crearon automáticamente.
 
-## 🔧 Solución del Error de Build
+## 🔧 Soluciones a Errores de Build
 
-El error de build que experimentaste fue causado por referencias a librerías no instaladas en `vite.config.ts`. Esto ya fue corregido:
+### 1. Error de librerías no instaladas
+El error de build fue causado por referencias a librerías no instaladas en `vite.config.ts`. **SOLUCIONADO**: 
+- Eliminadas referencias a `@radix-ui/react-dialog` y `@radix-ui/react-toast`
+- Eliminadas referencias a `axios` y `date-fns`
 
-1. Eliminadas referencias a `@radix-ui/react-dialog` y `@radix-ui/react-toast`
-2. Eliminadas referencias a `axios` y `date-fns`
-3. Simplificada la configuración de `manualChunks`
+### 2. Build colgado en Railway
+El build se colgaba debido al script `postinstall`. **SOLUCIONADO**:
+- Eliminado el script `postinstall` que causaba un loop
+- Añadido archivo `.npmrc` con timeouts más largos
+- Creado `nixpacks.toml` con configuración específica
+- Actualizado `railway.toml` con comandos de build
 
 ## 📝 Variables de Entorno Necesarias
 
@@ -45,34 +51,47 @@ NODE_ENV=production
 
 ## 🚂 Pasos para Deploy
 
-1. **Commit y Push**: Asegúrate de hacer commit de todos los cambios
+1. **Verificar archivos localmente**:
+   ```bash
+   npm run check-planets  # Verifica imágenes de planetas
+   npm run check-env      # Verifica variables de entorno
+   ```
+
+2. **Commit y Push**:
    ```bash
    git add .
-   git commit -m "Fix build errors and add planet images"
+   git commit -m "Fix Railway build issues"
    git push origin main
    ```
 
-2. **En Railway**:
+3. **En Railway**:
    - Ve a tu proyecto en Railway
-   - Las variables de entorno ya deberían estar configuradas
-   - Railway detectará automáticamente los cambios y comenzará el build
+   - Verifica las variables de entorno
+   - El build debería completarse sin errores ahora
 
-3. **Verificación**: 
-   - El build debería completarse sin errores
-   - Verifica que el health check responda en `/health`
-   - Las imágenes de planetas deberían aparecer en el juego
+## 🐛 Si el Build Sigue Fallando
 
-## 🐛 Debugging
+1. **Limpiar caché en Railway**:
+   - En Railway dashboard, ve a Settings > Build > Clear build cache
 
-Si encuentras problemas:
+2. **Verificar logs**:
+   - Los logs deberían mostrar el progreso del build
+   - Si se queda colgado, verifica que no haya scripts infinitos
 
-1. Revisa los logs de build en Railway
-2. Verifica que todas las variables de entorno estén configuradas
-3. Ejecuta `node check-env.cjs` localmente para verificar
+3. **Build manual** (último recurso):
+   ```bash
+   # Localmente
+   npm run build
+   # Commit la carpeta dist
+   git add dist -f
+   git commit -m "Add dist folder"
+   git push
+   ```
 
 ## 🎮 Mejoras Aplicadas
 
-- Planetas ahora usan imágenes PNG reales con efecto parallax
-- Movimiento de derecha a izquierda simulando movimiento hacia adelante
-- Diferentes velocidades y tamaños para crear sensación de profundidad
-- Fallback a SVG si las imágenes PNG no están disponibles
+- ✅ Planetas ahora usan imágenes PNG reales con efecto parallax
+- ✅ Movimiento de derecha a izquierda simulando movimiento hacia adelante
+- ✅ Diferentes velocidades y tamaños para crear sensación de profundidad
+- ✅ Fallback a SVG si las imágenes PNG no están disponibles
+- ✅ Build optimizado para Railway sin loops infinitos

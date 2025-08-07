@@ -1,0 +1,19 @@
+# nixpacks.toml
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs-22_x", "npm-10_x"]
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = ["npm ci --no-audit --no-fund"]
+
+[phases.build]
+dependsOn = ["install"]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"
+
+[variables]
+NODE_ENV = "production"
