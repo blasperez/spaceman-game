@@ -476,3 +476,14 @@
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out;
 }
+
+/* Fire jet animations for spaceship */
+@keyframes fireJet {
+  0%, 100% { opacity: 0.9; transform: scaleX(1) scaleY(0.8) translateX(0); }
+  50% { opacity: 1; transform: scaleX(1.2) scaleY(0.9) translateX(-5px); }
+}
+
+@keyframes fireCore {
+  0%, 100% { opacity: 1; width: 120px; height: 40px; }
+  50% { opacity: 1; width: 140px; height: 45px; }
+}

@@ -491,7 +491,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         }}
       >
         <div className="relative">
-          {/* Fire Jets - only when flying - HORIZONTAL - ONLY RED */}
+          {/* Fire Jets - only when flying - HORIZONTAL */}
           {gameState.phase === 'flying' && (
             <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6">
               {/* Core fire jet - RED ONLY */}
@@ -516,6 +516,32 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   background: 'linear-gradient(to left, #ff3300 0%, #ff6600 40%, transparent 100%)',
                   filter: 'blur(6px)',
                   animation: 'fireJet 0.15s ease-in-out infinite alternate',
+                  borderRadius: '0 50% 50% 0'
+                }}
+              />
+              
+              {/* Third fire layer - yellow/orange */}
+              <div 
+                className="absolute left-0 top-1/2 transform -translate-y-1/2"
+                style={{
+                  width: '80px',
+                  height: '20px',
+                  background: 'linear-gradient(to left, #ffaa00 0%, #ffcc44 50%, transparent 100%)',
+                  filter: 'blur(4px)',
+                  animation: 'fireJet 0.12s ease-in-out infinite alternate',
+                  borderRadius: '0 50% 50% 0'
+                }}
+              />
+              
+              {/* Fourth fire layer - white core */}
+              <div 
+                className="absolute left-0 top-1/2 transform -translate-y-1/2"
+                style={{
+                  width: '60px',
+                  height: '15px',
+                  background: 'linear-gradient(to left, #ffffff 0%, #ffeeaa 60%, transparent 100%)',
+                  filter: 'blur(2px)',
+                  animation: 'fireJet 0.1s ease-in-out infinite alternate',
                   borderRadius: '0 50% 50% 0'
                 }}
               />
