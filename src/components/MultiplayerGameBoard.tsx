@@ -436,23 +436,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             }}
           />
 
-          {/* Inner bright core */}
-          <div 
-            className="absolute"
-            style={{
-              width: '100px',
-              height: '30px',
-              background: `linear-gradient(to left, 
-                transparent 0%,
-                rgba(255, 255, 255, 0.9) 70%,
-                rgba(255, 255, 200, 1) 90%,
-                transparent 100%)`,
-              filter: 'blur(5px)',
-              animation: 'fireCore 0.08s infinite',
-              left: '80px',
-              top: '25px'
-            }}
-          />
+
         </div>
       )}
 
