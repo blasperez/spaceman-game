@@ -1226,7 +1226,7 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/cancel" element={<CancelPage />} />
-        <Route path="/health" element={<div>OK</div>} />
+        <Route path="/health" element={<div style={{padding: '20px', fontFamily: 'monospace'}}>OK</div>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
