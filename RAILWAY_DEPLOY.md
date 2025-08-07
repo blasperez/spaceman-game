@@ -22,9 +22,9 @@ El error de build fue causado por referencias a librerías no instaladas en `vit
 ### 2. Build colgado en Railway
 El build se colgaba debido al script `postinstall`. **SOLUCIONADO**:
 - Eliminado el script `postinstall` que causaba un loop
-- Añadido archivo `.npmrc` con timeouts más largos
-- Creado `nixpacks.toml` con configuración específica
-- Actualizado `railway.toml` con comandos de build
+- Simplificado `.npmrc` con configuración mínima
+- Eliminado `nixpacks.toml` para usar detección automática
+- Especificado Node.js 20.x en `package.json` y `.nvmrc`
 
 ## 📝 Variables de Entorno Necesarias
 
