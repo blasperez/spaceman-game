@@ -5,8 +5,12 @@ import path from 'path';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    port: process.env.PORT ? parseInt(process.env.PORT) : 8081,
-    host: true,
+    port: parseInt(process.env.PORT || '3000'),
+    host: '0.0.0.0',
+    strictPort: true,
+    watch: {
+      usePolling: true
+    }
   },
   plugins: [
     react(),
