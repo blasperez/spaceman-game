@@ -526,7 +526,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                 style={{
                   width: '80px',
                   height: '20px',
-                  background: 'linear-gradient(to left, #ffaa00 0%, #ffcc44 50%, transparent 100%)',
+                  background: 'linear-gradient(to left,rgba(255, 0, 0, 0.49) 0%,rgba(255, 72, 0, 0.29) 50%, transparent 100%)',
                   filter: 'blur(4px)',
                   animation: 'fireJet 0.12s ease-in-out infinite alternate',
                   borderRadius: '0 50% 50% 0'
