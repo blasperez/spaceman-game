@@ -532,7 +532,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   borderRadius: '0 50% 50% 0'
                 }}
               />
-    
+            </div>
+          )}
           
           <div className={`w-32 h-32 flex items-center justify-center ${
             gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
