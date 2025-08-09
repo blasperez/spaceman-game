@@ -147,10 +147,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 space-background">
-      {/* New diagonal parallax background layers (static PNG stays centered) */}
-      <div className="space-drift-slow" style={{ zIndex: 0 }} />
-      <div className="space-drift-mid" style={{ zIndex: 1 }} />
-      <div className="space-drift-fast" style={{ zIndex: 2 }} />
+      {/* Diagonal drift layers removed per request. We'll incline movement for stars/planets instead. */}
       {/* Deep background layer */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/20 to-black/40" />
@@ -176,7 +173,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                 `0 0 ${star.size * 3}px rgba(255, 255, 255, 0.7), 0 0 ${star.size * 6}px rgba(200, 200, 255, 0.3)` :
                 `0 0 ${star.size * 2}px rgba(255, 255, 255, 0.5)`,
               animationDelay: `${index * 0.1}s`,
-              animationDuration: `${2 + Math.random() * 4}s`
+              animationDuration: `${2 + Math.random() * 4}s`,
+              transform: 'rotate(-12deg)'
             }}
           />
         ))}
@@ -252,7 +250,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '250px',
             left: `${planetPositions.planet2.x}%`,
             top: `${planetPositions.planet2.y}%`,
-            transform: 'translateX(-50%)',
+            transform: 'translateX(-50%) rotate(-12deg)',
             zIndex: -3,
             opacity: 0.4,
             filter: 'blur(1px)'
@@ -271,7 +269,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '200px',
             left: `${planetPositions.planet4.x}%`,
             top: `${planetPositions.planet4.y}%`,
-            transform: 'translateX(-50%)',
+            transform: 'translateX(-50%) rotate(-12deg)',
             zIndex: -2,
             opacity: 0.5,
             filter: 'blur(0.5px)'
@@ -291,7 +289,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '180px',
             left: `${planetPositions.planet1.x}%`,
             top: `${planetPositions.planet1.y}%`,
-            transform: 'translateX(-50%)',
+            transform: 'translateX(-50%) rotate(-12deg)',
             zIndex: -1,
             opacity: 0.7
           }}
@@ -309,7 +307,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '140px',
             left: `${planetPositions.planet3.x}%`,
             top: `${planetPositions.planet3.y}%`,
-            transform: 'translateX(-50%)',
+            transform: 'translateX(-50%) rotate(-12deg)',
             zIndex: -1,
             opacity: 0.75
           }}
@@ -328,7 +326,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '80px',
             left: `${planetPositions.planet5.x}%`,
             top: `${planetPositions.planet5.y}%`,
-            transform: 'translateX(-50%)',
+            transform: 'translateX(-50%) rotate(-12deg)',
             zIndex: 5,
             opacity: 0.9
           }}
@@ -346,7 +344,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '100px',
             left: `${planetPositions.planet1b.x}%`,
             top: `${planetPositions.planet1b.y}%`,
-            transform: 'translateX(-50%) rotate(45deg)',
+            transform: 'translateX(-50%) rotate(33deg)',
             zIndex: 6,
             opacity: 0.8
           }}
@@ -390,7 +388,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         <div className="relative">
           {/* Fire Jets - only when flying - HORIZONTAL */}
           {gameState.phase === 'flying' && (
-            <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6">
+            <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6" style={{ transform: 'translate(-28px, -50%) rotate(-12deg)' }}>
               {/* Core fire jet - RED ONLY */}
               <div 
                 className="absolute left-0 top-1/2 transform -translate-y-1/2"
@@ -400,7 +398,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   background: 'linear-gradient(to left, #cc1100 0%, #ff3300 30%, #ff5500 60%, transparent 100%)',
                   filter: 'blur(8px)',
                   animation: 'fireCore 0.2s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0'
+                  borderRadius: '0 50% 50% 0',
+                  transform: 'skewX(-6deg)'
                 }}
               />
               
@@ -413,7 +412,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   background: 'linear-gradient(to left, #ff3300 0%, #ff6600 40%, transparent 100%)',
                   filter: 'blur(6px)',
                   animation: 'fireJet 0.15s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0'
+                  borderRadius: '0 50% 50% 0',
+                  transform: 'skewX(-6deg)'
                 }}
               />
               
@@ -426,7 +426,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   background: 'linear-gradient(to left,rgba(255, 0, 0, 0.49) 0%,rgba(255, 72, 0, 0.29) 50%, transparent 100%)',
                   filter: 'blur(4px)',
                   animation: 'fireJet 0.12s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0'
+                  borderRadius: '0 50% 50% 0',
+                  transform: 'skewX(-6deg)'
                 }}
               />
             </div>
