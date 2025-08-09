@@ -78,6 +78,12 @@
   }
 }
 
+/* Utility: prevent active transform on specific buttons */
+.no-active-transform,
+.no-active-transform:active {
+  transform: none !important;
+}
+
 /* Custom animations for mobile betting panel */
 @keyframes slideUp {
   from {

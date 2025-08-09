@@ -143,7 +143,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
       <div
 
         ref={panelRef}
-        className={`fixed bottom-0 left-0 right-0 z-40 bg-black/40 backdrop-blur-xl border-t border-white/20 transition-all duration-300 ease-out ${
+        className={`fixed bottom-0 left-0 right-0 z-40 bg-black/40 backdrop-blur-xl border-t border-white/20 transition-transform duration-300 ease-out ${
           isCollapsed ? 'translate-y-[calc(100%-80px)]' : 'translate-y-0'
         }`}
         style={{
@@ -178,7 +178,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
             <button
               onClick={handleMainAction}
               disabled={!canBet && !canCashOut}
-              className={`px-8 py-3 rounded-2xl font-bold text-white transition-all ${
+              className={`px-8 py-3 rounded-2xl font-bold text-white transition-colors no-active-transform ${
                 canCashOut 
                   ? 'bg-red-600/90 hover:bg-red-700/90 shadow-lg shadow-red-500/30' 
                   : canBet
@@ -252,7 +252,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
               <div className="text-white/90 text-sm font-medium">Controles Automáticos</div>
               <button
                 onClick={() => setShowAutoControls(!showAutoControls)}
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors no-active-transform"
               >
                 {showAutoControls ? <ChevronUp size={16} className="text-white" /> : <ChevronDown size={16} className="text-white" />}
               </button>
@@ -341,7 +341,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
       {/* Toggle Button Below Panel */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed bottom-0 left-1/2 transform -translate-x-1/2 mb-20 z-50 bg-black/60 backdrop-blur-md rounded-full p-2 shadow-lg hover:bg-black/80 transition-colors"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 mb-20 z-50 bg-black/60 backdrop-blur-md rounded-full p-2 shadow-lg hover:bg-black/80 transition-colors no-active-transform"
         aria-label={isCollapsed ? 'Show betting panel' : 'Hide betting panel'}
       >
         {isCollapsed ? (
