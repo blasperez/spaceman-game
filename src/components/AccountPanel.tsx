@@ -4,6 +4,7 @@ import { usePayments } from '../hooks/usePayments';
 import { TransactionHistory } from './TransactionHistory';
 import { PaymentMethods } from './PaymentMethods';
 import { WithdrawalForm } from './WithdrawalForm';
+import { AddCardModal } from './AddCardModal';
 import { RechargeModal } from './RechargeModal';
 import { supabase } from '../lib/supabase';
 import { 
@@ -42,11 +43,12 @@ type TabType = 'dashboard' | 'games' | 'transactions' | 'payments' | 'settings';
 
 export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
   const { user, signOut } = useAuth();
-  const { userBalance, loading } = usePayments();
+  const { userBalance, loading, refreshData } = usePayments();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [showWithdrawalForm, setShowWithdrawalForm] = useState(false);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [gameHistory, setGameHistory] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -492,7 +494,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
           <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-4 md:p-8">
             <h2 className="text-xl font-semibold text-white mb-6">Métodos de Pago</h2>
             <PaymentMethods 
-              onAddNew={() => setShowPaymentMethods(true)}
+              onAddNew={() => setShowAddCardModal(true)}
               showAddButton={true}
             />
           </div>
@@ -612,12 +614,22 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
             </div>
             <div className="p-6">
               <PaymentMethods 
-                onAddNew={() => {}}
+                onAddNew={() => setShowAddCardModal(true)}
                 showAddButton={true}
               />
             </div>
           </div>
         </div>
+      )}
+
+      {showAddCardModal && (
+        <AddCardModal 
+          onClose={() => setShowAddCardModal(false)}
+          onAdded={() => {
+            setShowAddCardModal(false);
+            refreshData();
+          }}
+        />
       )}
     </div>
   );

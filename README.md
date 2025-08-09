@@ -91,6 +91,15 @@ npm start
 - Validación de edad (18+)
 - WebSocket seguro con autenticación
 
+## 💳 Pagos en la App (Stripe + Supabase)
+
+- Agregar tarjeta y pagar sin redirecciones mediante modales dentro del juego.
+- Edge Functions usadas:
+  - `stripe-create-setup-intent`: crea un SetupIntent para agregar tarjeta.
+  - `stripe-attach-payment-method`: adjunta la tarjeta al cliente y guarda método de pago en Supabase (sin exponer datos sensibles).
+  - `stripe-create-payment-intent`: crea y confirma un PaymentIntent con tarjeta guardada (off_session) para recargas en la app.
+- Cumplimiento PCI: los datos de tarjeta se manejan solo por Stripe Elements y el backend de Stripe. En Supabase se guardan únicamente datos enmascarados.
+
 ## 📄 Licencia
 
 <<<<<<< Current (Your changes)
