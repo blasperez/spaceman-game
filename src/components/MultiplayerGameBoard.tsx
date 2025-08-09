@@ -428,7 +428,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             </div>
           )}
           
-          <div className={`w-32 h-32 flex items-center justify-center ${
+          <div className={`w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 flex items-center justify-center ${
             gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
           }`}
                style={{
@@ -501,7 +501,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
       {gameState.phase === 'flying' && (
         <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <div className="text-center">
-            <span className={`text-8xl font-bold ${getMultiplierColor()} drop-shadow-2xl`}
+            <span className={`text-5xl sm:text-7xl md:text-8xl font-bold ${getMultiplierColor()} drop-shadow-2xl`}
                   style={{ 
                     textShadow: '0 0 30px currentColor, 0 0 60px currentColor',
                     animation: 'pulse 0.5s ease-in-out infinite'
