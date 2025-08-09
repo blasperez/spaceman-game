@@ -146,7 +146,11 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
   const otherBets = activeBets.filter(bet => bet.playerId !== currentUserId);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900">
+    <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 space-background">
+      {/* New diagonal parallax background layers (static PNG stays centered) */}
+      <div className="space-drift-slow" style={{ zIndex: -30 }} />
+      <div className="space-drift-mid" style={{ zIndex: -25 }} />
+      <div className="space-drift-fast" style={{ zIndex: -20 }} />
       {/* Deep background layer */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/20 to-black/40" />
