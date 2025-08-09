@@ -477,6 +477,11 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   borderRadius: '0 50% 50% 0'
                 }}
               />
+<<<<<<< Current (Your changes)
+>>>>>>> Incoming (Background Agent changes)
+=======
+              
+
 >>>>>>> Incoming (Background Agent changes)
             </div>
           )}
