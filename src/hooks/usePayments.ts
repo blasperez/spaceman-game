@@ -335,6 +335,23 @@ export const usePayments = () => {
     ]);
   };
 
+  const payWithSavedMethod = async (amount: number, paymentMethodId?: string) => {
+    if (!user) throw new Error('User not authenticated');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('No session');
+
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-create-payment-intent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ amount: Math.round(amount * 100), currency: 'mxn', paymentMethodId }),
+    });
+    if (!res.ok) throw new Error('Payment failed');
+    return res.json();
+  };
+
   return {
     paymentMethods,
     transactions,
@@ -347,6 +364,7 @@ export const usePayments = () => {
     savePaymentMethod,
     deletePaymentMethod,
     setDefaultPaymentMethod,
-    refreshData
+    refreshData,
+    payWithSavedMethod
   };
 };

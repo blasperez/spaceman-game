@@ -144,6 +144,8 @@ export const RechargeModal: React.FC<RechargeModalProps> = ({ onClose }) => {
               Recargar ${selectedAmount || customAmount || 0} MXN
             </button>
           </div>
+
+          <div className="text-center text-white/60 text-xs">Para pagar en la app, agrega una tarjeta y usa el botón "Pagar ahora" en el siguiente paso.</div>
         </div>
       </div>
 

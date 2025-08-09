@@ -4,8 +4,8 @@ import { usePayments } from '../hooks/usePayments';
 import { TransactionHistory } from './TransactionHistory';
 import { PaymentMethods } from './PaymentMethods';
 import { WithdrawalForm } from './WithdrawalForm';
+import { AddCardModal } from './AddCardModal';
 import { RechargeModal } from './RechargeModal';
-import { UserProfileForm } from './UserProfileForm';
 import { supabase } from '../lib/supabase';
 import { 
   User,
@@ -43,12 +43,12 @@ type TabType = 'dashboard' | 'games' | 'transactions' | 'payments' | 'settings';
 
 export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
   const { user, signOut } = useAuth();
-  const { userBalance, loading } = usePayments();
+  const { userBalance, loading, refreshData } = usePayments();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [showWithdrawalForm, setShowWithdrawalForm] = useState(false);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
-  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [gameHistory, setGameHistory] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -180,33 +180,6 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
     }
   };
 
-  const handleProfileUpdate = async (updates: any) => {
-    if (!user) return;
-    try {
-      const updatesDb: any = {
-        full_name: updates.full_name,
-        phone: updates.phone_number,
-        birthdate: updates.date_of_birth,
-        country: updates.country,
-      };
-      Object.keys(updatesDb).forEach((k) => updatesDb[k] === undefined && delete updatesDb[k]);
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          ...updatesDb,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-      await fetchUserData();
-    } catch (e) {
-      console.error('Error updating profile:', e);
-      throw e;
-    }
-  };
-
   const sidebarItems = [
     { id: 'dashboard', label: 'Mi tablero', icon: Home, active: true },
     { id: 'games', label: 'Juegos', icon: BarChart3, disabled: false },
@@ -232,7 +205,6 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                 <button 
                   className="absolute bottom-2 right-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full py-1 px-3 flex items-center gap-1"
                   type="button"
-                  onClick={() => setShowProfileForm(true)}
                 >
                   <Camera size={12} />
                   Cambiar foto
@@ -305,9 +277,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
                   Métodos de Pago
                 </button>
 
-                <button 
-                  onClick={() => setShowProfileForm(true)}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold rounded-full py-2" type="button">
+                <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold rounded-full py-2" type="button">
                   Editar Perfil
                 </button>
               </div>
@@ -524,7 +494,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
           <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-4 md:p-8">
             <h2 className="text-xl font-semibold text-white mb-6">Métodos de Pago</h2>
             <PaymentMethods 
-              onAddNew={() => setShowPaymentMethods(true)}
+              onAddNew={() => setShowAddCardModal(true)}
               showAddButton={true}
             />
           </div>
@@ -543,57 +513,23 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
       <div className="relative w-full max-w-7xl bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden">
-        {/* Header - Gradient banner with avatar/name */}
-        <div className="relative overflow-hidden border-b border-white/10">
-          <div className="p-6 md:p-8 bg-gradient-to-r from-indigo-600/30 via-fuchsia-600/20 to-purple-600/30">
-            <div className="flex items-start md:items-center justify-between gap-4">
-              <div className="flex items-start md:items-center gap-4">
-                <div className="relative">
-                  <img
-                    src={
-                      (userProfile?.avatar_url || user?.user_metadata?.avatar_url) ??
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.full_name || (user as any)?.name || 'Usuario')}&background=random&color=fff&size=128`
-                    }
-                    alt="Avatar"
-                    className="w-14 h-14 md:w-16 md:h-16 rounded-2xl border-2 border-white/30 shadow-lg object-cover"
-                  />
-                  <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]"></span>
-                </div>
-                <div>
-                  <h1 className="text-xl md:text-2xl font-bold text-white">
-                    {userProfile?.full_name || (user as any)?.name || 'Tu Perfil'}
-                  </h1>
-                  <p className="text-xs md:text-sm text-white/80">
-                    {(user as any)?.email || userProfile?.email || 'email@ejemplo.com'}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] md:text-xs px-2 py-1 rounded-full bg-white/10 text-white/80 border border-white/20">
-                      ID: {user?.id?.slice(0, 8) || '—'}
-                    </span>
-                    <span className="text-[11px] md:text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                      Balance: ${new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 }).format(Math.floor(userBalance?.balance || 0))}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 md:gap-3">
-                <button
-                  onClick={() => setShowProfileForm(true)}
-                  className="px-3 py-2 text-xs md:text-sm rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors"
-                >
-                  Editar Perfil
-                </button>
-                <button aria-label="Notificaciones" className="text-gray-200/80 hover:text-white transition-colors">
-                  <Bell size={18} />
-                </button>
-                <button
-                  onClick={onClose}
-                  className="text-gray-200/80 hover:text-white transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
+        {/* Header - Mobile/Desktop */}
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10">
+          <div>
+            <h1 className="text-lg font-semibold text-white">Mi panel de finanzas</h1>
+            <p className="text-xs font-normal text-gray-400">Bienvenido al portal de pagos Spaceman</p>
+          </div>
+          
+          <div className="flex items-center gap-2 md:gap-4">
+            <button aria-label="Notificaciones" className="text-gray-400 hover:text-white transition-colors">
+              <Bell size={16} />
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
           </div>
         </div>
 
@@ -678,10 +614,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
             </div>
             <div className="p-6">
               <PaymentMethods 
-                onAddNew={() => {
-                  setShowPaymentMethods(false);
-                  setShowRechargeModal(true);
-                }}
+                onAddNew={() => setShowAddCardModal(true)}
                 showAddButton={true}
               />
             </div>
@@ -689,23 +622,13 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
         </div>
       )}
 
-      {showProfileForm && userProfile && (
-        <UserProfileForm
-          user={{
-            id: userProfile.id,
-            email: userProfile.email || (user as any)?.email || '',
-            full_name: userProfile.full_name || (user as any)?.name || '',
-            phone_number: userProfile.phone || '',
-            date_of_birth: userProfile.birthdate || '',
-            country: userProfile.country || '',
-            city: userProfile.city || '',
-            address: userProfile.address || '',
-            document_type: userProfile.document_type || '',
-            document_number: userProfile.document_number || '',
-            kyc_status: userProfile.kyc_verified ? 'verified' : 'pending',
+      {showAddCardModal && (
+        <AddCardModal 
+          onClose={() => setShowAddCardModal(false)}
+          onAdded={() => {
+            setShowAddCardModal(false);
+            refreshData();
           }}
-          onUpdate={handleProfileUpdate}
-          onClose={() => setShowProfileForm(false)}
         />
       )}
     </div>
