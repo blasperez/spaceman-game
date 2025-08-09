@@ -436,7 +436,23 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             }}
           />
 
-
+          {/* Inner bright core */}
+          <div 
+            className="absolute"
+            style={{
+              width: '100px',
+              height: '30px',
+              background: `linear-gradient(to left, 
+                transparent 0%,
+                rgba(255, 255, 255, 0.9) 70%,
+                rgba(255, 255, 200, 1) 90%,
+                transparent 100%)`,
+              filter: 'blur(5px)',
+              animation: 'fireCore 0.08s infinite',
+              left: '80px',
+              top: '25px'
+            }}
+          />
         </div>
       )}
 
@@ -516,7 +532,21 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   borderRadius: '0 50% 50% 0'
                 }}
               />
-    
+              
+              {/* Fourth fire layer - white core */}
+              <div 
+                className="absolute left-0 top-1/2 transform -translate-y-1/2"
+                style={{
+                  width: '60px',
+                  height: '15px',
+                  background: 'linear-gradient(to left, #ffffff 0%, #ffeeaa 60%, transparent 100%)',
+                  filter: 'blur(2px)',
+                  animation: 'fireJet 0.1s ease-in-out infinite alternate',
+                  borderRadius: '0 50% 50% 0'
+                }}
+              />
+            </div>
+          )}
           
           <div className={`w-32 h-32 flex items-center justify-center ${
             gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
