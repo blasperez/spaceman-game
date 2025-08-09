@@ -678,7 +678,10 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
             </div>
             <div className="p-6">
               <PaymentMethods 
-                onAddNew={() => {}}
+                onAddNew={() => {
+                  setShowPaymentMethods(false);
+                  setShowRechargeModal(true);
+                }}
                 showAddButton={true}
               />
             </div>
