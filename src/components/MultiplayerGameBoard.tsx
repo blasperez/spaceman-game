@@ -430,59 +430,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
                   transform: 'skewX(-6deg)'
                 }}
               />
-<<<<<<< Current (Your changes)
-=======
-              
-              {/* Fourth fire layer - white core */}
-              <div 
-                className="absolute left-0 top-1/2 transform -translate-y-1/2"
-                style={{
-                  width: '60px',
-                  height: '15px',
-                  background: 'linear-gradient(to left, #ffffff 0%, #ffeeaa 60%, transparent 100%)',
-                  filter: 'blur(2px)',
-                  animation: 'fireJet 0.1s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0'
-                }}
-              />
-<<<<<<< Current (Your changes)
->>>>>>> Incoming (Background Agent changes)
-=======
-              
-              {/* Fourth fire layer - white core */}
-              <div 
-                className="absolute left-0 top-1/2 transform -translate-y-1/2"
-                style={{
-                  width: '60px',
-                  height: '15px',
-                  background: 'linear-gradient(to left, #ffffff 0%, #ffeeaa 60%, transparent 100%)',
-                  filter: 'blur(2px)',
-                  animation: 'fireJet 0.1s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0'
-                }}
-              />
-<<<<<<< Current (Your changes)
->>>>>>> Incoming (Background Agent changes)
-=======
-              
-              {/* Fourth fire layer - white core */}
-              <div 
-                className="absolute left-0 top-1/2 transform -translate-y-1/2"
-                style={{
-                  width: '60px',
-                  height: '15px',
-                  background: 'linear-gradient(to left, #ffffff 0%, #ffeeaa 60%, transparent 100%)',
-                  filter: 'blur(2px)',
-                  animation: 'fireJet 0.1s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0'
-                }}
-              />
-<<<<<<< Current (Your changes)
->>>>>>> Incoming (Background Agent changes)
-=======
-              
-
->>>>>>> Incoming (Background Agent changes)
+ 
             </div>
           )}
           
