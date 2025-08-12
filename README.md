@@ -107,3 +107,24 @@ MIT License - ver archivo LICENSE para detalles.
 ---
 
 ¡Disfruta jugando Spaceman! 🚀✨
+<<<<<<< Updated upstream
+=======
+<<<<<<< Current (Your changes)
+<<<<<<< Current (Your changes)
+<<<<<<< Current (Your changes)
+=======
+Todos los derechos reservados.
+>>>>>>> Incoming (Background Agent changes)
+=======
+Todos los derechos reservados.
+>>>>>>> Incoming (Background Agent changes)
+=======
+Todos los derechos reservados.
+>>>>>>> Incoming (Background Agent changes)
+=======
+>>>>>>> Incoming (Background Agent changes)
+=======
+>>>>>>> Incoming (Background Agent changes)
+=======
+>>>>>>> Incoming (Background Agent changes)
+>>>>>>> Stashed changes
