@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import 'dotenv/config';
+
 // Script para verificar variables de entorno requeridas
 
 const requiredEnvVars = [

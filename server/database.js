@@ -1,3 +1,4 @@
+import 'dotenv/config';
 // server/database.js - Convertido a ES modules
 import pkg from 'pg';
 const { Pool } = pkg;

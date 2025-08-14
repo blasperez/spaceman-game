@@ -1,4 +1,5 @@
 // server/database.cjs - CommonJS para ser usado por gameServer.cjs
+require('dotenv').config();
 const { Pool } = require('pg');
 
 if (!process.env.DATABASE_URL) {

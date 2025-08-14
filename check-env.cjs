@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+require('dotenv').config();
+
 // Script para verificar variables de entorno requeridas
 
 const requiredEnvVars = [
@@ -16,7 +18,9 @@ const requiredEnvVars = [
   
   // App
   'VITE_APP_URL',
-  'VITE_WS_URL',
+  // Aceptamos cualquiera de estas dos
+  // 'VITE_WS_URL',
+  // 'VITE_WEBSOCKET_URL',
   'PORT',
   'NODE_ENV'
 ];
@@ -35,6 +39,16 @@ requiredEnvVars.forEach(varName => {
     allPresent = false;
   }
 });
+
+// Manejo especial para WS URL (acepta cualquiera de las dos)
+const hasWs = !!(process.env.VITE_WS_URL || process.env.VITE_WEBSOCKET_URL);
+if (!hasWs) {
+  console.log('❌ VITE_WS_URL/VITE_WEBSOCKET_URL: FALTA (se acepta cualquiera de las dos)');
+  missing.push('VITE_WS_URL or VITE_WEBSOCKET_URL');
+  allPresent = false;
+} else {
+  console.log(`✅ WS URL: ${process.env.VITE_WS_URL || process.env.VITE_WEBSOCKET_URL}`);
+}
 
 console.log('\n' + '='.repeat(50) + '\n');
 
