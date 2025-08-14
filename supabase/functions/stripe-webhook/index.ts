@@ -73,9 +73,31 @@ async function handleEvent(event: Stripe.Event) {
     case 'customer.subscription.deleted':
       await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
       break;
+
+    case 'account.updated':
+      await handleAccountUpdated(event.data.object as Stripe.Account);
+      break;
       
     default:
       console.log(`Unhandled event type: ${event.type}`);
+  }
+}
+
+async function handleAccountUpdated(account: Stripe.Account) {
+  try {
+    const connectAccountId = account.id;
+    await supabase
+      .from('stripe_connect_accounts')
+      .update({
+        payouts_enabled: account.payouts_enabled ?? false,
+        charges_enabled: account.charges_enabled ?? false,
+        details_submitted: account.details_submitted ?? false,
+        requirements_due: (account.requirements as any)?.currently_due ?? null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('connect_account_id', connectAccountId);
+  } catch (error) {
+    console.error('Error updating connect account status:', error);
   }
 }
 

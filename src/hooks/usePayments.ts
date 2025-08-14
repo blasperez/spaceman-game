@@ -350,6 +350,53 @@ export const usePayments = () => {
     return res.json();
   };
 
+  const createConnectAccount = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('No session');
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-connect-create-account`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  };
+
+  const getConnectOnboardingLink = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('No session');
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-connect-onboarding-link`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  };
+
+  const getConnectStatus = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('No session');
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-connect-account-status`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  };
+
+  const requestConnectWithdrawal = async (amount: number) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('No session');
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-connect-request-withdrawal`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ amount: Math.round(amount * 100), currency: 'mxn' }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  };
+
   return {
     paymentMethods,
     transactions,
@@ -363,6 +410,10 @@ export const usePayments = () => {
     deletePaymentMethod,
     setDefaultPaymentMethod,
     refreshData,
-    payWithSavedMethod
+    payWithSavedMethod,
+    createConnectAccount,
+    getConnectOnboardingLink,
+    getConnectStatus,
+    requestConnectWithdrawal,
   };
 };
