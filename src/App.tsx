@@ -788,20 +788,7 @@ function GameApp() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <p className="text-white text-lg mb-4">Cargando...</p>
-          
-          {/* Emergency reset button */}
-          <button
-            onClick={async () => {
-              console.log('🚨 Emergency reset triggered');
-              await supabase.auth.signOut();
-              localStorage.clear();
-              sessionStorage.clear();
-              window.location.reload();
-            }}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
-          >
-            🔄 Reiniciar si no carga
-          </button>
+          {/* Removed emergency reload button to avoid confusing UX */}
         </div>
       </div>
     );
