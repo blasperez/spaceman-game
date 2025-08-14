@@ -1328,8 +1328,9 @@ function GameApp() {
       {/* Gain Popup */}
       {gainPopup && (
         <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center">
-          <div className="animate-[gainPop_1.5s_ease-out_forwards] px-4 py-2 rounded-2xl text-2xl font-extrabold text-green-300" style={{
-            textShadow: '0 0 12px rgba(34,197,94,0.9), 0 0 24px rgba(16,185,129,0.7)'
+          <div className="px-4 py-2 rounded-2xl text-2xl font-extrabold text-green-300" style={{
+            textShadow: '0 0 12px rgba(34,197,94,0.9), 0 0 24px rgba(16,185,129,0.7)',
+            animation: 'gainPop 1.5s ease-out forwards'
           }}>
             +{Math.floor(gainPopup.amount)}
             <span className="ml-2">💰</span>

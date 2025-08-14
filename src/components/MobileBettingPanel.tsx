@@ -337,7 +337,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
       {/* Toggle Button Below Panel - center fixed */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed bottom-[72px] left-1/2 -translate-x-1/2 z-50 bg-black/60 backdrop-blur-md rounded-full p-2 shadow-[0_0_14px_rgba(255,255,255,0.3)] hover:bg-black/80 transition-colors no-active-transform"
+        className="fixed bottom-[116px] left-1/2 -translate-x-1/2 z-50 bg-black/60 backdrop-blur-md rounded-full p-2 shadow-[0_0_14px_rgba(255,255,255,0.3)] hover:bg-black/80 transition-colors no-active-transform"
         aria-label={isCollapsed ? 'Show betting panel' : 'Hide betting panel'}
       >
         {isCollapsed ? (
