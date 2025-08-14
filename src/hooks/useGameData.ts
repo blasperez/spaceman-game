@@ -66,13 +66,19 @@ export const useGameData = (userId: string | undefined) => {
     try {
       const { data, error } = await supabase
         .from('game_history')
-        .select('*')
+        .select('id,user_id,game_id,bet_amount,win_amount,multiplier,game_type,status,session_id,metadata,created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (error) throw error;
-      setGameHistory(data || []);
+      const normalized = (data || []).map((g: any) => ({
+        ...g,
+        bet_amount: Number(g.bet_amount) || 0,
+        win_amount: Number(g.win_amount) || 0,
+        multiplier: Number(g.multiplier) || 0,
+      }));
+      setGameHistory(normalized);
     } catch (error) {
       console.error('Error fetching game history:', error);
     }
@@ -108,14 +114,19 @@ export const useGameData = (userId: string | undefined) => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const totalGames = data.length;
-        const totalBets = data.reduce((sum, game) => sum + game.bet_amount, 0);
-        const totalWins = data.reduce((sum, game) => sum + Math.max(0, game.win_amount - game.bet_amount), 0);
-        const totalLosses = data.reduce((sum, game) => sum + Math.max(0, game.bet_amount - game.win_amount), 0);
-        const winRate = (data.filter(g => g.win_amount > g.bet_amount).length / totalGames) * 100;
-        const highestMultiplier = Math.max(...data.map(g => g.multiplier));
-        const averageBet = totalBets / totalGames;
-        const bestWin = Math.max(...data.map(g => g.win_amount - g.bet_amount));
+        const normalized = data.map((g: any) => ({
+          bet_amount: Number(g.bet_amount) || 0,
+          win_amount: Number(g.win_amount) || 0,
+          multiplier: Number(g.multiplier) || 0,
+        }));
+        const totalGames = normalized.length;
+        const totalBets = normalized.reduce((sum, game) => sum + game.bet_amount, 0);
+        const totalWins = normalized.reduce((sum, game) => sum + Math.max(0, game.win_amount - game.bet_amount), 0);
+        const totalLosses = normalized.reduce((sum, game) => sum + Math.max(0, game.bet_amount - game.win_amount), 0);
+        const winRate = (normalized.filter(g => g.win_amount > g.bet_amount).length / totalGames) * 100;
+        const highestMultiplier = normalized.length ? Math.max(...normalized.map(g => g.multiplier)) : 0;
+        const averageBet = totalGames ? totalBets / totalGames : 0;
+        const bestWin = normalized.length ? Math.max(...normalized.map(g => g.win_amount - g.bet_amount)) : 0;
 
         setGameStats({
           total_games: totalGames,
