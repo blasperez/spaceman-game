@@ -33,7 +33,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
   isConnected,
   currentUserId
 }) => {
-  const [stars, setStars] = useState<Array<{ x: number; y: number; size: number; speed: number }>>([]);
+  const [stars, setStars] = useState<Array<{ x: number; y: number; size: number; speed: number; depth: number }>>([]);
   const [showPlayersModal, setShowPlayersModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [astronautRotation, setAstronautRotation] = useState(0);
@@ -107,13 +107,16 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     // Stars with different speeds
     const generateStars = () => {
       const starCount = 150;
-      const newStars = [];
+      const newStars = [] as Array<{x:number;y:number;size:number;speed:number;depth:number}>;
       for (let i = 0; i < starCount; i++) {
+        const depth = Math.random(); // 0 far, 1 near
+        const baseSpeed = 0.08 + Math.random() * 0.4;
         newStars.push({
-          x: Math.random() * 200, // Extended for continuous loop
+          x: Math.random() * 200,
           y: Math.random() * 100,
-          size: Math.random() * 3 + 0.5,
-          speed: 0.1 + Math.random() * 0.5 // Different speeds for parallax
+          size: 0.5 + depth * 3, // near stars look bigger
+          speed: baseSpeed * (0.6 + depth * 1.4),
+          depth
         });
       }
       setStars(newStars);
@@ -188,7 +191,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
   const otherBets = activeBets.filter(bet => bet.playerId !== currentUserId);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 space-background">
+    <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 space-background" style={{ perspective: '900px' }}>
       {/* Diagonal drift layers removed per request. We'll incline movement for stars/planets instead. */}
       {/* Deep background layer */}
       <div className="absolute inset-0 opacity-30">
@@ -210,13 +213,15 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
               background: star.size > 2 ? 
                 `radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(200,200,255,0.6) 50%, transparent 100%)` :
                 `rgba(255, 255, 255, 0.8)`,
-              opacity: 0.4 + Math.sin(Date.now() * 0.001 + index) * 0.3 + 0.3,
+              opacity: 0.4 + star.depth * 0.5,
               boxShadow: star.size > 2 ? 
                 `0 0 ${star.size * 3}px rgba(255, 255, 255, 0.7), 0 0 ${star.size * 6}px rgba(200, 200, 255, 0.3)` :
                 `0 0 ${star.size * 2}px rgba(255, 255, 255, 0.5)`,
               animationDelay: `${index * 0.1}s`,
               animationDuration: `${2 + Math.random() * 4}s`,
-              transform: 'rotate(-12deg)'
+              transform: `rotate(-12deg) scale(${0.8 + star.depth * 0.6})`,
+              filter: `blur(${(1 - star.depth) * 1.5}px)`,
+              zIndex: Math.round(3 + star.depth * 4) as any
             }}
           />
         ))}
