@@ -321,6 +321,7 @@
   height: 100px;
   animation: planetFloat1 35s linear infinite;
   top: 15%;
+  left: 110%;
 }
 
 .planet-2 {
@@ -330,6 +331,7 @@
   height: 80px;
   animation: planetFloat2 45s linear infinite;
   top: 25%;
+  left: 110%;
 }
 
 .planet-3 {
@@ -339,6 +341,7 @@
   height: 120px;
   animation: planetFloat3 55s linear infinite;
   top: 60%;
+  left: 110%;
 }
 
 /* Spaceship with enhanced fire trail */
