@@ -521,3 +521,10 @@
   50% { box-shadow: 0 0 32px rgba(255,200,200,0.95), 0 0 72px rgba(255,80,80,0.7); filter: brightness(1.1); }
   100% { box-shadow: 0 0 16px rgba(255,160,160,0.6), 0 0 32px rgba(255,110,110,0.4); filter: brightness(1); }
 }
+
+@keyframes gainPop {
+  0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+  20% { opacity: 1; transform: translateY(0) scale(1); }
+  80% { opacity: 1; transform: translateY(-20px) scale(1.02); }
+  100% { opacity: 0; transform: translateY(-30px) scale(0.98); }
+}

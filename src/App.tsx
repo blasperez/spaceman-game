@@ -181,6 +181,8 @@ function GameApp() {
   const [, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [, setTransactions] = useState<Transaction[]>([]);
 
+  const [gainPopup, setGainPopup] = useState<{amount:number; key:number} | null>(null);
+
   const fetchUserProfileWithRetry = useCallback(async (supabaseUser: any): Promise<UserProfile | null> => {
     try {
       console.log('🔍 Fetching user profile for:', supabaseUser.id);
@@ -763,6 +765,9 @@ function GameApp() {
         type: 'user'
       }]);
       
+      setGainPopup({ amount: totalWinnings, key: Date.now() });
+      setTimeout(() => setGainPopup(null), 1500);
+
       // Unlock after delay
       setTimeout(() => setBetLocked(false), 1000);
     }
@@ -1181,46 +1186,46 @@ function GameApp() {
               <button 
                 onClick={() => setBetAmount(1)}
                 disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
-                className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
+                className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center shadow-[0_0_12px_rgba(34,197,94,0.6)]"
               >
                 1
               </button>
               <button 
                 onClick={() => setBetAmount(5)}
                 disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
-                className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
+                className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center shadow-[0_0_12px_rgba(34,197,94,0.6)]"
               >
                 5
               </button>
               <button 
                 onClick={() => handleButtonPress(decreaseBet)}
                 disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
-                className="w-8 h-8 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded text-white font-bold flex items-center justify-center"
+                className="w-8 h-8 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded text-white font-bold flex items-center justify-center shadow-[0_0_12px_rgba(255,255,255,0.3)]"
               >
                 <ChevronLeft size={16} />
               </button>
-              <div className="bg-purple-500/80 px-4 py-2 rounded-xl">
+              <div className="bg-purple-500/80 px-4 py-2 rounded-xl shadow-[0_0_18px_rgba(168,85,247,0.7)]">
                 <div className="text-white/80 text-xs">Bet</div>
                 <div className="text-white font-bold">{betAmount} pesos</div>
               </div>
               <button 
                 onClick={() => handleButtonPress(increaseBet)}
                 disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
-                className="w-8 h-8 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded text-white font-bold flex items-center justify-center"
+                className="w-8 h-8 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded text-white font-bold flex items-center justify-center shadow-[0_0_12px_rgba(255,255,255,0.3)]"
               >
                 <ChevronRight size={16} />
               </button>
               <button 
                 onClick={() => setBetAmount(10)}
                 disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
-                className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
+                className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center shadow-[0_0_12px_rgba(34,197,94,0.6)]"
               >
                 10
               </button>
               <button 
                 onClick={() => setBetAmount(25)}
                 disabled={hasActiveBet || autoBotConfig.isActive || betLocked}
-                className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center"
+                className="w-8 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-full text-white font-bold flex items-center justify-center shadow-[0_0_12px_rgba(34,197,94,0.6)]"
               >
                 25
               </button>
@@ -1318,6 +1323,18 @@ function GameApp() {
           onClose={() => setShowProfileModal(false)}
           user={user}
         />
+      )}
+
+      {/* Gain Popup */}
+      {gainPopup && (
+        <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center">
+          <div className="animate-[gainPop_1.5s_ease-out_forwards] px-4 py-2 rounded-2xl text-2xl font-extrabold text-green-300" style={{
+            textShadow: '0 0 12px rgba(34,197,94,0.9), 0 0 24px rgba(16,185,129,0.7)'
+          }}>
+            +{Math.floor(gainPopup.amount)}
+            <span className="ml-2">💰</span>
+          </div>
+        </div>
       )}
     </div>
   );
