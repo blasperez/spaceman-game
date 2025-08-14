@@ -137,7 +137,7 @@ function GameApp() {
   // Removed nextRoundBet - no longer allowing betting on next round
   
   // WebSocket connection for multiplayer
-  const { gameData, isConnected, connectionStatus, placeBet, cashOut, reconnect } = useGameSocket(
+  const { gameData, isConnected, connectionStatus, placeBet, cashOut, reconnect, onChatMessage, sendChatMessage } = useGameSocket(
     user?.id || '',
     user?.name || ''
   );
@@ -400,11 +400,22 @@ function GameApp() {
 
   useEffect(() => {
     if (!user) return;
-    // subscribe to chat events
-    const off = (useGameSocket as any).prototype?.onChatMessage
-      ? null
-      : null;
-  }, [user]);
+    const off = onChatMessage?.((evt: any) => {
+      if (evt.type === 'history') {
+        const mapped = (evt.data || []).map((m: any) => ({
+          id: m.id,
+          username: m.username,
+          message: m.message,
+          timestamp: new Date(m.timestamp),
+          type: (m.type as any) || 'user'
+        }));
+        setChatMessages(mapped);
+      } else if (evt.type === 'message') {
+        setChatMessages(prev => [...prev, { ...evt.data, timestamp: new Date(evt.data.timestamp) }]);
+      }
+    });
+    return () => { if (typeof off === 'function') off(); };
+  }, [user, onChatMessage]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -759,10 +770,8 @@ function GameApp() {
   }, [hasActiveBet, gameData.gameState.phase, currentBet, gameData.gameState.multiplier, user?.name, hasCashedOut, betLocked, cashOut, saveGameHistory]);
 
   const handleSendMessage = (message: string) => {
-    // Send to server via websocket hook if available
-    try {
-      (gameData as any); // noop to keep references
-    } catch {}
+    if (!message) return;
+    sendChatMessage?.(message);
   };
 
   const toggleFullscreen = () => {
@@ -1156,7 +1165,8 @@ function GameApp() {
               <Chat 
                 messages={chatMessages} 
                 onSendMessage={handleSendMessage} 
-                username={user?.name || 'Jugador'} 
+                username={user?.name || 'Jugador'}
+                totalOnline={gameData.totalPlayers}
               />
             </div>
           </div>

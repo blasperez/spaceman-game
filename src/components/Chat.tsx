@@ -13,48 +13,15 @@ interface ChatProps {
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   username: string;
+  totalOnline?: number;
 }
 
-export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username }) => {
+export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username, totalOnline }) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isExpanded, setIsExpanded] = useState(true);
-  const [globalMessages, setGlobalMessages] = useState<ChatMessage[]>([
-    {
-      id: 1,
-      username: 'Sistema',
-      message: '¡Bienvenidos al chat global de Spaceman! 🚀',
-      timestamp: new Date(),
-      type: 'system'
-    },
-    {
-      id: 2,
-      username: 'CryptoKing',
-      message: '¡Acabo de ganar 50x! 💰',
-      timestamp: new Date(Date.now() - 60000),
-      type: 'global'
-    },
-    {
-      id: 3,
-      username: 'LuckyPlayer',
-      message: 'Buena suerte a todos en la próxima ronda',
-      timestamp: new Date(Date.now() - 120000),
-      type: 'global'
-    },
-    {
-      id: 4,
-      username: 'SpaceAce',
-      message: 'Estrategia: siempre retirar en 2x 📈',
-      timestamp: new Date(Date.now() - 180000),
-      type: 'global'
-    }
-  ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [onlineUsers] = useState(Math.floor(Math.random() * 500) + 150);
 
-  // Combine local and global messages
-  const allMessages = [...globalMessages, ...messages].sort((a, b) => 
-    a.timestamp.getTime() - b.timestamp.getTime()
-  );
+  const sortedMessages = [...messages].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -62,49 +29,11 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username })
 
   useEffect(() => {
     scrollToBottom();
-  }, [allMessages]);
-
-  // Simulate global messages
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const randomMessages = [
-        '¡Qué vuelo increíble! 🚀',
-        'Casi llego a 10x, pero me retiré en 8x 😅',
-        '¿Alguien más usa auto cashout?',
-        'La estrategia Martingale funciona 📊',
-        '¡Nuevo récord personal! 25.5x 🎉',
-        'Buena suerte en la próxima ronda',
-        'El spaceman está volando alto hoy ✨',
-        '¿Cuál es su multiplicador favorito?',
-        'Retirando en 2x siempre es seguro',
-        '¡Vamos por el 100x! 🌟'
-      ];
-      
-      const randomUsernames = [
-        'AstroGamer', 'RocketMan', 'StarPlayer', 'CosmicWin', 'SpaceExplorer',
-        'GalaxyBet', 'NebulaKing', 'OrbitMaster', 'StellarLuck', 'VoidWalker'
-      ];
-      
-      if (Math.random() > 0.7) { // 30% chance every interval
-        const newMessage: ChatMessage = {
-          id: Date.now() + Math.floor(Math.random() * 10000),
-          username: randomUsernames[Math.floor(Math.random() * randomUsernames.length)],
-          message: randomMessages[Math.floor(Math.random() * randomMessages.length)],
-          timestamp: new Date(),
-          type: 'global'
-        };
-        
-        setGlobalMessages(prev => [...prev, newMessage].slice(-50)); // Keep last 50 messages
-      }
-    }, 8000); // Every 8 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+  }, [sortedMessages]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim() && inputMessage.length <= 200) {
-      // Basic content moderation
       const moderatedMessage = moderateMessage(inputMessage.trim());
       if (moderatedMessage) {
         onSendMessage(moderatedMessage);
@@ -114,21 +43,12 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username })
   };
 
   const moderateMessage = (message: string): string | null => {
-    // Basic profanity filter and spam prevention
     const bannedWords = ['spam', 'scam', 'hack', 'cheat'];
     const lowerMessage = message.toLowerCase();
-    
     for (const word of bannedWords) {
-      if (lowerMessage.includes(word)) {
-        return null; // Block message
-      }
+      if (lowerMessage.includes(word)) return null;
     }
-    
-    // Prevent excessive caps
-    if (message.length > 10 && message === message.toUpperCase()) {
-      return message.toLowerCase();
-    }
-    
+    if (message.length > 10 && message === message.toUpperCase()) return message.toLowerCase();
     return message;
   };
 
@@ -162,10 +82,12 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username })
         <div className="flex items-center space-x-2">
           <MessageCircle size={20} className="text-blue-400" />
           <span className="text-white font-medium">Chat Global</span>
-          <div className="flex items-center space-x-1 text-white/70">
-            <Users size={14} />
-            <span className="text-xs">{onlineUsers}</span>
-          </div>
+          {typeof totalOnline === 'number' && (
+            <div className="flex items-center space-x-1 text-white/70">
+              <Users size={14} />
+              <span className="text-xs">{totalOnline}</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           <Shield size={16} className="text-green-400" />
@@ -183,7 +105,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username })
           {/* Messages */}
           <div className="h-64 overflow-y-auto px-4 pb-2">
             <div className="space-y-2">
-              {allMessages.slice(-50).map((msg) => (
+              {sortedMessages.slice(-50).map((msg) => (
                 <div key={msg.id} className={`p-2 rounded-lg ${getMessageStyle(msg)}`}>
                   {msg.type === 'system' ? (
                     <div className="text-center">
@@ -197,7 +119,6 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username })
                         <span className="text-sm font-medium text-white flex items-center">
                           {msg.username === username && <span className="mr-1">👤</span>}
                           {msg.username}
-                          {msg.type === 'global' && <span className="ml-1 text-xs text-blue-400">🌐</span>}
                         </span>
                         <span className="text-xs text-white/60">{formatTime(msg.timestamp)}</span>
                       </div>
@@ -229,8 +150,6 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username })
                 <Send size={16} className="text-white" />
               </button>
             </form>
-            
-            {/* Character counter */}
             <div className="mt-2 text-right">
               <span className={`text-xs ${
                 inputMessage.length > 180 ? 'text-red-400' : 
@@ -239,8 +158,6 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, username })
                 {inputMessage.length}/200
               </span>
             </div>
-            
-            {/* Chat rules */}
             <div className="mt-2 text-xs text-white/50">
               💡 Mantén el respeto. Mensajes moderados automáticamente.
             </div>
