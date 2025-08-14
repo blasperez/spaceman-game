@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase'
 import EnhancedGameBoard from './components/EnhancedGameBoard';
@@ -521,6 +521,7 @@ function GameApp() {
     }
   }, [gameData.gameState.phase, gameData.gameState.crashPoint]);
 
+  const lastRecordedRoundIdRef = useRef<string | null>(null);
   // FIXED: Reset bet state SOLO cuando inicia nueva ronda (countdown === 20)
   useEffect(() => {
     if (gameData.gameState.phase === 'waiting' && gameData.gameState.countdown === 20) {
@@ -528,27 +529,25 @@ function GameApp() {
       setCurrentBet(0);
       setHasCashedOut(false);
       setBetLocked(false);
+      lastRecordedRoundIdRef.current = null; // allow next round logging
     } else if (gameData.gameState.phase === 'crashed') {
       // Handle crash - lose bet if not cashed out
       if (hasActiveBet && !hasCashedOut) {
-        const lostGame: GameHistory = {
-          id: Date.now(),
-          multiplier: gameData.gameState.crashPoint || gameData.gameState.multiplier,
-          betAmount: currentBet,
-          winAmount: 0,
-          timestamp: new Date()
-        };
-        
-        setGameHistory(prev => [...prev, lostGame]);
-        saveGameHistory(lostGame);
-        
-        setChatMessages(prev => [...prev, {
-          id: Date.now(),
-          username: user?.name || 'Jugador',
-          message: `💥 Perdido en ${(gameData.gameState.crashPoint || gameData.gameState.multiplier).toFixed(2)}x - ${currentBet.toFixed(0)} pesos`,
-          timestamp: new Date(),
-          type: 'user'
-        }]);
+        const currentRoundId = gameData.gameState.gameId || String(gameData.gameState.crashPoint || 0);
+        if (lastRecordedRoundIdRef.current !== currentRoundId) {
+          lastRecordedRoundIdRef.current = currentRoundId;
+          const lostGame: GameHistory = {
+            id: Date.now(),
+            multiplier: gameData.gameState.crashPoint || gameData.gameState.multiplier,
+            betAmount: currentBet,
+            winAmount: 0,
+            timestamp: new Date()
+          };
+          setGameHistory(prev => [...prev, lostGame]);
+          saveGameHistory(lostGame);
+          // Send one chat message via server
+          sendChatMessage?.(`💥 Perdido en ${(gameData.gameState.crashPoint || gameData.gameState.multiplier).toFixed(2)}x - ${currentBet.toFixed(0)} pesos`);
+        }
       }
       
       // Reset for next round
@@ -559,7 +558,7 @@ function GameApp() {
         setBetLocked(false);
       }, 2000);
     }
-  }, [gameData.gameState.phase, gameData.gameState.countdown, gameData.gameState.crashPoint, hasActiveBet, hasCashedOut, currentBet, user?.name, balance, betLocked, placeBet]);
+  }, [gameData.gameState.phase, gameData.gameState.countdown, gameData.gameState.crashPoint, gameData.gameState.gameId, hasActiveBet, hasCashedOut, currentBet, sendChatMessage]);
 
   // Improved bet locking to prevent race conditions
   useEffect(() => {
