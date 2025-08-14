@@ -174,9 +174,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onDemoMode })
       <div className="w-full max-w-sm sm:max-w-md">
         {/* Logo */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-400 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Rocket size={32} className="text-white sm:w-10 sm:h-10" />
-          </div>
+          <img
+            src="/iconodeapp.png"
+            alt="Spaceman"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl mx-auto mb-3 shadow-lg"
+          />
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Spaceman Casino</h1>
           <p className="text-gray-300 text-sm sm:text-base">¡Vuela alto y gana más!</p>
         </div>
