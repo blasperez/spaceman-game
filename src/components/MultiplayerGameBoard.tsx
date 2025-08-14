@@ -97,31 +97,32 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
   useEffect(() => {
     if (gameState.phase === 'flying') {
       const interval = setInterval(() => {
-        // Move stars
+        // Move stars diagonally: decrease x and increase y to simulate upward right-to-left motion
         setStars(prevStars => 
           prevStars.map(star => ({
             ...star,
-            x: star.x - star.speed < -10 ? 200 : star.x - star.speed
+            x: star.x - star.speed < -10 ? 200 : star.x - star.speed,
+            y: star.y + star.speed * 0.35 > 110 ? (star.y + star.speed * 0.35 - 110) : star.y + star.speed * 0.35
           }))
         );
         
-        // Move planets from right to left
+        // Move planets diagonally from top-right to bottom-left
         setPlanetPositions(prev => ({
-          planet1: { ...prev.planet1, x: prev.planet1.x - 0.3 < -50 ? 150 : prev.planet1.x - 0.3 },
-          planet2: { ...prev.planet2, x: prev.planet2.x - 0.25 < -50 ? 180 : prev.planet2.x - 0.25 },
-          planet3: { ...prev.planet3, x: prev.planet3.x - 0.4 < -50 ? 160 : prev.planet3.x - 0.4 },
-          planet4: { ...prev.planet4, x: prev.planet4.x - 0.35 < -50 ? 200 : prev.planet4.x - 0.35 },
-          planet5: { ...prev.planet5, x: prev.planet5.x - 0.5 < -50 ? 170 : prev.planet5.x - 0.5 },
-          planet1b: { ...prev.planet1b, x: prev.planet1b.x - 0.45 < -50 ? 220 : prev.planet1b.x - 0.45 },
-          planet3b: { ...prev.planet3b, x: prev.planet3b.x - 0.38 < -50 ? 240 : prev.planet3b.x - 0.38 }
+          planet1: { ...prev.planet1, x: prev.planet1.x - 0.3 < -50 ? 150 : prev.planet1.x - 0.3, y: prev.planet1.y + 0.08 > 110 ? (prev.planet1.y + 0.08 - 110) : prev.planet1.y + 0.08 },
+          planet2: { ...prev.planet2, x: prev.planet2.x - 0.25 < -50 ? 180 : prev.planet2.x - 0.25, y: prev.planet2.y + 0.06 > 110 ? (prev.planet2.y + 0.06 - 110) : prev.planet2.y + 0.06 },
+          planet3: { ...prev.planet3, x: prev.planet3.x - 0.4 < -50 ? 160 : prev.planet3.x - 0.4, y: prev.planet3.y + 0.1 > 110 ? (prev.planet3.y + 0.1 - 110) : prev.planet3.y + 0.1 },
+          planet4: { ...prev.planet4, x: prev.planet4.x - 0.35 < -50 ? 200 : prev.planet4.x - 0.35, y: prev.planet4.y + 0.05 > 110 ? (prev.planet4.y + 0.05 - 110) : prev.planet4.y + 0.05 },
+          planet5: { ...prev.planet5, x: prev.planet5.x - 0.5 < -50 ? 170 : prev.planet5.x - 0.5, y: prev.planet5.y + 0.12 > 110 ? (prev.planet5.y + 0.12 - 110) : prev.planet5.y + 0.12 },
+          planet1b: { ...prev.planet1b, x: prev.planet1b.x - 0.45 < -50 ? 220 : prev.planet1b.x - 0.45, y: prev.planet1b.y + 0.09 > 110 ? (prev.planet1b.y + 0.09 - 110) : prev.planet1b.y + 0.09 },
+          planet3b: { ...prev.planet3b, x: prev.planet3b.x - 0.38 < -50 ? 240 : prev.planet3b.x - 0.38, y: prev.planet3b.y + 0.07 > 110 ? (prev.planet3b.y + 0.07 - 110) : prev.planet3b.y + 0.07 }
         }));
         
-        // Move nebula clouds slowly
+        // Move nebula clouds diagonally
         setNebulaPositions(prev => ({
-          nebula1: { ...prev.nebula1, x: prev.nebula1.x - 0.1 < -60 ? 120 : prev.nebula1.x - 0.1 },
-          nebula2: { ...prev.nebula2, x: prev.nebula2.x - 0.08 < -60 ? 160 : prev.nebula2.x - 0.08 },
-          nebula3: { ...prev.nebula3, x: prev.nebula3.x - 0.12 < -60 ? 110 : prev.nebula3.x - 0.12 },
-          nebula4: { ...prev.nebula4, x: prev.nebula4.x - 0.09 < -60 ? 180 : prev.nebula4.x - 0.09 }
+          nebula1: { ...prev.nebula1, x: prev.nebula1.x - 0.1 < -60 ? 120 : prev.nebula1.x - 0.1, y: prev.nebula1.y + 0.04 > 120 ? (prev.nebula1.y + 0.04 - 120) : prev.nebula1.y + 0.04 },
+          nebula2: { ...prev.nebula2, x: prev.nebula2.x - 0.08 < -60 ? 160 : prev.nebula2.x - 0.08, y: prev.nebula2.y + 0.035 > 120 ? (prev.nebula2.y + 0.035 - 120) : prev.nebula2.y + 0.035 },
+          nebula3: { ...prev.nebula3, x: prev.nebula3.x - 0.12 < -60 ? 110 : prev.nebula3.x - 0.12, y: prev.nebula3.y + 0.045 > 120 ? (prev.nebula3.y + 0.045 - 120) : prev.nebula3.y + 0.045 },
+          nebula4: { ...prev.nebula4, x: prev.nebula4.x - 0.09 < -60 ? 180 : prev.nebula4.x - 0.09, y: prev.nebula4.y + 0.04 > 120 ? (prev.nebula4.y + 0.04 - 120) : prev.nebula4.y + 0.04 }
         }));
       }, 50);
 

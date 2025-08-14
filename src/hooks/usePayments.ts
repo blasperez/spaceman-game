@@ -137,19 +137,17 @@ export const usePayments = () => {
 
       if (error) throw error;
 
-      // Calculate totals from transactions
-      const { data: transactionData } = await supabase
-        .from('user_transaction_history')
-        .select('transaction_type, net_amount')
+      // Calculate totals from actual game results to avoid double-counting bets
+      const { data: historyData } = await supabase
+        .from('game_history')
+        .select('bet_amount, win_amount')
         .eq('user_id', user.id);
 
-      const totalWins = transactionData
-        ?.filter(t => t.transaction_type === 'game_win')
-        .reduce((sum, t) => sum + (t.net_amount || 0), 0) || 0;
+      const totalWins = historyData
+        ?.reduce((sum: number, g: any) => sum + Math.max(0, (g.win_amount || 0) - (g.bet_amount || 0)), 0) || 0;
 
-      const totalLosses = transactionData
-        ?.filter(t => t.transaction_type === 'game_loss')
-        .reduce((sum, t) => sum + Math.abs(t.net_amount || 0), 0) || 0;
+      const totalLosses = historyData
+        ?.reduce((sum: number, g: any) => sum + Math.max(0, (g.bet_amount || 0) - (g.win_amount || 0)), 0) || 0;
 
       setUserBalance({
         balance: data.balance || 0,
