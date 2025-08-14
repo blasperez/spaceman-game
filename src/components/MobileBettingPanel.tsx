@@ -179,12 +179,12 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
               disabled={!canBet && !canCashOut}
               className={`px-8 py-3 rounded-2xl font-bold text-white transition-all no-active-transform ${
                 canCashOut 
-                  ? 'bg-red-600/90 hover:bg-red-700/90 shadow-[0_0_20px_rgba(239,68,68,0.7)] animate-[pulse_1s_ease-in-out_infinite]' 
+                  ? 'bg-red-600/90 hover:bg-red-700/90 shadow-[0_0_28px_rgba(255,120,120,0.9),0_0_60px_rgba(255,50,50,0.5)] animate-[neonPulse_1s_ease-in-out_infinite]' 
                   : canBet
-                  ? 'bg-blue-500/90 hover:bg-blue-600/90 shadow-[0_0_20px_rgba(59,130,246,0.7)]'
+                  ? 'bg-blue-500/90 hover:bg-blue-600/90 shadow-[0_0_22px_rgba(80,160,255,0.8)]'
                   : 'bg-white/20 cursor-not-allowed'
               }`}
-              style={{ textShadow: canCashOut ? '0 0 8px rgba(255,255,255,0.6)' : undefined }}
+              style={{ textShadow: canCashOut ? '0 0 10px rgba(255,255,255,0.8)' : undefined }}
             >
               {canCashOut ? 'RETIRAR' : 'APOSTAR'}
             </button>
