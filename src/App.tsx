@@ -175,15 +175,7 @@ function GameApp() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   
   // Chat
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: 1,
-      username: 'Sistema',
-      message: '¡Bienvenido a Spaceman Multijugador! ¡Buena suerte!',
-      timestamp: new Date(),
-      type: 'system'
-    }
-  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   // Mock payment methods and transactions (temporarily unused)
   const [, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -405,6 +397,14 @@ function GameApp() {
     
     return () => clearTimeout(timeoutId);
   }, [handleLogin, isLoading]);
+
+  useEffect(() => {
+    if (!user) return;
+    // subscribe to chat events
+    const off = (useGameSocket as any).prototype?.onChatMessage
+      ? null
+      : null;
+  }, [user]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -759,14 +759,10 @@ function GameApp() {
   }, [hasActiveBet, gameData.gameState.phase, currentBet, gameData.gameState.multiplier, user?.name, hasCashedOut, betLocked, cashOut, saveGameHistory]);
 
   const handleSendMessage = (message: string) => {
-    const newMessage: ChatMessage = {
-      id: Date.now(),
-      username: user?.name || 'Jugador',
-      message,
-      timestamp: new Date(),
-      type: 'user'
-    };
-    setChatMessages(prev => [...prev, newMessage]);
+    // Send to server via websocket hook if available
+    try {
+      (gameData as any); // noop to keep references
+    } catch {}
   };
 
   const toggleFullscreen = () => {

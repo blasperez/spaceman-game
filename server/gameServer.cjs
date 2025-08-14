@@ -139,6 +139,9 @@ let currentGame = {
   players: new Map() // playerId -> player info
 };
 
+// Simple in-memory chat buffer (last 100 messages)
+let recentChat = [];
+
 // WebSocket server with proper port handling
 const PORT = process.env.PORT || 8080;
 const wss = new WebSocket.Server({ 
@@ -320,6 +323,16 @@ wss.on('connection', (ws, req) => {
       serverTime: new Date().toISOString()
     }
   }));
+
+  // Send recent chat history to the new client
+  try {
+    ws.send(JSON.stringify({
+      type: 'chat_history',
+      data: recentChat.slice(-50)
+    }));
+  } catch (e) {
+    console.error('Error sending chat history:', e);
+  }
   
   ws.on('message', (data) => {
     try {
@@ -374,6 +387,12 @@ async function handlePlayerMessage(ws, message) {
         
         currentGame.players.set(userId, { id: userId, name: userName, ws: ws });
         console.log(`✅ Player ${userName} (${userId}) joined`);
+        
+        // Broadcast system chat message: user joined
+        const joinMsg = { id: Date.now(), username: 'Sistema', message: `${userName} se unió`, timestamp: new Date().toISOString(), type: 'system' };
+        recentChat.push(joinMsg); if (recentChat.length > 100) recentChat.shift();
+        broadcast({ type: 'chat_message', data: joinMsg });
+        
         sendGameStateUpdate();
         break;
         
@@ -463,6 +482,19 @@ async function handlePlayerMessage(ws, message) {
           ws.send(JSON.stringify({ type: 'error', data: { message: 'Cannot cash out during this phase' }}));
         }
         break;
+        
+      case 'chat_message': {
+        const { userId, userName, message: text } = message.data || {};
+        if (!userId || !userName || !text || typeof text !== 'string') {
+          return ws.send(JSON.stringify({ type: 'error', data: { message: 'Invalid chat payload' }}));
+        }
+        const trimmed = text.trim().slice(0, 200);
+        if (!trimmed) return;
+        const chatMsg = { id: Date.now(), username: userName, message: trimmed, timestamp: new Date().toISOString(), type: 'user' };
+        recentChat.push(chatMsg); if (recentChat.length > 100) recentChat.shift();
+        broadcast({ type: 'chat_message', data: chatMsg });
+        break;
+      }
         
       default:
         console.log('Unknown message type:', message.type);

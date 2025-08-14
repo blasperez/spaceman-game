@@ -45,6 +45,23 @@ export const useGameSocket = (userId: string, userName: string) => {
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
   const betLockRef = useRef(false);
+  const chatHistoryRef = useRef<Array<{ id:number; username:string; message:string; timestamp:string; type:string }>>([]);
+  const chatListenersRef = useRef<Array<(msg:any)=>void>>([]);
+
+  const onChatMessage = (cb: (msg:any)=>void) => {
+    chatListenersRef.current.push(cb);
+    return () => {
+      chatListenersRef.current = chatListenersRef.current.filter(fn => fn !== cb);
+    };
+  };
+
+  const sendChatMessage = (text: string) => {
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    socketRef.current.send(JSON.stringify({
+      type: 'chat_message',
+      data: { userId, userName, message: text }
+    }));
+  };
 
   // Get WebSocket URL based on environment
   const getWebSocketUrl = () => {
@@ -298,6 +315,16 @@ export const useGameSocket = (userId: string, userName: string) => {
         console.log('🛑 Server shutdown:', message.data.message);
         break;
         
+      case 'chat_history':
+        chatHistoryRef.current = message.data || [];
+        chatListenersRef.current.forEach(fn => fn({ type: 'history', data: chatHistoryRef.current }));
+        break;
+      case 'chat_message':
+        chatHistoryRef.current.push(message.data);
+        if (chatHistoryRef.current.length > 100) chatHistoryRef.current.shift();
+        chatListenersRef.current.forEach(fn => fn({ type: 'message', data: message.data }));
+        break;
+        
       default:
         console.log('❓ Unknown message type:', message.type);
     }
@@ -405,6 +432,8 @@ export const useGameSocket = (userId: string, userName: string) => {
     gameData,
     isConnected,
     connectionStatus,
+    onChatMessage,
+    sendChatMessage,
     placeBet,
     cashOut,
     reconnect
