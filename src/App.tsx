@@ -1327,13 +1327,13 @@ function GameApp() {
 
       {/* Gain Popup */}
       {gainPopup && (
-        <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center">
-          <div className="px-4 py-2 rounded-2xl text-2xl font-extrabold text-green-300" style={{
-            textShadow: '0 0 12px rgba(34,197,94,0.9), 0 0 24px rgba(16,185,129,0.7)',
+        <div className="pointer-events-none fixed inset-0 z-[9999] flex items-center justify-center">
+          <div className="px-6 py-3 rounded-3xl text-5xl font-extrabold text-green-200" style={{
+            textShadow: '0 0 24px rgba(34,197,94,1), 0 0 60px rgba(16,185,129,0.9)',
             animation: 'gainPop 1.5s ease-out forwards'
           }}>
             +{Math.floor(gainPopup.amount)}
-            <span className="ml-2">💰</span>
+            <span className="ml-3">💰</span>
           </div>
         </div>
       )}
