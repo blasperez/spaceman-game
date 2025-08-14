@@ -54,6 +54,17 @@ app.post('/api/stripe/webhook', (req, res) => {
 const staticPath = path.join(process.cwd(), 'dist');
 app.use(express.static(staticPath));
 
+// Explicitly serve manifest and service worker for PWA
+app.get('/manifest.webmanifest', (req, res) => {
+  res.set('Content-Type', 'application/manifest+json');
+  res.sendFile(path.join(process.cwd(), 'public', 'manifest.webmanifest'));
+});
+
+app.get('/sw.js', (req, res) => {
+  res.set('Service-Worker-Allowed', '/');
+  res.sendFile(path.join(process.cwd(), 'dist', 'sw.js'));
+});
+
 // API Routes for game functionality (no auth needed, handled by frontend)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
