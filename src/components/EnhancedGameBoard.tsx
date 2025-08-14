@@ -42,7 +42,7 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
   autoCashOut,
   setAutoCashOut
 }) => {
-  const [stars, setStars] = useState<Array<{ x: number; y: number; opacity: number; size: number }>>([]);
+  const [stars, setStars] = useState<Array<{ x: number; y: number; opacity: number; size: number; vx: number; vy: number }>>([]);
   const [spacemanX, setSpacemanX] = useState(50);
   const [spacemanY, setSpacemanY] = useState(70);
   const [trail, setTrail] = useState<Array<{ x: number; y: number; opacity: number }>>([]);
@@ -54,7 +54,9 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
       x: Math.random() * 100,
       y: Math.random() * 100,
       opacity: Math.random() * 0.8 + 0.2,
-      size: Math.random() * 2 + 1
+      size: Math.random() * 2 + 1,
+      vx: -(0.1 + Math.random() * 0.5),
+      vy: 0.03 + Math.random() * 0.2,
     }));
     setStars(newStars);
   }, []);
@@ -122,11 +124,13 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
       const interval = setInterval(() => {
         setStars(prevStars => prevStars.map(star => {
           let newX = star.x + star.vx;
-          // If star goes off-screen to the left, reset it to the right
+          let newY = star.y + star.vy;
           if (newX < -5) {
-            newX = 105; // Reset to slightly off-screen right
+            newX = 105;
+            newY = Math.random() * 100;
           }
-          return { ...star, x: newX };
+          if (newY > 105) newY -= 105;
+          return { ...star, x: newX, y: newY };
         }));
       }, 50);
 

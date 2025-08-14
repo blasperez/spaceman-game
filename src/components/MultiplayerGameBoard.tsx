@@ -106,23 +106,33 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
           }))
         );
         
+        // Helper to update planets with diagonal motion and randomized Y on reset
+        const update = (pos: {x:number;y:number}, sx: number, sy: number, resetX: number) => {
+          const nextX = pos.x - sx;
+          const nextY = pos.y + sy;
+          if (nextX < -50) {
+            return { x: resetX, y: 10 + Math.random() * 80 };
+          }
+          return { x: nextX, y: nextY > 110 ? (nextY - 110) : nextY };
+        };
+        
         // Move planets diagonally from top-right to bottom-left
         setPlanetPositions(prev => ({
-          planet1: { ...prev.planet1, x: prev.planet1.x - 0.3 < -50 ? 150 : prev.planet1.x - 0.3, y: prev.planet1.y + 0.08 > 110 ? (prev.planet1.y + 0.08 - 110) : prev.planet1.y + 0.08 },
-          planet2: { ...prev.planet2, x: prev.planet2.x - 0.25 < -50 ? 180 : prev.planet2.x - 0.25, y: prev.planet2.y + 0.06 > 110 ? (prev.planet2.y + 0.06 - 110) : prev.planet2.y + 0.06 },
-          planet3: { ...prev.planet3, x: prev.planet3.x - 0.4 < -50 ? 160 : prev.planet3.x - 0.4, y: prev.planet3.y + 0.1 > 110 ? (prev.planet3.y + 0.1 - 110) : prev.planet3.y + 0.1 },
-          planet4: { ...prev.planet4, x: prev.planet4.x - 0.35 < -50 ? 200 : prev.planet4.x - 0.35, y: prev.planet4.y + 0.05 > 110 ? (prev.planet4.y + 0.05 - 110) : prev.planet4.y + 0.05 },
-          planet5: { ...prev.planet5, x: prev.planet5.x - 0.5 < -50 ? 170 : prev.planet5.x - 0.5, y: prev.planet5.y + 0.12 > 110 ? (prev.planet5.y + 0.12 - 110) : prev.planet5.y + 0.12 },
-          planet1b: { ...prev.planet1b, x: prev.planet1b.x - 0.45 < -50 ? 220 : prev.planet1b.x - 0.45, y: prev.planet1b.y + 0.09 > 110 ? (prev.planet1b.y + 0.09 - 110) : prev.planet1b.y + 0.09 },
-          planet3b: { ...prev.planet3b, x: prev.planet3b.x - 0.38 < -50 ? 240 : prev.planet3b.x - 0.38, y: prev.planet3b.y + 0.07 > 110 ? (prev.planet3b.y + 0.07 - 110) : prev.planet3b.y + 0.07 }
+          planet1: update(prev.planet1, 0.3, 0.08, 150),
+          planet2: update(prev.planet2, 0.25, 0.06, 180),
+          planet3: update(prev.planet3, 0.4, 0.10, 160),
+          planet4: update(prev.planet4, 0.35, 0.05, 200),
+          planet5: update(prev.planet5, 0.5, 0.12, 170),
+          planet1b: update(prev.planet1b, 0.45, 0.09, 220),
+          planet3b: update(prev.planet3b, 0.38, 0.07, 240),
         }));
         
         // Move nebula clouds diagonally
         setNebulaPositions(prev => ({
-          nebula1: { ...prev.nebula1, x: prev.nebula1.x - 0.1 < -60 ? 120 : prev.nebula1.x - 0.1, y: prev.nebula1.y + 0.04 > 120 ? (prev.nebula1.y + 0.04 - 120) : prev.nebula1.y + 0.04 },
-          nebula2: { ...prev.nebula2, x: prev.nebula2.x - 0.08 < -60 ? 160 : prev.nebula2.x - 0.08, y: prev.nebula2.y + 0.035 > 120 ? (prev.nebula2.y + 0.035 - 120) : prev.nebula2.y + 0.035 },
-          nebula3: { ...prev.nebula3, x: prev.nebula3.x - 0.12 < -60 ? 110 : prev.nebula3.x - 0.12, y: prev.nebula3.y + 0.045 > 120 ? (prev.nebula3.y + 0.045 - 120) : prev.nebula3.y + 0.045 },
-          nebula4: { ...prev.nebula4, x: prev.nebula4.x - 0.09 < -60 ? 180 : prev.nebula4.x - 0.09, y: prev.nebula4.y + 0.04 > 120 ? (prev.nebula4.y + 0.04 - 120) : prev.nebula4.y + 0.04 }
+          nebula1: update(prev.nebula1, 0.1, 0.04, 120),
+          nebula2: update(prev.nebula2, 0.08, 0.035, 160),
+          nebula3: update(prev.nebula3, 0.12, 0.045, 110),
+          nebula4: update(prev.nebula4, 0.09, 0.04, 180),
         }));
       }, 50);
 
@@ -252,7 +262,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             left: `${planetPositions.planet2.x}%`,
             top: `${planetPositions.planet2.y}%`,
             transform: 'translateX(-50%) rotate(-12deg)',
-            zIndex: -3,
+            zIndex: 2,
             opacity: 0.4,
             filter: 'blur(1px)'
           }}
@@ -271,7 +281,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             left: `${planetPositions.planet4.x}%`,
             top: `${planetPositions.planet4.y}%`,
             transform: 'translateX(-50%) rotate(-12deg)',
-            zIndex: -2,
+            zIndex: 2,
             opacity: 0.5,
             filter: 'blur(0.5px)'
           }}
@@ -291,7 +301,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             left: `${planetPositions.planet1.x}%`,
             top: `${planetPositions.planet1.y}%`,
             transform: 'translateX(-50%) rotate(-12deg)',
-            zIndex: -1,
+            zIndex: 3,
             opacity: 0.7
           }}
           onError={(e) => {
@@ -309,7 +319,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             left: `${planetPositions.planet3.x}%`,
             top: `${planetPositions.planet3.y}%`,
             transform: 'translateX(-50%) rotate(-12deg)',
-            zIndex: -1,
+            zIndex: 3,
             opacity: 0.75
           }}
           onError={(e) => {
