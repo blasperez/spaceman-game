@@ -141,14 +141,13 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
 
       {/* Main Panel */}
       <div
-
         ref={panelRef}
         className={`fixed bottom-0 left-0 right-0 z-40 bg-black/40 backdrop-blur-xl border-t border-white/20 transition-transform duration-300 ease-out ${
           isCollapsed ? 'translate-y-[calc(100%-80px)]' : 'translate-y-0'
         }`}
         style={{
           transform: isDragging 
-            ? `translateY(${Math.max(0, currentY - startY)}px)` 
+            ? `translateY(${Math.max(0, Math.min(300, currentY - startY))}px)` 
             : undefined
         }}
       >
@@ -158,7 +157,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={() => !isDragging && setIsCollapsed(!isCollapsed)}
         >
           <div className="w-12 h-1 bg-white/40 rounded-full" />
         </div>
@@ -174,17 +173,18 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
               </div>
             </div>
 
-            {/* Center - Main Action Button */}
+            {/* Center - Main Action Button with neon */}
             <button
               onClick={handleMainAction}
               disabled={!canBet && !canCashOut}
-              className={`px-8 py-3 rounded-2xl font-bold text-white transition-colors no-active-transform ${
+              className={`px-8 py-3 rounded-2xl font-bold text-white transition-all no-active-transform ${
                 canCashOut 
-                  ? 'bg-red-600/90 hover:bg-red-700/90 shadow-lg shadow-red-500/30' 
+                  ? 'bg-red-600/90 hover:bg-red-700/90 shadow-[0_0_20px_rgba(239,68,68,0.7)] animate-[pulse_1s_ease-in-out_infinite]' 
                   : canBet
-                  ? 'bg-blue-500/90 hover:bg-blue-600/90 shadow-lg shadow-blue-500/30'
+                  ? 'bg-blue-500/90 hover:bg-blue-600/90 shadow-[0_0_20px_rgba(59,130,246,0.7)]'
                   : 'bg-white/20 cursor-not-allowed'
               }`}
+              style={{ textShadow: canCashOut ? '0 0 8px rgba(255,255,255,0.6)' : undefined }}
             >
               {canCashOut ? 'RETIRAR' : 'APOSTAR'}
             </button>
@@ -206,15 +206,14 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
           {/* Bet Amount Controls */}
           <div className="space-y-3">
             <div className="text-white/90 text-sm font-medium text-center">Controles de Apuesta</div>
-            
-            {/* Quick Bet Amounts */}
+            {/* Quick Bet Amounts with neon glow */}
             <div className="flex justify-center space-x-2">
               {[1, 5, 10, 25, 50].map(amount => (
                 <button
                   key={amount}
                   onClick={() => setBetAmount(amount)}
                   disabled={hasActiveBet || autoBotConfig.isActive || gamePhase !== 'waiting'}
-                  className="w-12 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-lg text-white font-bold text-xs flex items-center justify-center transition-all"
+                  className="w-12 h-8 bg-green-500/80 hover:bg-green-600/80 disabled:bg-white/20 disabled:cursor-not-allowed rounded-lg text-white font-bold text-xs flex items-center justify-center transition-all shadow-[0_0_12px_rgba(34,197,94,0.6)]"
                 >
                   ${amount}
                 </button>
@@ -226,20 +225,18 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
               <button 
                 onClick={decreaseBet}
                 disabled={hasActiveBet || autoBotConfig.isActive || gamePhase !== 'waiting'}
-                className="w-10 h-10 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl text-white font-bold flex items-center justify-center transition-all"
+                className="w-10 h-10 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl text-white font-bold flex items-center justify-center transition-all shadow-[0_0_12px_rgba(255,255,255,0.3)]"
               >
                 <Minus size={18} />
               </button>
-              
-              <div className="bg-purple-500/80 px-6 py-3 rounded-xl min-w-[120px] text-center">
+              <div className="bg-purple-500/80 px-6 py-3 rounded-xl min-w-[120px] text-center shadow-[0_0_18px_rgba(168,85,247,0.7)]">
                 <div className="text-white/80 text-xs">Apuesta Actual</div>
                 <div className="text-white font-bold text-lg">${betAmount}</div>
               </div>
-              
               <button 
                 onClick={increaseBet}
                 disabled={hasActiveBet || autoBotConfig.isActive || gamePhase !== 'waiting'}
-                className="w-10 h-10 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl text-white font-bold flex items-center justify-center transition-all"
+                className="w-10 h-10 bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed rounded-xl text-white font-bold flex items-center justify-center transition-all shadow-[0_0_12px_rgba(255,255,255,0.3)]"
               >
                 <Plus size={18} />
               </button>
@@ -252,7 +249,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
               <div className="text-white/90 text-sm font-medium">Controles Automáticos</div>
               <button
                 onClick={() => setShowAutoControls(!showAutoControls)}
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors no-active-transform"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors no-active-transform shadow-[0_0_12px_rgba(255,255,255,0.2)]"
               >
                 {showAutoControls ? <ChevronUp size={16} className="text-white" /> : <ChevronDown size={16} className="text-white" />}
               </button>
@@ -265,7 +262,7 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
                   onClick={() => setAutoCashOutEnabled(!autoCashOutEnabled)}
                   className={`w-12 h-6 rounded-full transition-all duration-300 ${
                     autoCashOutEnabled 
-                      ? 'bg-green-500 shadow-lg shadow-green-500/30' 
+                      ? 'bg-green-500 shadow-[0_0_16px_rgba(34,197,94,0.7)]' 
                       : 'bg-white/20'
                   }`}
                 >
@@ -284,21 +281,20 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
                   <div className="text-white/60 text-xs">Retiro automático</div>
                 </div>
               </div>
-              
               {autoCashOutEnabled && (
                 <div className="flex items-center space-x-2">
                   <button 
                     onClick={() => setAutoCashOut(Math.max(1.01, autoCashOut - 0.1))}
-                    className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm flex items-center justify-center"
+                    className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.3)]"
                   >
                     -
                   </button>
-                  <div className="bg-orange-500/80 px-3 py-1 rounded-lg min-w-[60px] text-center">
+                  <div className="bg-orange-500/80 px-3 py-1 rounded-lg min-w-[60px] text-center shadow-[0_0_16px_rgba(249,115,22,0.7)]">
                     <div className="text-white font-bold text-sm">{autoCashOut.toFixed(1)}x</div>
                   </div>
                   <button 
                     onClick={() => setAutoCashOut(autoCashOut + 0.1)}
-                    className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm flex items-center justify-center"
+                    className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.3)]"
                   >
                     +
                   </button>
@@ -331,17 +327,17 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
           </div>
 
           {/* Balance Info */}
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 text-center shadow-[0_0_14px_rgba(255,255,255,0.2)]">
             <div className="text-white/70 text-xs">Saldo Disponible</div>
             <div className="text-white font-bold text-lg">${balance.toFixed(2)}</div>
           </div>
         </div>
       </div>
 
-      {/* Toggle Button Below Panel */}
+      {/* Toggle Button Below Panel - center fixed */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 mb-20 z-50 bg-black/60 backdrop-blur-md rounded-full p-2 shadow-lg hover:bg-black/80 transition-colors no-active-transform"
+        className="fixed bottom-[72px] left-1/2 -translate-x-1/2 z-50 bg-black/60 backdrop-blur-md rounded-full p-2 shadow-[0_0_14px_rgba(255,255,255,0.3)] hover:bg-black/80 transition-colors no-active-transform"
         aria-label={isCollapsed ? 'Show betting panel' : 'Hide betting panel'}
       >
         {isCollapsed ? (

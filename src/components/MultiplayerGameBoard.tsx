@@ -38,13 +38,13 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [astronautRotation, setAstronautRotation] = useState(0);
   const [planetPositions, setPlanetPositions] = useState({
-    planet1: { x: 150, y: 15 },
-    planet2: { x: 180, y: 55 },
-    planet3: { x: 160, y: 35 },
-    planet4: { x: 200, y: 5 },
-    planet5: { x: 170, y: 70 },
-    planet1b: { x: 220, y: 45 },
-    planet3b: { x: 240, y: 25 }
+    planet1: { x: 150, y: 15 + Math.random() * 60 },
+    planet2: { x: 180, y: 25 + Math.random() * 50 },
+    planet3: { x: 160, y: 20 + Math.random() * 60 },
+    planet4: { x: 200, y: 10 + Math.random() * 50 },
+    planet5: { x: 170, y: 30 + Math.random() * 50 },
+    planet1b: { x: 220, y: 20 + Math.random() * 60 },
+    planet3b: { x: 240, y: 15 + Math.random() * 60 }
   });
   
   const [nebulaPositions, setNebulaPositions] = useState({
@@ -111,9 +111,11 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
           const nextX = pos.x - sx;
           const nextY = pos.y + sy;
           if (nextX < -50) {
-            return { x: resetX, y: 10 + Math.random() * 80 };
+            const randY = Math.max(5, Math.min(90, 10 + Math.random() * 80));
+            return { x: resetX, y: randY };
           }
-          return { x: nextX, y: nextY > 110 ? (nextY - 110) : nextY };
+          const clampedY = nextY > 110 ? (nextY - 110) : (nextY < -10 ? nextY + 110 : nextY);
+          return { x: nextX, y: clampedY };
         };
         
         // Move planets diagonally from top-right to bottom-left
