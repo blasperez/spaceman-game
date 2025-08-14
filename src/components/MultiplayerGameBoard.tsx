@@ -54,6 +54,35 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     nebula4: { x: 180, y: 20 }
   });
 
+  const [platformX, setPlatformX] = useState(55);
+  const [platformVisible, setPlatformVisible] = useState(true);
+
+  // Reset platform every new round
+  useEffect(() => {
+    if (gameState.phase === 'waiting') {
+      setPlatformX(55);
+      setPlatformVisible(true);
+    }
+  }, [gameState.phase, gameState.gameId, gameState.countdown]);
+
+  // Move platform on flight
+  useEffect(() => {
+    if (gameState.phase !== 'flying') return;
+    let x = 55;
+    let speed = 0.35;
+    const id = setInterval(() => {
+      speed = Math.min(speed * 1.06, 4);
+      x -= speed;
+      if (x < -30) {
+        setPlatformVisible(false);
+        clearInterval(id);
+      } else {
+        setPlatformX(x);
+      }
+    }, 50);
+    return () => clearInterval(id);
+  }, [gameState.phase]);
+
   // Mobile detection
   useEffect(() => {
     const checkMobile = () => {
@@ -398,6 +427,24 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
           filter: gameState.phase === 'crashed' ? 'brightness(0.7)' : 'none'
         }}
       >
+        {/* Launch Platform under astronaut */}
+        {platformVisible && (
+          <div
+            className="absolute"
+            style={{ left: '50%', top: '60%', transform: `translate(-50%, 0)` }}
+          >
+            <div
+              className="w-[180px] h-[20px] rounded-md"
+              style={{
+                background: 'linear-gradient(180deg, rgba(120,120,130,0.9), rgba(60,60,70,0.9))',
+                boxShadow: '0 6px 20px rgba(0,0,0,0.5), 0 0 24px rgba(80,200,255,0.3) inset'
+              }}
+            />
+            <div className="w-[220px] h-[8px] mx-auto -mt-1 rounded-full" style={{
+              background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.6), transparent 70%)'
+            }} />
+          </div>
+        )}
         <div className="relative">
           {/* Fire Jets - only when flying - HORIZONTAL */}
           {gameState.phase === 'flying' && (
