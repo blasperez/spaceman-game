@@ -69,163 +69,22 @@ router.post('/create-payment-intent', verifyToken, async (req, res) => {
 
 // 1. Endpoint para crear una sesión de pago en Stripe
 router.post('/create-checkout-session', verifyToken, async (req, res) => {
-  const { priceId, amount, coins } = req.body;
-  const userId = req.userId;
-
-  console.log('🛒 Creating checkout session:', { priceId, amount, coins, userId });
-
-  if (amount < 50) {
-    return res.status(400).json({ error: 'El importe mínimo es de 50 MXN.' });
-  }
-
-  try {
-    // Enhanced session creation with better error handling
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'mxn',
-            product_data: {
-              name: `${coins} Monedas`,
-              description: 'Créditos para el juego Spaceman',
-            },
-            unit_amount: amount * 100, // Stripe espera el monto en centavos
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${process.env.VITE_SITE_URL || process.env.VITE_APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.VITE_SITE_URL || process.env.VITE_APP_URL}/cancel`,
-      metadata: {
-        userId: userId,
-        coins: coins,
-        type: 'checkout_session'
-      }
-    });
-
-    console.log('✅ Checkout session created:', session.id);
-    res.json({ id: session.id });
-  } catch (error) {
-    console.error('❌ Checkout session creation failed:', error);
-    res.status(500).json({ 
-      error: 'Error al crear la sesión de pago.',
-      details: error.message 
-    });
-  }
+  return res.status(410).json({ error: 'Deprecated. Use Supabase Edge Function /functions/v1/stripe-checkout' });
 });
 
 // 2. Endpoint para manejar webhooks de Stripe
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.VITE_STRIPE_WEBHOOK_SECRET;
-  
-  console.log('🔔 Webhook received:', {
-    hasSignature: !!sig,
-    hasSecret: !!webhookSecret,
-    bodyLength: req.body?.length
-  });
-
-  let event;
-
-  try {
-    if (!webhookSecret) {
-      console.error('❌ Missing webhook secret');
-      return res.status(400).send('Webhook secret not configured');
-    }
-
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    console.log('✅ Webhook signature verified:', event.type);
-  } catch (err) {
-    console.error(`❌ Webhook signature verification failed: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  try {
-    // Handle different event types
-    switch (event.type) {
-      case 'payment_intent.succeeded':
-        await handlePaymentIntentSucceeded(event.data.object);
-        break;
-        
-      case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object);
-        break;
-        
-      default:
-        console.log(`🔔 Unhandled event type: ${event.type}`);
-    }
-
-    res.json({ received: true });
-  } catch (error) {
-    console.error('❌ Webhook processing failed:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
-  }
+  return res.status(410).send('Deprecated. Use Supabase Edge Function /functions/v1/stripe-webhook');
 });
 
 // Handle payment intent succeeded
 async function handlePaymentIntentSucceeded(paymentIntent) {
-  const userId = paymentIntent.metadata.userId;
-  const amount = paymentIntent.amount / 100; // Convert from cents
-  
-  console.log('💰 Payment intent succeeded:', { userId, amount });
-
-  try {
-    await pool.query('BEGIN');
-    
-    // Add credits to user balance
-    await pool.query(
-      'UPDATE users SET balance_deposited = balance_deposited + $1 WHERE id = $2',
-      [amount, userId]
-    );
-
-    // Record transaction
-    await pool.query(
-      'INSERT INTO transactions (user_id, type, amount, status, stripe_charge_id) VALUES ($1, $2, $3, $4, $5)',
-      [userId, 'deposit', amount, 'completed', paymentIntent.id]
-    );
-    
-    await pool.query('COMMIT');
-    console.log(`✅ Payment processed for user ${userId}: ${amount} MXN`);
-
-  } catch (error) {
-    await pool.query('ROLLBACK');
-    console.error('❌ Payment processing failed:', error);
-    throw error;
-  }
+  // Deprecated (handled by Supabase webhook)
 }
 
 // Handle checkout session completed
 async function handleCheckoutSessionCompleted(session) {
-  const userId = session.metadata.userId;
-  const coins = parseInt(session.metadata.coins);
-  
-  console.log('🛒 Checkout session completed:', { userId, coins });
-
-  try {
-    await pool.query('BEGIN');
-    
-    // Update user balance
-    await pool.query(
-      'UPDATE users SET balance_deposited = balance_deposited + $1 WHERE id = $2',
-      [coins, userId]
-    );
-
-    // Record transaction
-    await pool.query(
-      'INSERT INTO transactions (user_id, type, amount, status, stripe_charge_id) VALUES ($1, $2, $3, $4, $5)',
-      [userId, 'deposit', coins, 'completed', session.payment_intent]
-    );
-    
-    await pool.query('COMMIT');
-    console.log(`✅ Checkout completed for user ${userId}: ${coins} coins`);
-
-  } catch (error) {
-    await pool.query('ROLLBACK');
-    console.error('❌ Checkout processing failed:', error);
-    throw error;
-  }
+  // Deprecated (handled by Supabase webhook)
 }
 
 // 3. Endpoint para solicitar un retiro
