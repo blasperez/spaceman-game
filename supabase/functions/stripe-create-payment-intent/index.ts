@@ -85,16 +85,7 @@ serve(async (req) => {
       metadata: { userId: user.id, type: 'in_game_topup' },
     });
 
-    // Persist transaction minimal record via admin client (optional, webhook will do full updates)
-    await supabaseAdmin.from('transactions').insert({
-      user_id: user.id,
-      type: 'deposit',
-      amount: amount / 100,
-      status: paymentIntent.status === 'succeeded' ? 'completed' : 'pending',
-      payment_method: 'stripe',
-      stripe_payment_id: paymentIntent.id,
-      currency,
-    });
+    // Do not insert transactions here; webhook will handle recording and balance updates
 
     return new Response(JSON.stringify({
       id: paymentIntent.id,

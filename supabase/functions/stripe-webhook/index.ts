@@ -88,19 +88,20 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   console.log(`Processing successful checkout session: ${session.id}`);
   
   try {
-    const userId = session.metadata?.user_id;
-    const coins = parseInt(session.metadata?.coins || '0');
+    const meta: any = session.metadata || {};
+    const userId = meta.userId || meta.user_id;
     const amount = session.amount_total ? session.amount_total / 100 : 0;
+    const coins = parseInt(meta.coins || `${amount}`, 10);
     const paymentIntentId = session.payment_intent as string;
     
     if (!userId) {
-      console.error('No user_id found in session metadata');
+      console.error('No userId found in session metadata');
       return;
     }
 
     console.log(`Processing payment for user ${userId}, amount: ${amount}, coins: ${coins}`);
 
-    // 1. Insert transaction record
+    // 1. Insert transaction record (triggers will update profile balances)
     const { error: transactionError } = await supabase
       .from('transactions')
       .insert({
@@ -110,6 +111,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         status: 'completed',
         payment_method: 'stripe',
         stripe_payment_id: paymentIntentId,
+        currency: session.currency,
       });
 
     if (transactionError) {
@@ -117,21 +119,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       return;
     }
 
-    // 2. Update user balance in profiles table
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ 
-        balance: supabase.sql`balance + ${amount}`,
-        total_deposits: supabase.sql`total_deposits + ${amount}`
-      })
-      .eq('id', userId);
-
-    if (profileError) {
-      console.error('Error updating profile balance:', profileError);
-      return;
-    }
-
-    // 3. Insert order record for tracking
+    // 2. Insert order record for tracking
     const { error: orderError } = await supabase
       .from('stripe_orders')
       .insert({
@@ -160,7 +148,8 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   console.log(`Processing payment intent: ${paymentIntent.id}`);
   
   try {
-    const userId = paymentIntent.metadata?.userId;
+    const meta: any = paymentIntent.metadata || {};
+    const userId = meta.userId || meta.user_id;
     const amount = paymentIntent.amount / 100;
     
     if (!userId) {
@@ -170,7 +159,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
     console.log(`Processing payment intent for user ${userId}, amount: ${amount}`);
 
-    // 1. Insert transaction record
+    // 1. Insert transaction record (triggers will update profile balances)
     const { error: transactionError } = await supabase
       .from('transactions')
       .insert({
@@ -180,24 +169,11 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
         status: 'completed',
         payment_method: 'stripe',
         stripe_payment_id: paymentIntent.id,
+        currency: paymentIntent.currency,
       });
 
     if (transactionError) {
       console.error('Error inserting transaction:', transactionError);
-      return;
-    }
-
-    // 2. Update user balance in profiles table
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ 
-        balance: supabase.sql`balance + ${amount}`,
-        total_deposits: supabase.sql`total_deposits + ${amount}`
-      })
-      .eq('id', userId);
-
-    if (profileError) {
-      console.error('Error updating profile balance:', profileError);
       return;
     }
 

@@ -72,6 +72,7 @@ serve(async (req) => {
         userId: user.id,
         amount: amount.toString(),
         currency: currency,
+        coins: (amount / 100).toString(),
       },
     })
 
