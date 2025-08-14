@@ -26,7 +26,15 @@ export default defineConfig(({ mode }) => ({
   build: {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        sw: path.resolve(__dirname, 'src/sw.ts'),
+      },
       output: {
+        entryFileNames: (chunk) => {
+          if (chunk.name === 'sw') return 'sw.js';
+          return 'assets/[name]-[hash].js';
+        },
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'ui-vendor': ['lucide-react']

@@ -1,0 +1,19 @@
+{
+  "name": "Spaceman Crash Game",
+  "short_name": "Spaceman",
+  "description": "Juego Spaceman multijugador con apuestas y efectos espaciales.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

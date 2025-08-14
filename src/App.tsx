@@ -1330,6 +1330,7 @@ function GameApp() {
   );
 }
 
+import InstallPWA from './components/InstallPWA';
 function App() {
   return (
     <Router>
@@ -1355,7 +1356,7 @@ function App() {
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-
+      <InstallPWA />
     </Router>
   );
 }
