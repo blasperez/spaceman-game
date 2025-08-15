@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       return new Response('No signature found', { status: 400 });
     }
 
-    // get the raw body
+    // get the raw body (ensure no JSON.parse before signature verification)
     const body = await req.text();
 
     // verify the webhook signature

@@ -28,7 +28,7 @@ export const PaymentSheet: React.FC<PaymentSheetProps> = ({ onClose, onSuccess, 
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          amount: Math.round(amount * 100),
+          amount: Math.max(5000, Math.round(amount * 100)),
           currency: 'mxn',
           paymentMethodId: selectedPaymentMethodId,
         }),

@@ -174,7 +174,7 @@ export const usePayments = () => {
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         },
         body: JSON.stringify({
-          amount,
+          amount: Math.max(5000, amount),
           payment_method_id: paymentMethodId
         })
       });

@@ -19,7 +19,14 @@ const server = http.createServer(app);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? ['https://spaceman-game-production.up.railway.app', 'https://lcpsoyorsaevkabvanrw.supabase.co']
-    : ['http://localhost:8081', 'http://127.0.0.1:8081', 'http://localhost:3000'],
+    : [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:8081',
+        'http://127.0.0.1:8081'
+      ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with']
@@ -143,7 +150,7 @@ let currentGame = {
 let recentChat = [];
 
 // WebSocket server with proper port handling
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 const wss = new WebSocket.Server({ 
   server,
   perMessageDeflate: false,

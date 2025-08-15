@@ -41,7 +41,7 @@ export const useGameSocket = (userId: string, userName: string) => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
   const socketRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
   const betLockRef = useRef(false);
@@ -82,7 +82,7 @@ export const useGameSocket = (userId: string, userName: string) => {
     }
     
     // Development URL
-    return 'ws://localhost:8080';
+    return 'ws://localhost:3000';
   };
 
   // Connect to WebSocket server

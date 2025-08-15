@@ -6,7 +6,8 @@ interface RechargeModalProps {
   onClose: () => void;
 }
 
-const RECHARGE_AMOUNTS = [1, 5, 10, 50, 100, 200, 500, 1000, 2000];
+// Stripe Functions usan centavos; el mínimo real de intent es 1 MXN (100 cents)
+const RECHARGE_AMOUNTS = [50, 100, 200, 500, 1000, 2000];
 
 export const RechargeModal: React.FC<RechargeModalProps> = ({ onClose }) => {
   const [selectedAmount, setSelectedAmount] = useState(50);
@@ -29,8 +30,8 @@ export const RechargeModal: React.FC<RechargeModalProps> = ({ onClose }) => {
   const handleRecharge = () => {
     const amount = selectedAmount || parseFloat(customAmount);
     
-    if (!amount || amount < 1) {
-      setError('El monto mínimo es de 1 peso mexicano');
+    if (!amount || amount < 50) {
+      setError('El monto mínimo es de 50 pesos mexicanos');
       return;
     }
 
