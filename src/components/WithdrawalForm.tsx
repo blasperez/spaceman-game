@@ -27,8 +27,13 @@ interface AccountDetails {
 }
 
 export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ onClose, onSuccess }) => {
-  const { user } = useAuth();
-  const { userBalance, requestWithdrawal } = usePayments();
+  const { 
+    userBalance, 
+    requestConnectWithdrawal, 
+    getConnectStatus, 
+    createConnectAccount, 
+    getConnectOnboardingLink 
+  } = usePayments();
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'paypal' | 'crypto'>('bank');
   const [accountDetails, setAccountDetails] = useState<AccountDetails>({
@@ -36,6 +41,37 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ onClose, onSucce
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [connectReady, setConnectReady] = useState<boolean | null>(null);
+  const [checkingConnect, setCheckingConnect] = useState(false);
+
+  React.useEffect(() => {
+    const check = async () => {
+      try {
+        setCheckingConnect(true);
+        const res = await getConnectStatus();
+        const status = res?.status;
+        setConnectReady(!!status && !!status.payouts_enabled);
+      } catch {
+        setConnectReady(false);
+      } finally {
+        setCheckingConnect(false);
+      }
+    };
+    check();
+  }, [getConnectStatus]);
+
+  const handleSetupConnect = async () => {
+    try {
+      setLoading(true);
+      await createConnectAccount();
+      const { url } = await getConnectOnboardingLink();
+      if (url) window.location.href = url;
+    } catch (e: any) {
+      setError(e?.message || 'No se pudo iniciar la configuración de Stripe Connect');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,19 +95,9 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ onClose, onSucce
       return;
     }
 
-    // Validate account details based on payment method
-    if (paymentMethod === 'bank' && (!accountDetails.account_number || !accountDetails.routing_number || !accountDetails.bank_name)) {
-      setError('Por favor completa todos los campos bancarios');
-      return;
-    }
-
-    if (paymentMethod === 'paypal' && !accountDetails.paypal_email) {
-      setError('Por favor ingresa tu email de PayPal');
-      return;
-    }
-
-    if (paymentMethod === 'crypto' && !accountDetails.crypto_address) {
-      setError('Por favor ingresa tu dirección de crypto');
+    // Stripe Connect required and preferred
+    if (!connectReady) {
+      setError('Tu cuenta de retiros no está lista. Configúrala con Stripe Connect.');
       return;
     }
 
@@ -79,7 +105,8 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ onClose, onSucce
     setError('');
 
     try {
-      await requestWithdrawal(withdrawalAmount, paymentMethod, accountDetails);
+      // Process withdrawal via Stripe Connect (amount in MXN)
+      await requestConnectWithdrawal(withdrawalAmount);
       onSuccess?.();
       onClose();
     } catch (err) {
@@ -128,6 +155,24 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ onClose, onSucce
           </button>
         </div>
 
+        {/* Connect status banner */}
+        <div className="mb-4">
+          {checkingConnect ? (
+            <div className="bg-white/10 border border-white/20 rounded-xl p-3 text-white/70 text-sm">Verificando estado de retiros...</div>
+          ) : connectReady ? (
+            <div className="bg-green-500/15 border border-green-400/30 rounded-xl p-3 text-green-300 text-sm">Stripe Connect listo para retiros.</div>
+          ) : (
+            <div className="bg-yellow-500/15 border border-yellow-400/30 rounded-xl p-3 text-yellow-300 text-sm">
+              Para retirar fondos, configura tu cuenta de Stripe Connect.
+              <div className="mt-2">
+                <button onClick={handleSetupConnect} disabled={loading} className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 text-white font-semibold py-2 px-4 rounded-xl">
+                  {loading ? 'Abriendo...' : 'Configurar Stripe Connect'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {userBalance && (
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 mb-6">
             <div className="text-white/70 text-sm mb-2">Balance Disponible</div>
@@ -158,116 +203,27 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ onClose, onSucce
             </div>
           </div>
 
-          {/* Payment Method Selection */}
+          {/* Payment Method Selection (disabled when using Connect) */}
           <div>
             <label className="block text-white/70 text-sm mb-2">Método de Pago</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 opacity-50 pointer-events-none">
               {(['bank', 'paypal', 'crypto'] as const).map((method) => (
-                <button
-                  key={method}
-                  type="button"
-                  onClick={() => {
-                    setPaymentMethod(method);
-                    setAccountDetails({ account_type: method });
-                  }}
-                  className={`p-3 rounded-xl border transition-colors flex flex-col items-center space-y-1 ${
-                    paymentMethod === method
-                      ? 'bg-blue-500/20 border-blue-400 text-blue-300'
-                      : 'bg-white/10 border-white/20 text-white/70 hover:bg-white/20'
-                  }`}
-                >
+                <div key={method} className={`p-3 rounded-xl border flex flex-col items-center space-y-1 ${
+                  paymentMethod === method
+                    ? 'bg-blue-500/20 border-blue-400 text-blue-300'
+                    : 'bg-white/10 border-white/20 text-white/70'
+                }`}>
                   {getPaymentMethodIcon(method)}
                   <span className="text-xs">{getPaymentMethodLabel(method)}</span>
-                </button>
+                </div>
               ))}
             </div>
+            <div className="text-white/50 text-xs mt-1">Los retiros se procesan vía Stripe Connect.</div>
           </div>
 
-          {/* Account Details */}
-          <div className="space-y-3">
-            {paymentMethod === 'bank' && (
-              <>
-                <div>
-                  <label className="block text-white/70 text-sm mb-2">Nombre del Banco</label>
-                  <input
-                    type="text"
-                    value={accountDetails.bank_name || ''}
-                    onChange={(e) => setAccountDetails({ ...accountDetails, bank_name: e.target.value })}
-                    placeholder="Ej: Banco de América"
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:border-blue-400 transition-colors"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-white/70 text-sm mb-2">Número de Cuenta</label>
-                    <input
-                      type="text"
-                      value={accountDetails.account_number || ''}
-                      onChange={(e) => setAccountDetails({ ...accountDetails, account_number: e.target.value })}
-                      placeholder="1234567890"
-                      className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:border-blue-400 transition-colors"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/70 text-sm mb-2">Número de Routing</label>
-                    <input
-                      type="text"
-                      value={accountDetails.routing_number || ''}
-                      onChange={(e) => setAccountDetails({ ...accountDetails, routing_number: e.target.value })}
-                      placeholder="021000021"
-                      className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:border-blue-400 transition-colors"
-                      required
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            {paymentMethod === 'paypal' && (
-              <div>
-                <label className="block text-white/70 text-sm mb-2">Email de PayPal</label>
-                <input
-                  type="email"
-                  value={accountDetails.paypal_email || ''}
-                  onChange={(e) => setAccountDetails({ ...accountDetails, paypal_email: e.target.value })}
-                  placeholder="tu@email.com"
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:border-blue-400 transition-colors"
-                  required
-                />
-              </div>
-            )}
-
-            {paymentMethod === 'crypto' && (
-              <>
-                <div>
-                  <label className="block text-white/70 text-sm mb-2">Dirección de Wallet</label>
-                  <input
-                    type="text"
-                    value={accountDetails.crypto_address || ''}
-                    onChange={(e) => setAccountDetails({ ...accountDetails, crypto_address: e.target.value })}
-                    placeholder="0x1234...5678"
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:border-blue-400 transition-colors"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/70 text-sm mb-2">Red (Opcional)</label>
-                  <select
-                    value={accountDetails.crypto_network || ''}
-                    onChange={(e) => setAccountDetails({ ...accountDetails, crypto_network: e.target.value })}
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400 transition-colors"
-                  >
-                    <option value="">Seleccionar red</option>
-                    <option value="ethereum">Ethereum</option>
-                    <option value="bitcoin">Bitcoin</option>
-                    <option value="polygon">Polygon</option>
-                    <option value="binance">Binance Smart Chain</option>
-                  </select>
-                </div>
-              </>
-            )}
+          {/* Account Details (managed by Stripe Connect onboarding) */}
+          <div className="space-y-3 opacity-50 pointer-events-none">
+            <div className="text-white/60 text-sm">Los datos bancarios se gestionan en Stripe Connect.</div>
           </div>
 
           {/* Error Message */}
@@ -297,7 +253,7 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({ onClose, onSucce
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !connectReady}
             className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
           >
             {loading ? (
