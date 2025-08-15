@@ -195,15 +195,15 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
         return (
           <div className="flex-1 bg-gray-900/50 backdrop-blur-xl rounded-3xl p-4 md:p-8 flex flex-col lg:flex-row gap-6 relative overflow-visible">
             {/* Profile Card */}
-            <section className="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-6 w-full lg:w-[320px] flex flex-col items-center">
+            <section className="bg-gray-800/50 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-6 w-full lg:w-[320px] flex flex-col items-center transition-transform duration-300 hover:scale-[1.01]">
               <div className="relative mb-4 md:mb-6 w-full">
                 <img 
                   alt="Foto de perfil" 
-                  className="rounded-xl w-full h-48 md:h-64 object-cover border-2 border-white/20"
+                  className="rounded-xl w-full h-48 md:h-64 object-cover border-2 border-white/20 shadow-[0_0_24px_rgba(168,85,247,0.25)]"
                   src={profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.full_name || user?.name || 'Usuario')}&background=6366f1&color=fff&size=280`}
                 />
                 <button 
-                  className="absolute bottom-2 right-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full py-1 px-3 flex items-center gap-1"
+                  className="absolute bottom-2 right-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full py-1 px-3 flex items-center gap-1 active:scale-95 shadow-[0_0_16px_rgba(236,72,153,0.45)]"
                   type="button"
                 >
                   <Camera size={12} />
@@ -271,13 +271,13 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
 
                 <button 
                   onClick={() => setShowPaymentMethods(true)}
-                  className="w-full bg-gray-700/50 hover:bg-gray-700/70 text-white text-sm font-semibold rounded-full py-2 mb-2 flex items-center justify-center gap-2"
+                  className="w-full bg-gray-700/50 hover:bg-gray-700/70 text-white text-sm font-semibold rounded-full py-2 mb-2 flex items-center justify-center gap-2 active:scale-95"
                 >
                   <CreditCard size={14} />
                   Métodos de Pago
                 </button>
 
-                <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold rounded-full py-2" type="button">
+                <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold rounded-full py-2 active:scale-95 shadow-[0_0_18px_rgba(168,85,247,0.45)]" type="button">
                   Editar Perfil
                 </button>
               </div>
@@ -314,7 +314,7 @@ export const AccountPanel: React.FC<AccountPanelProps> = ({ onClose }) => {
 
                 <button 
                   onClick={() => setShowBalanceDetails(!showBalanceDetails)}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full px-3 py-1 mb-4 w-max"
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full px-3 py-1 mb-4 w-max active:scale-95"
                 >
                   {showBalanceDetails ? 'Ocultar' : 'Mostrar'} balance de sumas y restas
                 </button>
