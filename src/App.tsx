@@ -819,7 +819,6 @@ function GameApp() {
         <div className="planet planet-1"></div>
         <div className="planet planet-2"></div>
         <div className="planet planet-3"></div>
-        <div className="spaceship"></div>
         <div className="meteor"></div>
         <div className="meteor"></div>
         <div className="meteor"></div>
@@ -827,6 +826,12 @@ function GameApp() {
         <div className="meteor"></div>
         <div className="nebula"></div>
         <div className="nebula"></div>
+        {/* Immense nebulae drifting far in the background */}
+        <div className="mega-nebula">
+          <div className="mega-nebula-layer pillars layer-1"></div>
+          <div className="mega-nebula-layer pillars layer-2"></div>
+          <div className="mega-nebula-layer pillars layer-3"></div>
+        </div>
 
         {/* Mobile Game Board - Now using MultiplayerGameBoard for consistent visuals */}
         <div className="absolute inset-0">
@@ -1052,17 +1057,22 @@ function GameApp() {
     <div className={`min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden space-background ${gameData.gameState.phase === 'crashed' ? 'crash-shake' : ''}`}>
       {/* Space Background Animations */}
       <div className="stars"></div>
-      <div className="planet planet-1"></div>
-      <div className="planet planet-2"></div>
-      <div className="planet planet-3"></div>
-      <div className="spaceship"></div>
-      <div className="meteor"></div>
+              <div className="planet planet-1"></div>
+        <div className="planet planet-2"></div>
+        <div className="planet planet-3"></div>
+        <div className="meteor"></div>
       <div className="meteor"></div>
       <div className="meteor"></div>
       <div className="meteor"></div>
       <div className="meteor"></div>
       <div className="nebula"></div>
       <div className="nebula"></div>
+      {/* Immense nebulae drifting far in the background */}
+      <div className="mega-nebula">
+        <div className="mega-nebula-layer pillars layer-1"></div>
+        <div className="mega-nebula-layer pillars layer-2"></div>
+        <div className="mega-nebula-layer pillars layer-3"></div>
+      </div>
       
       {/* FULL SCREEN Game Board */}
       <div className="absolute inset-0">

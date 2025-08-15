@@ -222,6 +222,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         ))}
       </div>
 
+      {/* Far mega-nebula layers are injected by parent background; nothing to place here */}
+
       {/* Moving nebula clouds and gas */}
       <div className="absolute inset-0" style={{ zIndex: 4 }}>
         <div 
