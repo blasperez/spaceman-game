@@ -103,6 +103,23 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     generateStars();
   }, []);
 
+  // Warp lines configuration (generated once)
+  const [warpLines] = useState(() => Array.from({ length: 24 }, () => ({
+    top: Math.random() * 100,
+    delay: Math.random() * 1.2,
+    dur: 0.8 + Math.random() * 0.9,
+    heightVh: 20 + Math.random() * 40,
+    opacity: 0.15 + Math.random() * 0.5
+  })));
+
+  // Shockwave trigger key on crash
+  const [crashKey, setCrashKey] = useState<number | null>(null);
+  useEffect(() => {
+    if (gameState.phase === 'crashed') {
+      setCrashKey(Date.now());
+    }
+  }, [gameState.phase]);
+
   // Animate background elements
   useEffect(() => {
     if (gameState.phase === 'flying') {
@@ -397,6 +414,25 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         />
       </div>
 
+      {/* Warp speed lines during flight */}
+      {gameState.phase === 'flying' && (
+        <div className="absolute inset-0 warp-container">
+          {warpLines.map((line, i) => (
+            <div
+              key={`warp-${i}`}
+              className="warp-line"
+              style={{
+                top: `${line.top}%`,
+                height: `${line.heightVh}vh`,
+                opacity: line.opacity as any,
+                animationDuration: `${line.dur}s`,
+                animationDelay: `${line.delay}s`
+              }}
+            />
+          ))}
+        </div>
+      )}
+
 
 
       {/* Original Astronaut */}
@@ -418,13 +454,14 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
               <div 
                 className="absolute left-0 top-1/2 transform -translate-y-1/2"
                 style={{
-                  width: '120px',
+                  width: `${Math.min(120 * (1.1 + gameState.multiplier * 0.12), 360)}px`,
                   height: '40px',
                   background: 'linear-gradient(to left, #cc1100 0%, #ff3300 30%, #ff5500 60%, transparent 100%)',
                   filter: 'blur(8px)',
                   animation: 'fireCore 0.2s ease-in-out infinite alternate',
                   borderRadius: '0 50% 50% 0',
-                  transform: 'skewX(-6deg)'
+                  transform: 'skewX(-6deg)',
+                  transition: 'width 0.08s ease'
                 }}
               />
               
@@ -432,13 +469,14 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
               <div 
                 className="absolute left-0 top-1/2 transform -translate-y-1/2"
                 style={{
-                  width: '100px',
+                  width: `${Math.min(100 * (1.1 + gameState.multiplier * 0.12), 300)}px`,
                   height: '25px',
                   background: 'linear-gradient(to left, #ff3300 0%, #ff6600 40%, transparent 100%)',
                   filter: 'blur(6px)',
                   animation: 'fireJet 0.15s ease-in-out infinite alternate',
                   borderRadius: '0 50% 50% 0',
-                  transform: 'skewX(-6deg)'
+                  transform: 'skewX(-6deg)',
+                  transition: 'width 0.08s ease'
                 }}
               />
               
@@ -446,13 +484,14 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
               <div 
                 className="absolute left-0 top-1/2 transform -translate-y-1/2"
                 style={{
-                  width: '80px',
+                  width: `${Math.min(80 * (1.1 + gameState.multiplier * 0.12), 240)}px`,
                   height: '20px',
                   background: 'linear-gradient(to left,rgba(255, 0, 0, 0.49) 0%,rgba(255, 72, 0, 0.29) 50%, transparent 100%)',
                   filter: 'blur(4px)',
                   animation: 'fireJet 0.12s ease-in-out infinite alternate',
                   borderRadius: '0 50% 50% 0',
-                  transform: 'skewX(-6deg)'
+                  transform: 'skewX(-6deg)',
+                  transition: 'width 0.08s ease'
                 }}
               />
               
@@ -460,12 +499,13 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
               <div 
                 className="absolute left-0 top-1/2 transform -translate-y-1/2"
                 style={{
-                  width: '60px',
+                  width: `${Math.min(60 * (1.1 + gameState.multiplier * 0.12), 200)}px`,
                   height: '15px',
                   background: 'linear-gradient(to left, #ffffff 0%, #ffeeaa 60%, transparent 100%)',
                   filter: 'blur(2px)',
                   animation: 'fireJet 0.1s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0'
+                  borderRadius: '0 50% 50% 0',
+                  transition: 'width 0.08s ease'
                 }}
               />
             </div>
@@ -485,6 +525,11 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Lens flare around astronaut during flight */}
+      {gameState.phase === 'flying' && (
+        <div className="lens-flare" style={{ left: '50%', top: '50%' }} />
+      )}
 
       {/* Game Status */}
       {gameState.phase === 'waiting' && gameState.countdown > 0 && (
@@ -563,6 +608,11 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             <div className="text-red-200 text-5xl font-bold">{gameState.crashPoint?.toFixed(2)}x</div>
           </div>
         </div>
+      )}
+
+      {/* Shockwave on crash */}
+      {gameState.phase === 'crashed' && crashKey && (
+        <div key={crashKey} className="shockwave" style={{ left: '50%', top: '50%' }} />
       )}
 
       {/* Top Info Bar */}

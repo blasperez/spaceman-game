@@ -528,3 +528,82 @@
   80% { opacity: 1; transform: translateY(-20px) scale(1.02); }
   100% { opacity: 0; transform: translateY(-30px) scale(0.98); }
 }
+
+/* Cinematic effects and overlays */
+@keyframes crashShake {
+  0% { transform: translate(0, 0) rotate(0); }
+  20% { transform: translate(-10px, -5px) rotate(-1deg); }
+  40% { transform: translate(10px, 5px) rotate(1deg); }
+  60% { transform: translate(-6px, 3px) rotate(-0.5deg); }
+  80% { transform: translate(6px, -3px) rotate(0.5deg); }
+  100% { transform: translate(0, 0) rotate(0); }
+}
+
+.crash-shake {
+  animation: crashShake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Warp speed lines */
+.warp-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+  overflow: hidden;
+}
+
+.warp-line {
+  position: absolute;
+  left: 110%;
+  width: 2px;
+  height: 35vh;
+  background: linear-gradient(to left, rgba(255,255,255,0.35), rgba(173,216,230,0.25), transparent);
+  filter: blur(1px);
+  transform: rotate(-12deg);
+  animation: warpSlide 1.2s linear infinite;
+}
+
+@keyframes warpSlide {
+  0% { transform: translateX(0) rotate(-12deg); opacity: 0; }
+  5% { opacity: 0.7; }
+  95% { opacity: 0.4; }
+  100% { transform: translateX(-140vw) rotate(-12deg); opacity: 0; }
+}
+
+/* Shockwave ring (on crash) */
+.shockwave {
+  position: absolute;
+  width: 20vmin;
+  height: 20vmin;
+  border-radius: 9999px;
+  border: 3px solid rgba(255,255,255,0.85);
+  box-shadow: 0 0 40px rgba(255,255,255,0.5), 0 0 80px rgba(255,165,0,0.4);
+  animation: shockwave 0.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 11;
+}
+
+@keyframes shockwave {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.9; }
+  60% { transform: translate(-50%, -50%) scale(1.6); opacity: 0.45; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+
+/* Lens flare around the astronaut during flight */
+.lens-flare {
+  position: absolute;
+  width: 26vmin;
+  height: 26vmin;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.25) 0%, rgba(255,200,120,0.25) 30%, rgba(255,120,0,0.15) 55%, transparent 65%);
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  border-radius: 9999px;
+  animation: flarePulse 1.2s ease-in-out infinite;
+  z-index: 9;
+}
+
+@keyframes flarePulse {
+  0%, 100% { opacity: 0.35; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.08); }
+}

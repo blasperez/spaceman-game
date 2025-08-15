@@ -1049,7 +1049,7 @@ function GameApp() {
 
   // DESKTOP LAYOUT
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden space-background">
+    <div className={`min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden space-background ${gameData.gameState.phase === 'crashed' ? 'crash-shake' : ''}`}>
       {/* Space Background Animations */}
       <div className="stars"></div>
       <div className="planet planet-1"></div>
