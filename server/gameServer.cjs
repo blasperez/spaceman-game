@@ -159,15 +159,29 @@ const wss = new WebSocket.Server({
 
 // Enhanced crash point generation with better distribution
 function generateCrashPoint() {
-  const random = Math.random();
-  
-  // More realistic crash distribution
-  if (random < 0.40) return 1 + Math.random() * 0.5;      // 40% chance: 1.00x - 1.50x
-  if (random < 0.65) return 1.5 + Math.random() * 0.5;    // 25% chance: 1.50x - 2.00x
-  if (random < 0.82) return 2 + Math.random() * 1;        // 17% chance: 2.00x - 3.00x
-  if (random < 0.93) return 3 + Math.random() * 2;        // 11% chance: 3.00x - 5.00x
-  if (random < 0.98) return 5 + Math.random() * 5;        // 5% chance:  5.00x - 10.00x
-  return 10 + Math.random() * 40;                         // 2% chance:  10.00x - 50.00x
+  // Debias patterns by mixing random sources and adding memory
+  const base = Math.random();
+  const now = Date.now();
+  const jitter = ((now & 0xffff) / 0xffff) * 0.5; // time-based jitter [0,0.5)
+  const rand = (base * 0.7) + (Math.sin(now * 0.0007) * 0.15 + 0.15) + (jitter * 0.15);
+  const random = Math.min(Math.max(rand, 0), 0.9999);
+
+  // Anti-streak memory: avoid consecutive very-low crashes
+  if (!generateCrashPoint.prev) generateCrashPoint.prev = [];
+  const history = generateCrashPoint.prev;
+  const lastLow = history.length >= 2 && history.slice(-2).every(v => v < 1.4);
+
+  let result;
+  if (random < 0.36 || lastLow) result = 1 + Math.random() * 0.5;         // ~36% 1.00-1.50 (guarded)
+  else if (random < 0.63)       result = 1.5 + Math.random() * 0.7;        // ~27% 1.50-2.20
+  else if (random < 0.80)       result = 2.2 + Math.random() * 1.2;        // ~17% 2.20-3.40
+  else if (random < 0.92)       result = 3.4 + Math.random() * 2.2;        // ~12% 3.40-5.60
+  else if (random < 0.98)       result = 5.6 + Math.random() * 5.4;        // ~6%  5.60-11.00
+  else                          result = 11 + Math.random() * 39;          // ~2%  11.00-50.00
+
+  history.push(result);
+  if (history.length > 6) history.shift();
+  return result;
 }
 
 function generateGameId() {

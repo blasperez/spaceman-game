@@ -451,7 +451,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         <div className="relative">
           {/* Fire Jets - only when flying - HORIZONTAL */}
           {gameState.phase === 'flying' && (
-             <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6" style={{ transform: 'translate(-28px, -36%) rotate(-12deg)' }}>
+             <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6" style={{ transform: 'translate(-30px, 4%) rotate(-12deg)' }}>
                {/* Core fire jet - RED ONLY */}
                <div 
                  className="absolute left-0 top-1/2 transform -translate-y-1/2"
