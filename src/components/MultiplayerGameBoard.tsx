@@ -504,7 +504,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
               <div 
                 className="absolute left-0 transform"
                  style={{
-                   top: '74%',
+                   top: '78%',
                    width: `${Math.min(60 * (1.1 + gameState.multiplier * 0.12), 200)}px`,
                    height: '15px',
                   background: 'linear-gradient(to left, #ffffff 0%, #ffeeaa 60%, transparent 100%)',
@@ -521,7 +521,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
           }`}
                style={{
-                 filter: gameState.phase === 'flying' ? 'brightness(1.2)' : 'brightness(1)'
+                 filter: gameState.phase === 'flying' ? 'brightness(1.2)' : 'brightness(1)',
+                 transform: 'translateY(4px)'
                }}>
             <img 
               src="/png-png-urbanbrush-13297 copy.png" 
