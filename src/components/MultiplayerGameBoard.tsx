@@ -187,6 +187,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 space-background" style={{ perspective: '900px' }}>
+      {/* Comic halftone overlay for whole scene */}
+      <div className="comic-halftone" />
       {/* Diagonal drift layers removed per request. We'll incline movement for stars/planets instead. */}
       {/* Deep background layer */}
       <div className="absolute inset-0 opacity-30">
@@ -435,6 +437,13 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       )}
 
+      {/* Onomatopoeia WHOOOSH! only during flight (no anticipation) */}
+      {gameState.phase === 'flying' && (
+        <div className="onomato-whoosh" style={{ left: '62%', top: '40%' }}>
+          WHOOOSH!
+        </div>
+      )}
+
 
 
       {/* Original Astronaut */}
@@ -449,6 +458,10 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         }}
       >
         <div className="relative">
+          {/* Comic burst behind astronaut during flight */}
+          {gameState.phase === 'flying' && (
+            <div className="comic-burst" style={{ left: '50%', top: '50%' }} />
+          )}
           {/* Fire Jets - only when flying - HORIZONTAL */}
           {gameState.phase === 'flying' && (
              <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6" style={{ transform: 'translate(-36px, 30%) rotate(-12deg)' }}>
@@ -528,16 +541,20 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             <img 
               src="/png-png-urbanbrush-13297 copy.png" 
               alt="Spaceman"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain comic-outline"
             />
           </div>
+
+          {/* Swoosh arcs behind astronaut while flying */}
+          {gameState.phase === 'flying' && (
+            <div className="comic-swoosh" />
+          )}
+
+          {/* Action tick lines removed per request */}
         </div>
       </div>
 
-      {/* Lens flare around astronaut during flight */}
-      {gameState.phase === 'flying' && (
-        <div className="lens-flare" style={{ left: '50%', top: '50%' }} />
-      )}
+      {/* Lens flare removed per request */}
 
       {/* Game Status */}
       {gameState.phase === 'waiting' && gameState.countdown > 0 && (
@@ -621,6 +638,16 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
       {/* Shockwave on crash */}
       {gameState.phase === 'crashed' && crashKey && (
         <div key={crashKey} className="shockwave" style={{ left: '50%', top: '50%' }} />
+      )}
+
+      {/* On-crash onomatopoeia and halftone splash (trigger only on crash) */}
+      {gameState.phase === 'crashed' && (
+        <>
+          <div className="crash-halftone-splash" style={{ left: '50%', top: '50%' }} />
+          <div className="onomato-crash" style={{ left: '50%', top: '50%' }}>
+            CRASH!
+          </div>
+        </>
       )}
 
       {/* Top Info Bar */}

@@ -160,6 +160,7 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
 
   return (
     <div className="relative w-full h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-purple-900 overflow-hidden space-background">
+      <div className="comic-halftone" />
       {/* Space Background Elements */}
       <div className="stars"></div>
       <div className="planet planet-1"></div>
@@ -199,6 +200,13 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
           background: `radial-gradient(circle at 50% 40%, rgba(59, 130, 246, 0.4) 0%, transparent 70%)`
         }}
       />
+
+      {/* Onomatopoeia WHOOOSH! only during flight (no anticipation) */}
+      {gamePhase === 'flying' && (
+        <div className="onomato-whoosh" style={{ left: '62%', top: '40%' }}>
+          WHOOOSH!
+        </div>
+      )}
 
       {/* Game content */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full pt-20">
@@ -391,6 +399,15 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
           </div>
         </div>
       </div>
+      {/* Crash onomatopoeia and halftone splash */}
+      {gamePhase === 'crashed' && (
+        <>
+          <div className="crash-halftone-splash" style={{ left: '50%', top: '50%' }} />
+          <div className="onomato-crash" style={{ left: '50%', top: '50%' }}>
+            CRASH!
+          </div>
+        </>
+      )}
     </div>
   );
 };
