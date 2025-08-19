@@ -740,17 +740,13 @@
   position: absolute;
   pointer-events: none;
   z-index: 12;
-  color: #ffffff;
+  color: #ff2d2d;
   font-weight: 900;
   letter-spacing: 2px;
   text-transform: uppercase;
   font-size: clamp(34px, 9vmin, 110px);
-  -webkit-text-stroke: 4px rgba(0,0,0,0.95);
-  background: linear-gradient(180deg, #fffbf2 0%, #ffd9a1 35%, #ff6a00 70%, #d41000 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 6px 0 rgba(0,0,0,0.6), 0 0 60px rgba(255,120,0,0.6), 0 0 120px rgba(255,50,0,0.3);
+  -webkit-text-stroke: 6px rgba(0,0,0,1);
+  text-shadow: none;
   transform: translate(-50%, -50%) rotate(-6deg);
   animation: crashPop 420ms cubic-bezier(0.17, 0.67, 0.35, 1.25) both;
 }

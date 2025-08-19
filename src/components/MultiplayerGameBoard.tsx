@@ -550,17 +550,11 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             <div className="comic-swoosh" />
           )}
 
-          {/* Action tick lines around astronaut during flight */}
-          {gameState.phase === 'flying' && (
-            <div className="comic-action-lines" style={{ left: '50%', top: '50%' }} />
-          )}
+          {/* Action tick lines removed per request */}
         </div>
       </div>
 
-      {/* Lens flare around astronaut during flight */}
-      {gameState.phase === 'flying' && (
-        <div className="lens-flare" style={{ left: '50%', top: '50%' }} />
-      )}
+      {/* Lens flare removed per request */}
 
       {/* Game Status */}
       {gameState.phase === 'waiting' && gameState.countdown > 0 && (
