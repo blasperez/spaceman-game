@@ -201,6 +201,13 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
         }}
       />
 
+      {/* Onomatopoeia WHOOOSH! only during flight (no anticipation) */}
+      {gamePhase === 'flying' && (
+        <div className="onomato-whoosh" style={{ left: '62%', top: '40%' }}>
+          WHOOOSH!
+        </div>
+      )}
+
       {/* Game content */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full pt-20">
         {/* Planet/Multiplier display */}
@@ -392,6 +399,15 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
           </div>
         </div>
       </div>
+      {/* Crash onomatopoeia and halftone splash */}
+      {gamePhase === 'crashed' && (
+        <>
+          <div className="crash-halftone-splash" style={{ left: '50%', top: '50%' }} />
+          <div className="onomato-crash" style={{ left: '50%', top: '50%' }}>
+            CRASH!
+          </div>
+        </>
+      )}
     </div>
   );
 };

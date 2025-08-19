@@ -437,6 +437,13 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       )}
 
+      {/* Onomatopoeia WHOOOSH! only during flight (no anticipation) */}
+      {gameState.phase === 'flying' && (
+        <div className="onomato-whoosh" style={{ left: '62%', top: '40%' }}>
+          WHOOOSH!
+        </div>
+      )}
+
 
 
       {/* Original Astronaut */}
@@ -637,6 +644,16 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
       {/* Shockwave on crash */}
       {gameState.phase === 'crashed' && crashKey && (
         <div key={crashKey} className="shockwave" style={{ left: '50%', top: '50%' }} />
+      )}
+
+      {/* On-crash onomatopoeia and halftone splash (trigger only on crash) */}
+      {gameState.phase === 'crashed' && (
+        <>
+          <div className="crash-halftone-splash" style={{ left: '50%', top: '50%' }} />
+          <div className="onomato-crash" style={{ left: '50%', top: '50%' }}>
+            CRASH!
+          </div>
+        </>
       )}
 
       {/* Top Info Bar */}
