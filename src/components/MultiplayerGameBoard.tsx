@@ -187,6 +187,8 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 space-background" style={{ perspective: '900px' }}>
+      {/* Comic halftone overlay for whole scene */}
+      <div className="comic-halftone" />
       {/* Diagonal drift layers removed per request. We'll incline movement for stars/planets instead. */}
       {/* Deep background layer */}
       <div className="absolute inset-0 opacity-30">
@@ -449,6 +451,10 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         }}
       >
         <div className="relative">
+          {/* Comic burst behind astronaut during flight */}
+          {gameState.phase === 'flying' && (
+            <div className="comic-burst" style={{ left: '50%', top: '50%' }} />
+          )}
           {/* Fire Jets - only when flying - HORIZONTAL */}
           {gameState.phase === 'flying' && (
              <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6" style={{ transform: 'translate(-36px, 30%) rotate(-12deg)' }}>
@@ -528,9 +534,19 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             <img 
               src="/png-png-urbanbrush-13297 copy.png" 
               alt="Spaceman"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain comic-outline"
             />
           </div>
+
+          {/* Swoosh arcs behind astronaut while flying */}
+          {gameState.phase === 'flying' && (
+            <div className="comic-swoosh" />
+          )}
+
+          {/* Action tick lines around astronaut during flight */}
+          {gameState.phase === 'flying' && (
+            <div className="comic-action-lines" style={{ left: '50%', top: '50%' }} />
+          )}
         </div>
       </div>
 

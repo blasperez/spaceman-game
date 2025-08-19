@@ -160,6 +160,7 @@ const EnhancedGameBoard: React.FC<EnhancedGameBoardProps> = ({
 
   return (
     <div className="relative w-full h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-purple-900 overflow-hidden space-background">
+      <div className="comic-halftone" />
       {/* Space Background Elements */}
       <div className="stars"></div>
       <div className="planet planet-1"></div>
