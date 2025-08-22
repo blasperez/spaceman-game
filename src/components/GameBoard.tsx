@@ -20,7 +20,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const [flightParticles, setFlightParticles] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; vx: number; vy: number; type: string; color: string }>>([]);
   const [explosionParticles, setExplosionParticles] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; vx: number; vy: number; type: string; color: string }>>([]);
   const [nebulaClouds, setNebulaClouds] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; color: string }>>([]);
-  const [energyRings, setEnergyRings] = useState<Array<{ x: number; y: number; opacity: number; size: number; id: number; rotation: number }>>([]);
+  const [onomatopoeia, setOnomatopoeia] = useState<Array<{ id: number; text: string; x: number; y: number; opacity: number; scale: number }>>([]);
   
   // Audio context and oscillator for background sound
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -59,12 +59,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     generateStars();
   }, []);
 
-  // Generate nebula clouds for atmospheric effect
+  // Generate nebula clouds for atmospheric effect - lilac/purple fantasy
   useEffect(() => {
     const generateNebulas = () => {
       const nebulaCount = 8;
       const newNebulas = [];
-      const colors = ['rgba(138, 43, 226, 0.1)', 'rgba(75, 0, 130, 0.08)', 'rgba(147, 112, 219, 0.12)', 'rgba(72, 61, 139, 0.1)'];
+      const colors = [
+        'radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.20), rgba(74, 0, 224, 0.06) 60%, transparent 70%)',
+        'radial-gradient(circle at 70% 60%, rgba(192, 132, 252, 0.18), rgba(67, 56, 202, 0.06) 60%, transparent 70%)',
+        'radial-gradient(ellipse at 40% 70%, rgba(147, 51, 234, 0.16), rgba(76, 29, 149, 0.05) 60%, transparent 70%)',
+        'radial-gradient(circle at 60% 40%, rgba(236, 72, 153, 0.12), rgba(88, 28, 135, 0.05) 60%, transparent 70%)'
+      ];
       
       for (let i = 0; i < nebulaCount; i++) {
         newNebulas.push({
@@ -336,37 +341,34 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   }, [explosionParticles.length]);
 
-  // Energy rings effect during flight
+  // Onomatopoeia overlays based on game events
   useEffect(() => {
-    if (gamePhase === 'flying') {
-      const interval = setInterval(() => {
-        setEnergyRings(prev => {
-          const newRings = [...prev];
-          if (Math.random() > 0.8) {
-            newRings.push({
-              x: 50,
-              y: 50,
-              opacity: 0.6,
-              size: 60,
-              id: Date.now(),
-              rotation: 0
-            });
-          }
-          
-          return newRings.map(ring => ({
-            ...ring,
-            opacity: ring.opacity - 0.02,
-            size: ring.size + 2,
-            rotation: ring.rotation + 5
-          })).filter(ring => ring.opacity > 0);
-        });
-      }, 100);
-
-      return () => clearInterval(interval);
-    } else {
-      setEnergyRings([]);
+    if (gamePhase === 'waiting' && countdown === 1) {
+      setOnomatopoeia(prev => [...prev, { id: Date.now(), text: '¡LISTO!', x: 50, y: 30, opacity: 1, scale: 1 }]);
     }
-  }, [gamePhase]);
+    if (gamePhase === 'flying' && multiplier <= 1.05) {
+      setOnomatopoeia(prev => [...prev, { id: Date.now(), text: '¡VÁMONOS!', x: 55, y: 20, opacity: 1, scale: 1 }]);
+    }
+    if (gamePhase === 'flying' && (Math.abs(multiplier - 2) < 0.02 || Math.abs(multiplier - 5) < 0.02 || Math.abs(multiplier - 10) < 0.02)) {
+      const label = multiplier >= 10 ? '¡ÉPICO!' : multiplier >= 5 ? '¡BOOM!' : '¡WOW!';
+      setOnomatopoeia(prev => [...prev, { id: Date.now(), text: label, x: 50 + Math.random()*20-10, y: 25 + Math.random()*10, opacity: 1, scale: 1 }]);
+    }
+    if (gamePhase === 'crashed') {
+      setOnomatopoeia(prev => [...prev, { id: Date.now(), text: '¡CRASH!', x: 50, y: 60, opacity: 1, scale: 1 }]);
+    }
+  }, [gamePhase, countdown, multiplier]);
+
+  // Animate onomatopoeia fade/scale
+  useEffect(() => {
+    if (onomatopoeia.length === 0) return;
+    const interval = setInterval(() => {
+      setOnomatopoeia(prev => prev
+        .map(o => ({ ...o, opacity: o.opacity - 0.04, scale: o.scale + 0.03 }))
+        .filter(o => o.opacity > 0)
+      );
+    }, 50);
+    return () => clearInterval(interval);
+  }, [onomatopoeia.length]);
 
   const getMultiplierColor = () => {
     if (multiplier < 1.5) return 'text-white';
@@ -560,21 +562,23 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         }}
       />
 
-      {/* Energy rings effect */}
-      {energyRings.map((ring) => (
+      {/* Onomatopoeia overlays */}
+      {onomatopoeia.map(o => (
         <div
-          key={ring.id}
-          className="absolute rounded-full border-2 border-yellow-400/60"
+          key={o.id}
+          className="absolute z-30 select-none"
           style={{
-            left: `${ring.x}%`,
-            top: `${ring.y}%`,
-            width: `${ring.size}px`,
-            height: `${ring.size}px`,
-            opacity: ring.opacity,
-            transform: `translate(-50%, -50%) rotate(${ring.rotation}deg)`,
-            animation: 'pulse 1s ease-in-out infinite'
+            left: `${o.x}%`,
+            top: `${o.y}%`,
+            transform: `translate(-50%, -50%) scale(${o.scale})`,
+            opacity: o.opacity,
+            textShadow: '0 0 20px rgba(255,255,255,0.9), 0 0 40px rgba(168,85,247,0.8)'
           }}
-        />
+        >
+          <span className="px-4 py-2 rounded-2xl text-4xl font-extrabold bg-gradient-to-r from-fuchsia-500/30 to-purple-500/30 backdrop-blur-md border border-fuchsia-300/40 text-white">
+            {o.text}
+          </span>
+        </div>
       ))}
 
       {/* Flight particles */}
@@ -666,11 +670,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 />
                 <defs>
                   <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#3B82F6" />
-                    <stop offset="25%" stopColor="#8B5CF6" />
-                    <stop offset="50%" stopColor="#EC4899" />
-                    <stop offset="75%" stopColor="#F59E0B" />
-                    <stop offset="100%" stopColor="#EF4444" />
+                    <stop offset="0%" stopColor="#C084FC" />
+                    <stop offset="40%" stopColor="#A78BFA" />
+                    <stop offset="70%" stopColor="#8B5CF6" />
+                    <stop offset="100%" stopColor="#6D28D9" />
                   </linearGradient>
                 </defs>
               </svg>
