@@ -151,15 +151,17 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
             : undefined
         }}
       >
-        {/* Drag Handle */}
+        {/* Enhanced Drag Handle */}
         <div
-          className="flex justify-center py-2 cursor-grab active:cursor-grabbing"
+          className="flex justify-center py-3 cursor-grab active:cursor-grabbing relative"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onClick={() => !isDragging && setIsCollapsed(!isCollapsed)}
         >
-          <div className="w-12 h-1 bg-white/40 rounded-full" />
+          <div className="w-16 h-1.5 bg-gradient-to-r from-white/50 to-white/30 rounded-full shadow-lg" />
+          <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-white/20 rounded-full" />
+          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-white/20 rounded-full" />
         </div>
 
         {/* Collapsed View - Always Visible */}
@@ -173,18 +175,21 @@ export const MobileBettingPanel: React.FC<MobileBettingPanelProps> = ({
               </div>
             </div>
 
-            {/* Center - Main Action Button with neon */}
+            {/* Enhanced Main Action Button with better effects */}
             <button
               onClick={handleMainAction}
               disabled={!canBet && !canCashOut}
-              className={`px-8 py-3 rounded-2xl font-bold text-white transition-all no-active-transform ${
+              className={`px-10 py-4 rounded-2xl font-bold text-white transition-all duration-300 transform hover:scale-105 no-active-transform ${
                 canCashOut 
-                  ? 'bg-red-600/90 hover:bg-red-700/90 shadow-[0_0_28px_rgba(255,120,120,0.9),0_0_60px_rgba(255,50,50,0.5)] animate-[neonPulse_1s_ease-in-out_infinite]' 
+                  ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-[0_0_30px_rgba(255,120,120,0.9),0_0_60px_rgba(255,50,50,0.5)] animate-[neonPulse_1s_ease-in-out_infinite]' 
                   : canBet
-                  ? 'bg-blue-500/90 hover:bg-blue-600/90 shadow-[0_0_22px_rgba(80,160,255,0.8)]'
-                  : 'bg-white/20 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-[0_0_25px_rgba(80,160,255,0.8),0_0_50px_rgba(80,160,255,0.4)]'
+                  : 'bg-gradient-to-r from-gray-600/50 to-gray-700/50 cursor-not-allowed'
               }`}
-              style={{ textShadow: canCashOut ? '0 0 10px rgba(255,255,255,0.8)' : undefined }}
+              style={{ 
+                textShadow: canCashOut ? '0 0 15px rgba(255,255,255,0.9)' : '0 0 10px rgba(255,255,255,0.7)',
+                backdropFilter: 'blur(10px)'
+              }}
             >
               {canCashOut ? 'RETIRAR' : 'APOSTAR'}
             </button>
