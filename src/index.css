@@ -98,6 +98,165 @@
   from {
     transform: translateY(0);
   }
+}
+
+/* Enhanced game animations */
+@keyframes spaceGlow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(255, 165, 0, 0.5);
+    filter: brightness(1.2);
+  }
+  50% { 
+    box-shadow: 0 0 40px rgba(255, 165, 0, 0.8);
+    filter: brightness(1.4);
+  }
+}
+
+@keyframes multiplierPulse {
+  0%, 100% { 
+    transform: scale(1);
+    text-shadow: 0 0 20px currentColor;
+  }
+  50% { 
+    transform: scale(1.1);
+    text-shadow: 0 0 40px currentColor;
+  }
+}
+
+@keyframes explosionShake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-8px) rotate(-2deg); }
+  75% { transform: translateX(8px) rotate(2deg); }
+}
+
+@keyframes starField {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-100px) rotate(360deg); }
+}
+
+@keyframes energyWave {
+  0% { 
+    transform: scale(0.8) rotate(0deg);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.2) rotate(180deg);
+    opacity: 0.4;
+  }
+  100% { 
+    transform: scale(1.6) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes cosmicPulse {
+  0%, 100% { 
+    background: radial-gradient(circle, rgba(138, 43, 226, 0.1) 0%, transparent 70%);
+  }
+  50% { 
+    background: radial-gradient(circle, rgba(138, 43, 226, 0.3) 0%, transparent 70%);
+  }
+}
+
+/* Enhanced game-specific animations */
+@keyframes neonPulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(255, 120, 120, 0.9), 0 0 40px rgba(255, 50, 50, 0.5);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(255, 120, 120, 1), 0 0 60px rgba(255, 50, 50, 0.8);
+  }
+}
+
+@keyframes multiplierGlow {
+  0%, 100% { 
+    text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+    transform: scale(1);
+  }
+  50% { 
+    text-shadow: 0 0 30px currentColor, 0 0 60px currentColor;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes spacemanFloat {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% { 
+    transform: translateY(-5px) rotate(1deg);
+  }
+  75% { 
+    transform: translateY(5px) rotate(-1deg);
+  }
+}
+
+@keyframes particleTrail {
+  0% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% { 
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+@keyframes countdownPulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Enhanced button hover effects */
+.game-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.game-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.game-button:hover::before {
+  left: 100%;
+}
+
+/* Enhanced card effects */
+.game-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.game-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.game-card:hover::after {
+  opacity: 1;
+}
   to {
     transform: translateY(calc(100% - 80px));
   }

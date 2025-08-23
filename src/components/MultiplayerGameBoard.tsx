@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Users, Wifi, WifiOff, X } from 'lucide-react';
 
 interface GameState {
@@ -57,6 +57,24 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
   const [platformX, setPlatformX] = useState(55);
   const [platformVisible, setPlatformVisible] = useState(true);
 
+  // Launch scroll effect (vertical background scroll at countdown end)
+  const [isLaunchScroll, setIsLaunchScroll] = useState(false);
+  const prevPhaseRef = useRef<GameState['phase']>(gameState.phase);
+  const prevCountdownRef = useRef<number>(gameState.countdown);
+  const launchTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const countdownHitZero = gameState.phase === 'waiting' && prevCountdownRef.current !== 0 && gameState.countdown === 0;
+    const transitionedToFlying = prevPhaseRef.current === 'waiting' && gameState.phase === 'flying';
+    if ((countdownHitZero || transitionedToFlying) && !isLaunchScroll) {
+      setIsLaunchScroll(true);
+      if (launchTimerRef.current) window.clearTimeout(launchTimerRef.current);
+      launchTimerRef.current = window.setTimeout(() => setIsLaunchScroll(false), 1200);
+    }
+    prevCountdownRef.current = gameState.countdown;
+    prevPhaseRef.current = gameState.phase;
+  }, [gameState.countdown, gameState.phase, isLaunchScroll]);
+
   // Removed launch platform state
 
   // Removed launch platform effects
@@ -103,14 +121,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     generateStars();
   }, []);
 
-  // Warp lines configuration (generated once)
-  const [warpLines] = useState(() => Array.from({ length: 24 }, () => ({
-    top: Math.random() * 100,
-    delay: Math.random() * 1.2,
-    dur: 0.8 + Math.random() * 0.9,
-    heightVh: 20 + Math.random() * 40,
-    opacity: 0.15 + Math.random() * 0.5
-  })));
+  // Warp lines removed per request
 
   // Shockwave trigger key on crash
   const [crashKey, setCrashKey] = useState<number | null>(null);
@@ -120,23 +131,24 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
     }
   }, [gameState.phase]);
 
-  // Animate background elements
+  // Animate background elements (flight)
   useEffect(() => {
     if (gameState.phase === 'flying') {
       const interval = setInterval(() => {
+        const speedScale = Math.min(1 + Math.max(0, gameState.multiplier - 1) * 0.35, 6);
         // Move stars diagonally: decrease x and increase y to simulate upward right-to-left motion
         setStars(prevStars => 
           prevStars.map(star => ({
             ...star,
-            x: star.x - star.speed < -10 ? 200 : star.x - star.speed,
-            y: star.y + star.speed * 0.35 > 110 ? (star.y + star.speed * 0.35 - 110) : star.y + star.speed * 0.35
+            x: star.x - star.speed * speedScale < -10 ? 200 : star.x - star.speed * speedScale,
+            y: star.y + star.speed * 0.35 * speedScale > 110 ? (star.y + star.speed * 0.35 * speedScale - 110) : star.y + star.speed * 0.35 * speedScale
           }))
         );
         
         // Helper to update planets with diagonal motion and randomized Y on reset
         const update = (pos: {x:number;y:number}, sx: number, sy: number, resetX: number) => {
-          const nextX = pos.x - sx;
-          const nextY = pos.y + sy;
+          const nextX = pos.x - sx * speedScale;
+          const nextY = pos.y + sy * speedScale;
           if (nextX < -50) {
             const randY = Math.max(5, Math.min(90, 10 + Math.random() * 80));
             return { x: resetX, y: randY };
@@ -167,7 +179,38 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
 
       return () => clearInterval(interval);
     }
-  }, [gameState.phase]);
+  }, [gameState.phase, gameState.multiplier]);
+
+  // Launch vertical scroll (short burst straight upward) at start
+  useEffect(() => {
+    if (!isLaunchScroll) return;
+    const interval = setInterval(() => {
+      setStars(prevStars => prevStars.map(star => ({
+        ...star,
+        y: (star.y + star.speed * 2.2) % 110
+      })));
+      const updateY = (pos: {x:number;y:number}, sy: number) => {
+        const nextY = pos.y + sy;
+        return { x: pos.x, y: nextY > 110 ? nextY - 110 : nextY };
+      };
+      setPlanetPositions(prev => ({
+        planet1: updateY(prev.planet1, 1.0),
+        planet2: updateY(prev.planet2, 0.9),
+        planet3: updateY(prev.planet3, 1.2),
+        planet4: updateY(prev.planet4, 0.95),
+        planet5: updateY(prev.planet5, 1.3),
+        planet1b: updateY(prev.planet1b, 1.1),
+        planet3b: updateY(prev.planet3b, 1.0)
+      }));
+      setNebulaPositions(prev => ({
+        nebula1: updateY(prev.nebula1, 0.6),
+        nebula2: updateY(prev.nebula2, 0.5),
+        nebula3: updateY(prev.nebula3, 0.7),
+        nebula4: updateY(prev.nebula4, 0.6)
+      }));
+    }, 40);
+    return () => clearInterval(interval);
+  }, [isLaunchScroll]);
 
   // No rotation - astronaut stays static
 
@@ -187,8 +230,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900 space-background" style={{ perspective: '900px' }}>
-      {/* Comic halftone overlay for whole scene */}
-      <div className="comic-halftone" />
+      {/* Background layers */}
       {/* Diagonal drift layers removed per request. We'll incline movement for stars/planets instead. */}
       {/* Deep background layer */}
       <div className="absolute inset-0 opacity-30">
@@ -248,7 +290,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '150px',
             left: `${nebulaPositions.nebula2.x}%`,
             top: `${nebulaPositions.nebula2.y}%`,
-            background: 'radial-gradient(ellipse, rgba(30, 144, 255, 0.3) 0%, rgba(0, 100, 200, 0.2) 40%, transparent 70%)',
+            background: 'radial-gradient(ellipse, rgba(192, 132, 252, 0.25) 0%, rgba(139, 92, 246, 0.18) 40%, transparent 70%)',
             filter: 'blur(20px)',
             animationDuration: '12s',
             animationDelay: '2s'
@@ -262,7 +304,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '100px',
             left: `${nebulaPositions.nebula3.x}%`,
             top: `${nebulaPositions.nebula3.y}%`,
-            background: 'radial-gradient(ellipse, rgba(255, 20, 147, 0.2) 0%, rgba(139, 69, 19, 0.1) 50%, transparent 80%)',
+            background: 'radial-gradient(ellipse, rgba(236, 72, 153, 0.20) 0%, rgba(147, 51, 234, 0.10) 50%, transparent 80%)',
             filter: 'blur(25px)',
             animationDuration: '15s',
             animationDelay: '5s'
@@ -276,7 +318,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
             height: '300px',
             left: `${nebulaPositions.nebula4.x}%`,
             top: `${nebulaPositions.nebula4.y}%`,
-            background: 'radial-gradient(ellipse, rgba(50, 205, 50, 0.2) 0%, rgba(34, 139, 34, 0.1) 40%, transparent 70%)',
+            background: 'radial-gradient(ellipse, rgba(168, 85, 247, 0.22) 0%, rgba(88, 28, 135, 0.10) 40%, transparent 70%)',
             filter: 'blur(18px)',
             animationDuration: '10s',
             animationDelay: '3s'
@@ -418,24 +460,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         />
       </div>
 
-      {/* Warp speed lines during flight */}
-      {gameState.phase === 'flying' && (
-        <div className="absolute inset-0 warp-container">
-          {warpLines.map((line, i) => (
-            <div
-              key={`warp-${i}`}
-              className="warp-line"
-              style={{
-                top: `${line.top}%`,
-                height: `${line.heightVh}vh`,
-                opacity: line.opacity as any,
-                animationDuration: `${line.dur}s`,
-                animationDelay: `${line.delay}s`
-              }}
-            />
-          ))}
-        </div>
-      )}
+      {/* Speed lines and rings removed per request */}
 
       {/* Onomatopoeia WHOOOSH! only during flight (no anticipation) */}
       {gameState.phase === 'flying' && (
@@ -444,125 +469,26 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       )}
 
-
-
-      {/* Original Astronaut */}
+      {/* Astronaut */}
       <div
-        className="absolute transition-all duration-100"
-        style={{
-          left: `${astronautPosition.x}%`,
-          top: `${astronautPosition.y}%`,
-          transform: `translate(-50%, -50%)`,
-          zIndex: 10,
-          filter: gameState.phase === 'crashed' ? 'brightness(0.7)' : 'none'
-        }}
+        className="absolute"
+        style={{ left: `${astronautPosition.x}%`, top: `${astronautPosition.y}%`, transform: 'translate(-50%, -50%)', zIndex: 20 }}
       >
         <div className="relative">
-          {/* Comic burst behind astronaut during flight */}
-          {gameState.phase === 'flying' && (
-            <div className="comic-burst" style={{ left: '50%', top: '50%' }} />
-          )}
-          {/* Fire Jets - only when flying - HORIZONTAL */}
-          {gameState.phase === 'flying' && (
-             <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6" style={{ transform: 'translate(-36px, 30%) rotate(-12deg)' }}>
-               {/* Core fire jet - RED ONLY */}
-               <div 
-                 className="absolute left-0 transform"
-                 style={{
-                   top: '80%',
-                   width: `${Math.min(120 * (1.1 + gameState.multiplier * 0.12), 360)}px`,
-                   height: '40px',
-                  background: 'linear-gradient(to left, #cc1100 0%, #ff3300 30%, #ff5500 60%, transparent 100%)',
-                  filter: 'blur(8px)',
-                  animation: 'fireCore 0.2s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0',
-                  transform: 'skewX(-6deg)',
-                  transition: 'width 0.08s ease'
-                }}
-              />
-              
-              {/* Secondary red jet */}
-              <div 
-                className="absolute left-0 transform"
-                 style={{
-                   top: '82%',
-                   width: `${Math.min(100 * (1.1 + gameState.multiplier * 0.12), 300)}px`,
-                   height: '25px',
-                  background: 'linear-gradient(to left, #ff3300 0%, #ff6600 40%, transparent 100%)',
-                  filter: 'blur(6px)',
-                  animation: 'fireJet 0.15s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0',
-                  transform: 'skewX(-6deg)',
-                  transition: 'width 0.08s ease'
-                }}
-              />
-              
-              {/* Third fire layer - yellow/orange */}
-              <div 
-                className="absolute left-0 transform"
-                 style={{
-                   top: '84%',
-                   width: `${Math.min(80 * (1.1 + gameState.multiplier * 0.12), 240)}px`,
-                   height: '20px',
-                  background: 'linear-gradient(to left,rgba(255, 0, 0, 0.49) 0%,rgba(255, 72, 0, 0.29) 50%, transparent 100%)',
-                  filter: 'blur(4px)',
-                  animation: 'fireJet 0.12s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0',
-                  transform: 'skewX(-6deg)',
-                  transition: 'width 0.08s ease'
-                }}
-              />
-              
-              {/* Fourth fire layer - white core */}
-              <div 
-                className="absolute left-0 transform"
-                 style={{
-                   top: '86%',
-                   width: `${Math.min(60 * (1.1 + gameState.multiplier * 0.12), 200)}px`,
-                   height: '15px',
-                  background: 'linear-gradient(to left, #ffffff 0%, #ffeeaa 60%, transparent 100%)',
-                  filter: 'blur(2px)',
-                  animation: 'fireJet 0.1s ease-in-out infinite alternate',
-                  borderRadius: '0 50% 50% 0',
-                  transition: 'width 0.08s ease'
-                }}
-              />
-            </div>
-          )}
-          
-          <div className={`w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 flex items-center justify-center ${
-            gameState.phase === 'flying' ? 'drop-shadow-[0_0_40px_rgba(255,165,0,0.9)]' : 'drop-shadow-2xl'
-          }`}
-               style={{
-                 filter: gameState.phase === 'flying' ? 'brightness(1.2)' : 'brightness(1)',
-                 transform: 'translateY(0)'
-               }}>
-
-            <img 
-              src="/png-png-urbanbrush-13297 copy.png" 
-              alt="Spaceman"
-              className="w-full h-full object-contain comic-outline"
-            />
-          </div>
-
-          {/* Swoosh arcs behind astronaut while flying */}
-          {gameState.phase === 'flying' && (
-            <div className="comic-swoosh" />
-          )}
-
-          {/* Action tick lines around astronaut during flight */}
-          {gameState.phase === 'flying' && (
-            <div className="comic-action-lines" style={{ left: '50%', top: '50%' }} />
-          )}
+          {/* Removed burst/halo lines */}
+          <img
+            src="/png-png-urbanbrush-13297 copy.png"
+            alt="Astronaut"
+            className="w-24 h-24 object-contain select-none"
+            draggable={false}
+          />
+          {/* Action tick lines removed per request */}
         </div>
       </div>
 
-      {/* Lens flare around astronaut during flight */}
-      {gameState.phase === 'flying' && (
-        <div className="lens-flare" style={{ left: '50%', top: '50%' }} />
-      )}
+      {/* Lens flare removed per request */}
 
-      {/* Game Status */}
+      {/* Countdown and UI overlays */}
       {gameState.phase === 'waiting' && gameState.countdown > 0 && (
         <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 text-center">
           <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-blue-400/30 rounded-3xl p-8 shadow-2xl">
@@ -641,10 +567,7 @@ export const MultiplayerGameBoard: React.FC<MultiplayerGameBoardProps> = ({
         </div>
       )}
 
-      {/* Shockwave on crash */}
-      {gameState.phase === 'crashed' && crashKey && (
-        <div key={crashKey} className="shockwave" style={{ left: '50%', top: '50%' }} />
-      )}
+      {/* Shockwave ring removed per request */}
 
       {/* On-crash onomatopoeia and halftone splash (trigger only on crash) */}
       {gameState.phase === 'crashed' && (
