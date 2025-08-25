@@ -260,7 +260,6 @@
   to {
     transform: translateY(calc(100% - 80px));
   }
-}
 
 .slide-up {
   animation: slideUp 0.3s ease-out;
